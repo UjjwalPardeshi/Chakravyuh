@@ -51,12 +51,16 @@ from chakravyuh_env.schemas import AnalyzerSignal
 
 logger = logging.getLogger("chakravyuh.grpo")
 
-DEFAULT_TEMPLATES_PATH = (
-    Path(__file__).resolve().parent.parent
-    / "chakravyuh_env"
-    / "scammer_templates.json"
-)
-DEFAULT_BENIGN_PATH = Path("data/chakravyuh-bench-v0/scenarios.jsonl")
+_ENV_DIR = Path(__file__).resolve().parent.parent / "chakravyuh_env"
+
+DEFAULT_TEMPLATES_PATH = _ENV_DIR / "scammer_templates.json"
+DEFAULT_BENIGN_PATH = _ENV_DIR / "benign_templates.json"
+DEFAULT_PARAPHRASE_PATH = _ENV_DIR / "paraphrase_templates.json"
+DEFAULT_REGIONAL_PATH = _ENV_DIR / "regional_templates.json"
+DEFAULT_MULTITURN_PATH = _ENV_DIR / "multiturn_templates.json"
+
+# Test-set path — used ONLY to verify no overlap with training data, never for training.
+TEST_SET_PATH = Path("data/chakravyuh-bench-v0/scenarios.jsonl")
 
 
 # ---------------------------------------------------------------------------
@@ -72,39 +76,108 @@ class TrainingExample:
     signals: tuple[str, ...] = ()
 
 
-def build_training_examples(
-    templates_path: Path = DEFAULT_TEMPLATES_PATH,
-    benign_path: Path = DEFAULT_BENIGN_PATH,
-    benign_ratio: float = 0.2,
-    seed: int = 42,
-) -> list[TrainingExample]:
-    """Mix 80% scam templates + 20% benign scenarios. Balanced per-category."""
-    rng = random.Random(seed)
-    examples: list[TrainingExample] = []
+def _flat_template_to_prompt(t: dict) -> tuple[str, list[str]]:
+    """Render one scammer_templates.json / paraphrase_templates.json entry as a
+    single prompt string + derived signal list."""
+    parts: list[str] = []
+    if t.get("opener"):
+        parts.append(t["opener"])
+    if t.get("info_request"):
+        parts.append(f"Please share your {t['info_request']}.")
+    if t.get("escalation"):
+        parts.append(t["escalation"])
+    prompt = "\n".join(parts).strip()
 
-    # Scams from templates
-    with open(templates_path, encoding="utf-8") as f:
-        templates = json.load(f)["templates"]
-    for t in templates:
-        # Combine opener + escalation so the prompt represents the full attack
-        parts = [t.get("opener", "")]
-        if t.get("info_request"):
-            parts.append(f"Please share your {t['info_request']}.")
-        if t.get("escalation"):
-            parts.append(t["escalation"])
-        prompt = "\n".join(p for p in parts if p)
-
-        # Derive expected signals from the template metadata
-        signals: list[str] = []
+    # Prefer explicit `signals` if the template declares them, else derive.
+    if t.get("signals"):
+        signals = list(t["signals"])
+    else:
+        signals = []
         if t.get("info_request"):
             signals.append(AnalyzerSignal.INFO_REQUEST.value)
         if t.get("impersonation"):
             signals.append(AnalyzerSignal.IMPERSONATION.value)
         if t.get("link"):
             signals.append(AnalyzerSignal.SUSPICIOUS_LINK.value)
-        if t.get("intent") == "urgency":
+        intent = t.get("intent")
+        if intent == "urgency":
             signals.append(AnalyzerSignal.URGENCY.value)
+        elif intent == "fear":
+            signals.append(AnalyzerSignal.FEAR.value)
+        elif intent == "greed":
+            signals.append(AnalyzerSignal.GREED.value)
+        elif intent == "empathy":
+            signals.append(AnalyzerSignal.EMPATHY.value)
+        elif intent == "authority":
+            signals.append(AnalyzerSignal.AUTHORITY.value)
+    return prompt, signals
 
+
+def _multiturn_to_prompt(t: dict) -> tuple[str, list[str]]:
+    """Render a multi-turn scenario as a chronological message stream."""
+    turns = t.get("turns", [])
+    prompt_lines = [f"[Message {i + 1}] {text}" for i, text in enumerate(turns)]
+    prompt = "\n".join(prompt_lines).strip()
+    signals = list(t.get("signals", []))
+    return prompt, signals
+
+
+def _load_json_templates(path: Path) -> list[dict]:
+    if not path.exists():
+        return []
+    with path.open(encoding="utf-8") as f:
+        return json.load(f).get("templates", [])
+
+
+def build_training_examples(
+    templates_path: Path = DEFAULT_TEMPLATES_PATH,
+    benign_path: Path = DEFAULT_BENIGN_PATH,
+    paraphrase_path: Path = DEFAULT_PARAPHRASE_PATH,
+    regional_path: Path = DEFAULT_REGIONAL_PATH,
+    multiturn_path: Path = DEFAULT_MULTITURN_PATH,
+    benign_ratio: float = 0.2,
+    seed: int = 42,
+) -> list[TrainingExample]:
+    """Build the training corpus from 5 synthetic template sources.
+
+    Scam sources:
+      - scammer_templates.json   : 200 canonical templates (5 categories × 40)
+      - paraphrase_templates.json: 40 reworded variants (robustness)
+      - regional_templates.json  : 15 regional-language variants (Tamil/Telugu/…)
+      - multiturn_templates.json : 10 multi-turn sequences
+
+    Benign source:
+      - benign_templates.json    : hand-written legit Indian SMS
+
+    **Crucially disjoint from chakravyuh-bench-v0 test set** — verified by
+    tests/test_training_data.py (zero text overlap). This avoids test-set
+    contamination and makes LoRA-vs-baseline comparisons methodologically sound.
+    """
+    rng = random.Random(seed)
+    examples: list[TrainingExample] = []
+
+    # --- Scam examples from all 4 scam sources ---
+    for source_path, kind in (
+        (templates_path, "canonical"),
+        (paraphrase_path, "paraphrase"),
+        (regional_path, "regional"),
+    ):
+        for t in _load_json_templates(source_path):
+            prompt, signals = _flat_template_to_prompt(t)
+            if not prompt:
+                continue
+            examples.append(
+                TrainingExample(
+                    prompt_text=prompt,
+                    is_scam=True,
+                    category=t.get("category", "unknown"),
+                    signals=tuple(signals),
+                )
+            )
+    for t in _load_json_templates(multiturn_path):
+        prompt, signals = _multiturn_to_prompt(t)
+        if not prompt:
+            continue
         examples.append(
             TrainingExample(
                 prompt_text=prompt,
@@ -114,24 +187,36 @@ def build_training_examples(
             )
         )
 
-    # Benign scenarios from Mode C (only 15 of them)
-    n_benign = int(len(examples) * benign_ratio / (1 - benign_ratio))
-    try:
-        with open(benign_path, encoding="utf-8") as f:
-            benign_scenarios = [
-                json.loads(line) for line in f if line.strip()
-            ]
-        benign_scenarios = [
-            s for s in benign_scenarios if not s["ground_truth"]["is_scam"]
-        ]
-        # Repeat the small benign pool to get desired ratio
-        while len(benign_scenarios) < n_benign and benign_scenarios:
-            benign_scenarios.append(rng.choice(benign_scenarios))
-        for s in benign_scenarios[:n_benign]:
-            text = "\n".join(
-                msg["text"] for msg in s["attack_sequence"]
-                if msg["sender"] == "scammer"
-            )
+    n_scams = len(examples)
+    if n_scams == 0:
+        raise RuntimeError(
+            "No scam training examples loaded. Check that "
+            f"{templates_path} exists."
+        )
+
+    # --- Benign examples (target benign_ratio of total) ---
+    benign_templates = _load_json_templates(benign_path)
+    if not benign_templates:
+        logger.warning(
+            "No benign templates at %s — training will be scam-only, "
+            "which biases LoRA toward over-flagging. Create "
+            "chakravyuh_env/benign_templates.json.",
+            benign_path,
+        )
+    else:
+        target_n_benign = int(n_scams * benign_ratio / (1 - benign_ratio))
+        # Shuffle benign pool then sample with replacement if needed for ratio.
+        pool = list(benign_templates)
+        rng.shuffle(pool)
+        selected: list[dict] = []
+        while len(selected) < target_n_benign:
+            selected.extend(pool)
+            if len(pool) == 0:
+                break
+        for b in selected[:target_n_benign]:
+            text = b.get("text", "").strip()
+            if not text:
+                continue
             examples.append(
                 TrainingExample(
                     prompt_text=text,
@@ -140,8 +225,6 @@ def build_training_examples(
                     signals=(),
                 )
             )
-    except FileNotFoundError:
-        logger.warning("Benign set not found at %s — training on scams only", benign_path)
 
     rng.shuffle(examples)
     return examples

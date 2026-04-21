@@ -1,0 +1,117 @@
+{
+  "description": "Multi-turn scam training sequences for LoRA. Each scenario models 2-3 scammer messages (a trust-build → urgency → info-ask flow), which the single-turn scammer_templates.json can't capture. Disjoint from chakravyuh-bench-v0 test set.",
+  "version": "1.0.0",
+  "source": "hand-written fraud dialog patterns from I4C + NPCI bulletin case studies; distinct from benchmark test set multi-turn scenarios",
+  "templates": [
+    {
+      "id": "mt_otp_01",
+      "category": "otp_theft",
+      "intent": "authority",
+      "turns": [
+        "Good afternoon sir, this is Rohan from SBI Bandra branch. We noticed some unusual activity on your debit card ending 4521.",
+        "Sir for your safety we need to verify your identity first. Could you please confirm your registered mobile and full name on the account?",
+        "Thank you sir. Now you will receive an OTP on your mobile in the next 30 seconds. Please read it out to me so we can lock your card and prevent the Rs 85,000 debit that's pending."
+      ],
+      "signals": ["impersonation", "info_request", "urgency"]
+    },
+    {
+      "id": "mt_otp_02",
+      "category": "otp_theft",
+      "intent": "fear",
+      "turns": [
+        "Hello madam, ICICI security team here. Our fraud monitor flagged a Rs 49,999 net banking transfer attempt from Gujarat on your account.",
+        "We are trying to block it in real-time but need your confirmation. Are you currently in Gujarat or Maharashtra?",
+        "OK madam, since you're in Mumbai we confirm this is fraudulent. To block immediately please dictate the 6-digit OTP we've just sent — we only have 90 seconds."
+      ],
+      "signals": ["impersonation", "info_request", "urgency", "fear"]
+    },
+    {
+      "id": "mt_kyc_01",
+      "category": "kyc_fraud",
+      "intent": "urgency",
+      "turns": [
+        "Dear customer, HDFC Bank notification. Per RBI circular 2025, all account holders must complete video KYC within 7 days.",
+        "We see your KYC is not yet complete. This is the fastest channel via WhatsApp. May I assist you now to avoid account freeze on Monday?",
+        "Please click this link: hdfc-vkyc-complete.in-update.top and upload PAN + Aadhaar photos. Your Customer ID is needed to verify — please share from passbook."
+      ],
+      "signals": ["impersonation", "urgency", "info_request", "suspicious_link"]
+    },
+    {
+      "id": "mt_loan_01",
+      "category": "loan_app_fraud",
+      "intent": "fear",
+      "turns": [
+        "Hello, this is the recovery team from InstaCash Loans. You borrowed Rs 8,000 on 15-Nov-24.",
+        "Our records show no EMI received. Outstanding balance including penalty is now Rs 11,400. Please confirm when you plan to pay.",
+        "Sir if not paid by 9 PM tonight, starting tomorrow morning we will WhatsApp your contact list with defaulter notice and your photo. Your colleagues, family will see. Pay now to avoid embarrassment."
+      ],
+      "signals": ["impersonation", "urgency", "fear"]
+    },
+    {
+      "id": "mt_inv_01",
+      "category": "investment_fraud",
+      "intent": "greed",
+      "turns": [
+        "Hi! I'm Sanjay from Growth Capital Advisory. I noticed you follow investment pages — are you interested in stock market tips?",
+        "We help retail investors beat Nifty with our algo. Last month our members made 47% returns. What's your investment experience?",
+        "Perfect, beginner is ideal. Our VIP group entry is Rs 4,999 one-time. I guide you personally — we've had Rs 5,000 become Rs 50,000 in 60 days. Seats close tonight. UPI growth-vip@ybl to join."
+      ],
+      "signals": ["impersonation", "greed", "urgency"]
+    },
+    {
+      "id": "mt_inv_02",
+      "category": "investment_fraud",
+      "intent": "empathy",
+      "turns": [
+        "Hello! I'm Priya from SEBI-registered WealthMax Advisors. Saw you in our Telegram group.",
+        "I just helped a lady your age turn Rs 10,000 into Rs 1 lakh through our options strategy in 45 days. She was sceptical at first too.",
+        "I understand sceptical. Start with just Rs 5,000 — minimum risk. Send via UPI wealthmax-start@okicici and I'll personally mentor you. If I don't double your money in 30 days, I refund from my own pocket."
+      ],
+      "signals": ["impersonation", "greed", "empathy"]
+    },
+    {
+      "id": "mt_imp_01",
+      "category": "impersonation",
+      "intent": "fear",
+      "turns": [
+        "Hello, I'm Inspector Patil from Mumbai Cyber Crime Branch. Is your Aadhaar number ending 4521?",
+        "Your Aadhaar has been misused to open 3 fake bank accounts in Andheri that received Rs 12 lakh from a narcotics case. FIR is ready.",
+        "Sir to prove your innocence, transfer all bank balance to this RBI escrow account within 30 minutes. We'll return the full amount after verification. If not, you'll be arrested tonight. UPI: rbi-escrow-verify@ybl."
+      ],
+      "signals": ["impersonation", "fear", "authority"]
+    },
+    {
+      "id": "mt_imp_02",
+      "category": "impersonation",
+      "intent": "empathy",
+      "turns": [
+        "Hi, I saw your profile on BharatMatrimony last week and wanted to connect. I'm Priya, software engineer at TCS Singapore office.",
+        "I'm actually relocating back to India next week — Bengaluru office. Would love to meet when I land! Which area do you stay?",
+        "Small emergency — my debit card got blocked abroad and I need Rs 18,500 to change my flight for earlier date (tomorrow). Can you UPI me priya-flight@ybl? I'll return on landing, promise. Our first date is on me!"
+      ],
+      "signals": ["impersonation", "empathy", "urgency"]
+    },
+    {
+      "id": "mt_imp_03",
+      "category": "impersonation",
+      "intent": "urgency",
+      "turns": [
+        "Hello customer, this is Meera from Amazon customer care. We have an issue with your recent order delivery.",
+        "Your Rs 14,999 order of Samsung TV was dispatched but lost in transit. We need to initiate refund to your bank account now.",
+        "To process the refund I need to verify your identity — please confirm the 6-digit code we've just sent to your registered mobile. Once verified, refund will credit in 10 minutes."
+      ],
+      "signals": ["impersonation", "info_request", "urgency"]
+    },
+    {
+      "id": "mt_kyc_02",
+      "category": "kyc_fraud",
+      "intent": "authority",
+      "turns": [
+        "Greetings, calling from UIDAI regional office. Your Aadhaar record shows biometric data was last updated 11 years ago.",
+        "As per new UIDAI Dec 2024 mandate, mandatory biometric re-verification is required for all Aadhaars older than 10 years. Missing this will deactivate Aadhaar.",
+        "For convenience we're doing this via video-KYC. Please click uidai-biometric-urgent.gov-india.ml — upload Aadhaar photo, share the OTP that comes. Slot expires at 6 PM today, no extensions possible."
+      ],
+      "signals": ["impersonation", "authority", "urgency", "info_request", "suspicious_link"]
+    }
+  ]
+}
