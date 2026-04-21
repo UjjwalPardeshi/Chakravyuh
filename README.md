@@ -62,9 +62,32 @@ pip install -e .
 # Run 100-episode scripted baseline
 python -m training.run_scripted_baseline --episodes 100 --no-wandb
 
+# Run the Gradio demo (requires: pip install -e '.[demo]')
+python -m server.demo_ui
+
+# Run eval against Mode C benchmark with bootstrap CI
+python -m eval.mode_c_real_cases --analyzer scripted --bootstrap 1000
+
 # Run tests
 pytest tests/ -v
 ```
+
+### Demo
+
+The Gradio UI at `server/demo_ui.py` provides two tabs:
+
+1. **🎬 Replay** — 5 curated deterministic episodes (seed-reproducible, zero inference risk for pitch day)
+2. **🔬 Live** — paste any suspicious message, analyzer scores it instantly (for Q&A)
+
+The 5 curated episodes tell the full narrative:
+
+| # | Story | Demonstrates |
+|---|---|---|
+| 1 | Multi-Agent Defense Wins | Analyzer + Bank Monitor cooperate, tx frozen |
+| 2 | Skeptical Victim Refuses | Tech-savvy young user recognizes pattern, refuses |
+| 3 | Verification-First Behavior | Victim calls bank to verify — ideal outcome |
+| 4 | Detection Too Late | Analyzer flags but victim already complied — motivates LoRA |
+| 5 | Scripted Rules Blind Spot | Rule-based misses subtle KYC scam — gap the LoRA closes |
 
 ### Minimal usage
 
