@@ -1,7 +1,7 @@
 {
-  "source": "NPCI Safety Bulletins, RBI Fraud Reports FY22-24, I4C reports",
-  "version": "0.1.0",
-  "count": 50,
+  "source": "NPCI Safety Bulletins, RBI Fraud Reports FY22-24, I4C reports, news case studies",
+  "version": "0.3.0",
+  "count": 200,
   "templates": [
     {
       "id": "otp_01",
@@ -502,6 +502,1506 @@
       "escalation": "Pay via UPI immediately. Reconnection costs Rs 1,200 extra.",
       "info_request": "bank_account",
       "link": "fake_payment"
+    },
+    {
+      "id": "otp_11",
+      "category": "otp_theft",
+      "intent": "urgency",
+      "impersonation": "bank",
+      "opener": "IDFC First Bank: Your net banking will be suspended in 1 hour. Share OTP to reactivate immediately.",
+      "escalation": "Post suspension, branch visit + Rs 500 reactivation fee needed. Share OTP now.",
+      "info_request": "otp",
+      "link": null
+    },
+    {
+      "id": "otp_12",
+      "category": "otp_theft",
+      "intent": "fear",
+      "impersonation": "government",
+      "opener": "CBI Alert: Your Aadhaar used in money laundering case. Share OTP to verify identity, avoid arrest.",
+      "escalation": "Cooperate within 10 min or warrant issued. OTP required per RBI Section 66.",
+      "info_request": "otp",
+      "link": null
+    },
+    {
+      "id": "otp_13",
+      "category": "otp_theft",
+      "intent": "authority",
+      "impersonation": "bank",
+      "opener": "Namaskar, IndusInd Bank se. Aapke account se suspicious transaction detect hua hai. OTP share karein to block karne ke liye.",
+      "escalation": "Transaction 2 minute mein complete ho jayegi. Jaldi OTP batayein.",
+      "info_request": "otp",
+      "link": null
+    },
+    {
+      "id": "otp_14",
+      "category": "otp_theft",
+      "intent": "greed",
+      "impersonation": "government",
+      "opener": "Tax refund Rs 18,750 pending. Share OTP for processing.",
+      "escalation": "Refund returns to treasury at midnight. Act fast.",
+      "info_request": "otp",
+      "link": null
+    },
+    {
+      "id": "otp_15",
+      "category": "otp_theft",
+      "intent": "urgency",
+      "impersonation": "bank",
+      "opener": "Federal Bank: Your credit card limit upgrade is pending. Share OTP to activate new limit of Rs 2 lakh.",
+      "escalation": "Offer expires in 30 minutes. Share OTP received.",
+      "info_request": "otp",
+      "link": null
+    },
+    {
+      "id": "otp_16",
+      "category": "otp_theft",
+      "intent": "fear",
+      "impersonation": "bank",
+      "opener": "AU Small Finance Bank: Rs 95,000 loan EMI auto-debit failed. Share OTP to retry, else penalty Rs 5,000.",
+      "escalation": "CIBIL hit in 24 hrs. OTP sent to your phone — read it out.",
+      "info_request": "otp",
+      "link": null
+    },
+    {
+      "id": "otp_17",
+      "category": "otp_theft",
+      "intent": "authority",
+      "impersonation": "bank",
+      "opener": "Main SBI manager Sharma bol raha hoon. Apke account par fraud attempt hua hai. Verify karne ke liye OTP share karein.",
+      "escalation": "Mere supervisor hamare call sun rahe hain. OTP turant batayein.",
+      "info_request": "otp",
+      "link": null
+    },
+    {
+      "id": "otp_18",
+      "category": "otp_theft",
+      "intent": "urgency",
+      "impersonation": "government",
+      "opener": "Election Commission: Voter ID linked with Aadhaar mandatory. Share OTP to complete linking before deadline.",
+      "escalation": "Voter ID cancellation starts tomorrow. OTP please.",
+      "info_request": "otp",
+      "link": null
+    },
+    {
+      "id": "otp_19",
+      "category": "otp_theft",
+      "intent": "greed",
+      "impersonation": "delivery",
+      "opener": "Flipkart Big Billion Sale: You won iPhone 17 lucky draw. Share OTP to confirm delivery address.",
+      "escalation": "Prize goes to runner-up in 15 min. Share OTP to lock it.",
+      "info_request": "otp",
+      "link": null
+    },
+    {
+      "id": "otp_20",
+      "category": "otp_theft",
+      "intent": "fear",
+      "impersonation": "bank",
+      "opener": "Bank of India: Your locker is being accessed. To stop unauthorized access, share OTP immediately.",
+      "escalation": "Person is in vault. Share OTP to lock system remotely.",
+      "info_request": "otp",
+      "link": null
+    },
+    {
+      "id": "kyc_11",
+      "category": "kyc_fraud",
+      "intent": "urgency",
+      "impersonation": "government",
+      "opener": "PAN 2.0 mandatory upgrade: Update at https://pan20-upgrade.gov-in.co within 24 hrs. Free service.",
+      "escalation": "Old PAN deactivated. Tax filing blocked. Upgrade now.",
+      "info_request": "pan",
+      "link": "fake_kyc"
+    },
+    {
+      "id": "kyc_12",
+      "category": "kyc_fraud",
+      "intent": "authority",
+      "impersonation": "bank",
+      "opener": "RBL Bank: Re-KYC required per Digital Personal Data Protection Act 2024. Link: https://rbl-dpdpa-kyc.top",
+      "escalation": "Non-compliance = Rs 2,500 penalty + account freeze. Tap link.",
+      "info_request": "aadhaar",
+      "link": "fake_kyc"
+    },
+    {
+      "id": "kyc_13",
+      "category": "kyc_fraud",
+      "intent": "fear",
+      "impersonation": "government",
+      "opener": "IT Department: PAN-Aadhaar unlink detected on your profile. Re-link at https://incometax-relink.in-pan.net",
+      "escalation": "Rs 10,000 penalty levied from tomorrow. Click to verify.",
+      "info_request": "pan",
+      "link": "fake_kyc"
+    },
+    {
+      "id": "kyc_14",
+      "category": "kyc_fraud",
+      "intent": "urgency",
+      "impersonation": "bank",
+      "opener": "BharatPe KYC verification failed. Complete video KYC: https://bharatpe-video-kyc.xyz",
+      "escalation": "Transactions blocked in 2 hrs. Click now.",
+      "info_request": "aadhaar",
+      "link": "fake_kyc"
+    },
+    {
+      "id": "kyc_15",
+      "category": "kyc_fraud",
+      "intent": "authority",
+      "impersonation": "government",
+      "opener": "UIDAI: Aadhaar 10-year update mandatory. Free update: https://uidai-10yr.gov-in.click",
+      "escalation": "Failure to update disables ration card, PM-KISAN, LPG subsidy.",
+      "info_request": "aadhaar",
+      "link": "fake_kyc"
+    },
+    {
+      "id": "kyc_16",
+      "category": "kyc_fraud",
+      "intent": "fear",
+      "impersonation": "bank",
+      "opener": "DBS Bank: Your NRI KYC expired. Funds from abroad on hold. Update: https://dbs-nri-kyc.in-update.net",
+      "escalation": "Rs 2.5 lakh inward remittance frozen. 6 hrs to act.",
+      "info_request": "pan",
+      "link": "fake_kyc"
+    },
+    {
+      "id": "kyc_17",
+      "category": "kyc_fraud",
+      "intent": "urgency",
+      "impersonation": "bank",
+      "opener": "CRED app: Your CRED score dropped. Complete KYC re-verification: https://cred-reverify.co",
+      "escalation": "Rewards forfeited tomorrow. Verify to keep points.",
+      "info_request": "pan",
+      "link": "fake_kyc"
+    },
+    {
+      "id": "kyc_18",
+      "category": "kyc_fraud",
+      "intent": "authority",
+      "impersonation": "government",
+      "opener": "Ministry of Finance: New e-KYC framework. Consent via https://mof-ekyc-2026.click. Mandatory for all bank holders.",
+      "escalation": "Penalty Rs 5,000 + account restriction. Act immediately.",
+      "info_request": "aadhaar",
+      "link": "fake_kyc"
+    },
+    {
+      "id": "kyc_19",
+      "category": "kyc_fraud",
+      "intent": "empathy",
+      "impersonation": "bank",
+      "opener": "Namaste mam/sir. Main Muthoot Finance se. Gold loan KYC pending. Link par ek minute mein update karein: https://muthoot-kyc.top",
+      "escalation": "Gold loan interest badhega agar aaj KYC nahi hua. Please click.",
+      "info_request": "aadhaar",
+      "link": "fake_kyc"
+    },
+    {
+      "id": "kyc_20",
+      "category": "kyc_fraud",
+      "intent": "urgency",
+      "impersonation": "bank",
+      "opener": "WhatsApp Business: Your UPI app KYC for BHIM expired. Re-verify via https://bhim-kyc-reverify.gq",
+      "escalation": "UPI ID deactivated in 3 hrs. Click to preserve.",
+      "info_request": "aadhaar",
+      "link": "fake_kyc"
+    },
+    {
+      "id": "loan_11",
+      "category": "loan_app_fraud",
+      "intent": "empathy",
+      "impersonation": "employer",
+      "opener": "Namaste! Main Poonam from StashFin. Aapke paas Rs 2 lakh ka personal loan approved hai. Sirf processing fee Rs 1,499 bhejo.",
+      "escalation": "UPI: stashfin-approve@paytm. Paisa 10 min mein account mein.",
+      "info_request": "bank_account",
+      "link": "fake_payment"
+    },
+    {
+      "id": "loan_12",
+      "category": "loan_app_fraud",
+      "intent": "greed",
+      "impersonation": "employer",
+      "opener": "Bajaj Finserv pre-approved: Rs 5 lakh personal loan, 0 docs, 2% interest. Apply: https://bajaj-preapproved.app-loan.in",
+      "escalation": "Offer valid until 11:59 PM. Rs 999 activation fee via UPI.",
+      "info_request": "bank_account",
+      "link": "fake_payment"
+    },
+    {
+      "id": "loan_13",
+      "category": "loan_app_fraud",
+      "intent": "urgency",
+      "impersonation": "employer",
+      "opener": "Credit Bee: Rs 1 lakh loan sanctioned. Click disburse link: https://creditbee-disburse.top",
+      "escalation": "GST charge Rs 1,800 via UPI. Disbursal in 5 min after.",
+      "info_request": "bank_account",
+      "link": "fake_payment"
+    },
+    {
+      "id": "loan_14",
+      "category": "loan_app_fraud",
+      "intent": "fear",
+      "impersonation": "employer",
+      "opener": "Recovery Agent Pratik: You took Rs 40,000 loan from KreditBee in 2023. Balance Rs 18,000 overdue. Pay today or legal case.",
+      "escalation": "Lok Adalat notice tomorrow. Pay via UPI recovery-kreditbee@ybl.",
+      "info_request": "bank_account",
+      "link": null
+    },
+    {
+      "id": "loan_15",
+      "category": "loan_app_fraud",
+      "intent": "empathy",
+      "impersonation": "employer",
+      "opener": "Bhaiya namaskar, RupeeRedee se Priya. Aapka Rs 25,000 loan approved. Aadhaar photo WhatsApp karein, loan aaj hi aa jayega.",
+      "escalation": "Photo bhejne ke baad Rs 499 verification fee UPI karein.",
+      "info_request": "aadhaar",
+      "link": null
+    },
+    {
+      "id": "loan_16",
+      "category": "loan_app_fraud",
+      "intent": "greed",
+      "impersonation": "employer",
+      "opener": "Home loan Rs 50 lakh approved at 6% interest (lowest in market). Subvention from govt: https://home-loan-govt-subsidy.in-gov.net",
+      "escalation": "Register + Rs 3,000 stamp duty via UPI today. Offer gone tomorrow.",
+      "info_request": "bank_account",
+      "link": "fake_payment"
+    },
+    {
+      "id": "loan_17",
+      "category": "loan_app_fraud",
+      "intent": "urgency",
+      "impersonation": "employer",
+      "opener": "CashIn app: Emergency loan Rs 15,000 in 5 minutes. No credit check. Click: https://cashin-emergency.click",
+      "escalation": "Medical emergency? Processing fee Rs 299 via UPI unlocks instantly.",
+      "info_request": "bank_account",
+      "link": "fake_payment"
+    },
+    {
+      "id": "loan_18",
+      "category": "loan_app_fraud",
+      "intent": "fear",
+      "impersonation": "employer",
+      "opener": "Legal notice: Your PAN linked to EarlySalary loan default. Settlement Rs 22,000 via UPI or arrest warrant.",
+      "escalation": "Mumbai Cyber Police will visit today. Pay before 4 PM.",
+      "info_request": "bank_account",
+      "link": null
+    },
+    {
+      "id": "loan_19",
+      "category": "loan_app_fraud",
+      "intent": "empathy",
+      "impersonation": "employer",
+      "opener": "CASHe Loans: Congrats! Your application approved for Rs 30,000. Bank details WhatsApp karo.",
+      "escalation": "Processing Rs 699. UPI: cashe-processing@okaxis. 1 ghante mein loan.",
+      "info_request": "bank_account",
+      "link": null
+    },
+    {
+      "id": "loan_20",
+      "category": "loan_app_fraud",
+      "intent": "greed",
+      "impersonation": "employer",
+      "opener": "Gold loan Rs 10 lakh in 30 min, no gold pledge needed. Apply: https://swarn-gold-loan.in-gold.co",
+      "escalation": "Pay Rs 2,499 gold evaluation charge to activate. UPI now.",
+      "info_request": "bank_account",
+      "link": "fake_payment"
+    },
+    {
+      "id": "inv_11",
+      "category": "investment_fraud",
+      "intent": "greed",
+      "impersonation": "employer",
+      "opener": "Zerodha Pro Group: Intraday tips, profit Rs 15,000 daily guaranteed. Join Telegram: t.me/zerodha-pro-bangalore",
+      "escalation": "Entry fee Rs 2,500 via UPI. Members earning Rs 3 lakh/month already.",
+      "info_request": "bank_account",
+      "link": null
+    },
+    {
+      "id": "inv_12",
+      "category": "investment_fraud",
+      "intent": "authority",
+      "impersonation": "employer",
+      "opener": "Groww VIP Club: SEBI-registered, AI trading algo. Rs 50,000 → Rs 2 lakh in 60 days. Join: https://groww-vip.top",
+      "escalation": "Only 20 slots. Transfer Rs 5,000 membership via UPI, profits start Monday.",
+      "info_request": "bank_account",
+      "link": "fake_payment"
+    },
+    {
+      "id": "inv_13",
+      "category": "investment_fraud",
+      "intent": "greed",
+      "impersonation": "employer",
+      "opener": "Binance India referral: Bitcoin doubling scheme. Rs 5,000 becomes Rs 25,000 in 48 hrs. Refer and earn more.",
+      "escalation": "Transfer BTC to wallet address shared on WhatsApp. Locked doubling protocol.",
+      "info_request": "bank_account",
+      "link": null
+    },
+    {
+      "id": "inv_14",
+      "category": "investment_fraud",
+      "intent": "urgency",
+      "impersonation": "employer",
+      "opener": "IPO Alert: Private placement in upcoming IPO @ Rs 45/share (listing price Rs 200). Invest Rs 25,000 min.",
+      "escalation": "Bookings close 6 PM today. UPI ipo-alloc@sbi urgently.",
+      "info_request": "bank_account",
+      "link": null
+    },
+    {
+      "id": "inv_15",
+      "category": "investment_fraud",
+      "intent": "authority",
+      "impersonation": "government",
+      "opener": "LIC Premier Plan: Govt-backed, 14% annual return guaranteed. Minimum Rs 50,000. Register: https://lic-premier-2026.gov-india.top",
+      "escalation": "Last 3 days for registration. Aadhaar + PAN + deposit today.",
+      "info_request": "aadhaar",
+      "link": "fake_kyc"
+    },
+    {
+      "id": "inv_16",
+      "category": "investment_fraud",
+      "intent": "empathy",
+      "impersonation": "family",
+      "opener": "Didi namaste, main aapka cousin Rohit from Pune. Ek dost ne ek amazing MLM scheme bataya. Rs 20,000 dalo, 3 mahine mein Rs 1 lakh.",
+      "escalation": "Main bhi invest kar raha hoon. Trust karein, UPI send kar do.",
+      "info_request": "bank_account",
+      "link": null
+    },
+    {
+      "id": "inv_17",
+      "category": "investment_fraud",
+      "intent": "greed",
+      "impersonation": "employer",
+      "opener": "Forex Master Rajesh: Rs 10,000 into Rs 50,000 in 15 days via USD/INR trading. Proven strategy.",
+      "escalation": "UPI forex-rajesh@ibl. I'll trade for you personally. 0 loss guarantee.",
+      "info_request": "bank_account",
+      "link": null
+    },
+    {
+      "id": "inv_18",
+      "category": "investment_fraud",
+      "intent": "urgency",
+      "impersonation": "employer",
+      "opener": "Mutual fund insider tip: HDFC Small Cap will jump 40% Monday. Buy through my advisory link today: https://mf-insider.click",
+      "escalation": "Rs 10,000 min. UPI to advisor-mf@okicici. Returns guaranteed.",
+      "info_request": "bank_account",
+      "link": null
+    },
+    {
+      "id": "inv_19",
+      "category": "investment_fraud",
+      "intent": "authority",
+      "impersonation": "employer",
+      "opener": "IIM Ahmedabad alumnus here. Private equity fund for retail investors. Min Rs 1 lakh. Doubles in 18 months.",
+      "escalation": "Join WhatsApp group via invite, transfer via UPI today only.",
+      "info_request": "bank_account",
+      "link": null
+    },
+    {
+      "id": "inv_20",
+      "category": "investment_fraud",
+      "intent": "greed",
+      "impersonation": "employer",
+      "opener": "Online part-time: Review YouTube videos, earn Rs 500/task. Daily Rs 5,000 possible: https://youtube-review-earn.top",
+      "escalation": "Registration Rs 1,200 via UPI. First payout in 24 hrs.",
+      "info_request": "bank_account",
+      "link": "fake_reward"
+    },
+    {
+      "id": "imp_11",
+      "category": "impersonation",
+      "intent": "authority",
+      "impersonation": "delivery",
+      "opener": "IndiaPost: Your parcel with Rs 8,000 COD stuck. Confirm delivery + pay via https://indiapost-cod.click",
+      "escalation": "Parcel returned today if not confirmed. Pay UPI to delivery agent.",
+      "info_request": "bank_account",
+      "link": "fake_payment"
+    },
+    {
+      "id": "imp_12",
+      "category": "impersonation",
+      "intent": "urgency",
+      "impersonation": "delivery",
+      "opener": "Blinkit: Your grocery order Rs 1,250 failed. Refund via UPI PIN verification. Share PIN to release.",
+      "escalation": "Refund window closes in 1 hr. PIN to confirm.",
+      "info_request": "pin",
+      "link": null
+    },
+    {
+      "id": "imp_13",
+      "category": "impersonation",
+      "intent": "fear",
+      "impersonation": "government",
+      "opener": "TRAI: Your SIM involved in obscene calls case. Will be blocked in 2 hrs unless verified via video call.",
+      "escalation": "Cyber cell officer joining call. Share Aadhaar + OTP to prove innocence.",
+      "info_request": "aadhaar",
+      "link": null
+    },
+    {
+      "id": "imp_14",
+      "category": "impersonation",
+      "intent": "empathy",
+      "impersonation": "family",
+      "opener": "Beta, this is dadu. I'm at hospital in Lucknow, accident hua. Need Rs 25,000 urgently for treatment. Phone toota hai, borrowing.",
+      "escalation": "Doctor waiting. Send UPI to emergency-hospital@phonepe. Return in 2 days.",
+      "info_request": "bank_account",
+      "link": null
+    },
+    {
+      "id": "imp_15",
+      "category": "impersonation",
+      "intent": "authority",
+      "impersonation": "bank",
+      "opener": "This is Priya from Karur Vysya Bank fraud team. Unauthorized login from Chennai at 2:30 AM. Verify with OTP to secure.",
+      "escalation": "Session active right now. Losing control — OTP quickly.",
+      "info_request": "otp",
+      "link": null
+    },
+    {
+      "id": "imp_16",
+      "category": "impersonation",
+      "intent": "urgency",
+      "impersonation": "delivery",
+      "opener": "Swiggy refund pending: Your Rs 380 refund stuck due to UPI mismatch. Update via https://swiggy-refund.click",
+      "escalation": "Refund voids in 45 min. Click and verify.",
+      "info_request": "bank_account",
+      "link": "fake_payment"
+    },
+    {
+      "id": "imp_17",
+      "category": "impersonation",
+      "intent": "fear",
+      "impersonation": "government",
+      "opener": "Mumbai Crime Branch: Your bank account used for hawala. Explain in 2 hrs or arrest team dispatched.",
+      "escalation": "Settlement Rs 50,000 via UPI drops case. Decide fast.",
+      "info_request": "bank_account",
+      "link": null
+    },
+    {
+      "id": "imp_18",
+      "category": "impersonation",
+      "intent": "empathy",
+      "impersonation": "family",
+      "opener": "Beta hi, this is your bua from Delhi. Mera purse train mein chori ho gaya. UPI send karo Rs 8,000 please, return karungi kal.",
+      "escalation": "Conductor help nahi kar raha. Urgent 5 min mein.",
+      "info_request": "bank_account",
+      "link": null
+    },
+    {
+      "id": "imp_19",
+      "category": "impersonation",
+      "intent": "authority",
+      "impersonation": "bank",
+      "opener": "Namaste. Main Union Bank of India se manager Sinha. Aapke account mein Rs 1.2 lakh ka dubious deposit aaya hai. Reverse karne ke liye OTP share karein.",
+      "escalation": "RBI ko report jaayegi. OTP mein bataiye.",
+      "info_request": "otp",
+      "link": null
+    },
+    {
+      "id": "imp_20",
+      "category": "impersonation",
+      "intent": "urgency",
+      "impersonation": "delivery",
+      "opener": "DTDC courier: Parcel from abroad, customs charge Rs 250 pending. Click to pay: https://dtdc-customs.gq",
+      "escalation": "Parcel returns in 1 hr. Pay UPI or lose gift.",
+      "info_request": "bank_account",
+      "link": "fake_payment"
+    },
+    {
+      "id": "otp_21",
+      "category": "otp_theft",
+      "intent": "fear",
+      "impersonation": "government",
+      "opener": "Digital Arrest Notice: You are under virtual arrest for money laundering. Stay on video call, share OTP to verify identity.",
+      "escalation": "Hanging up = arrest warrant activated. OTP to drop charges.",
+      "info_request": "otp",
+      "link": null
+    },
+    {
+      "id": "otp_22",
+      "category": "otp_theft",
+      "intent": "authority",
+      "impersonation": "bank",
+      "opener": "HDFC Premier Banking: We detected your credit card cloned. Share OTP on line to de-activate the duplicate.",
+      "escalation": "Duplicate card is swiping at ATM. OTP in 30 seconds please.",
+      "info_request": "otp",
+      "link": null
+    },
+    {
+      "id": "otp_23",
+      "category": "otp_theft",
+      "intent": "urgency",
+      "impersonation": "bank",
+      "opener": "WazirX crypto: Withdrawal of 0.5 BTC initiated from your wallet. Share 2FA OTP to cancel.",
+      "escalation": "BTC leaves wallet in 2 min. OTP quick.",
+      "info_request": "otp",
+      "link": null
+    },
+    {
+      "id": "otp_24",
+      "category": "otp_theft",
+      "intent": "fear",
+      "impersonation": "bank",
+      "opener": "நமஸ்காரம், SBI Chennai branch-இல் இருந்து. உங்கள் account freeze ஆகப்போகுது. OTP share பண்ணுங்க immediately.",
+      "escalation": "Account unfreeze செய்ய OTP தேவை. 5 minutes மட்டும் இருக்கு.",
+      "info_request": "otp",
+      "link": null
+    },
+    {
+      "id": "otp_25",
+      "category": "otp_theft",
+      "intent": "authority",
+      "impersonation": "government",
+      "opener": "GST Department: Refund of Rs 23,400 for your business is pending. OTP share kijiye to process.",
+      "escalation": "Financial year closes. Refund forfeited if OTP not shared.",
+      "info_request": "otp",
+      "link": null
+    },
+    {
+      "id": "otp_26",
+      "category": "otp_theft",
+      "intent": "urgency",
+      "impersonation": "bank",
+      "opener": "Paytm Business: Merchant KYC verification failed. Share OTP to continue accepting payments.",
+      "escalation": "QR code will be disabled in 15 min. Business stops.",
+      "info_request": "otp",
+      "link": null
+    },
+    {
+      "id": "otp_27",
+      "category": "otp_theft",
+      "intent": "fear",
+      "impersonation": "government",
+      "opener": "CBI Cyber Cell: Your SIM used for terror funding. NIA investigating. Share OTP to prove clean.",
+      "escalation": "House raid in 2 hours without OTP. Cooperate now.",
+      "info_request": "otp",
+      "link": null
+    },
+    {
+      "id": "otp_28",
+      "category": "otp_theft",
+      "intent": "empathy",
+      "impersonation": "bank",
+      "opener": "Hello mam, main HDFC customer service. Aapka credit card late payment waive ho sakta hai. OTP share karein waiver activate karne ke liye.",
+      "escalation": "Rs 1,250 penalty waive hoga. OTP within 3 min.",
+      "info_request": "otp",
+      "link": null
+    },
+    {
+      "id": "otp_29",
+      "category": "otp_theft",
+      "intent": "authority",
+      "impersonation": "bank",
+      "opener": "CoinDCX alert: Suspicious login to your crypto account from Russia. Share email OTP to lock.",
+      "escalation": "10 BTC at risk. OTP asap.",
+      "info_request": "otp",
+      "link": null
+    },
+    {
+      "id": "otp_30",
+      "category": "otp_theft",
+      "intent": "greed",
+      "impersonation": "government",
+      "opener": "PM Awas Yojana: Rs 2.5 lakh subsidy approved. OTP share to credit to bank.",
+      "escalation": "Credit happens today only. OTP immediately.",
+      "info_request": "otp",
+      "link": null
+    },
+    {
+      "id": "kyc_21",
+      "category": "kyc_fraud",
+      "intent": "urgency",
+      "impersonation": "bank",
+      "opener": "Tata Power: Bill Rs 4,500 unpaid. Avoid disconnection — update KYC at https://tatapower-kyc-pay.top",
+      "escalation": "Power cut at 8 PM tonight. Click to pay via UPI.",
+      "info_request": "bank_account",
+      "link": "fake_payment"
+    },
+    {
+      "id": "kyc_22",
+      "category": "kyc_fraud",
+      "intent": "authority",
+      "impersonation": "government",
+      "opener": "ABHA Health ID: Your health ID KYC expired. Re-verify at https://abha-health-kyc.gov-in.click",
+      "escalation": "Ayushman Bharat benefits suspended. Click fast.",
+      "info_request": "aadhaar",
+      "link": "fake_kyc"
+    },
+    {
+      "id": "kyc_23",
+      "category": "kyc_fraud",
+      "intent": "fear",
+      "impersonation": "government",
+      "opener": "Passport Seva: Your passport linked KYC flagged. Suspension in 48 hrs. Verify: https://passport-seva-reverify.co",
+      "escalation": "Travel ban until fixed. Update now.",
+      "info_request": "aadhaar",
+      "link": "fake_kyc"
+    },
+    {
+      "id": "kyc_24",
+      "category": "kyc_fraud",
+      "intent": "urgency",
+      "impersonation": "bank",
+      "opener": "LIC KYC mandatory: Policy lapse protection. Update at https://lic-kyc-update.in-gov.xyz",
+      "escalation": "Premium Rs 25,000 forfeited without KYC. Act today.",
+      "info_request": "pan",
+      "link": "fake_kyc"
+    },
+    {
+      "id": "kyc_25",
+      "category": "kyc_fraud",
+      "intent": "authority",
+      "impersonation": "bank",
+      "opener": "Jio SIM re-KYC: New TRAI rules. Update via https://jio-trai-rekyc.top to keep number active.",
+      "escalation": "SIM deactivated tomorrow. Fast KYC.",
+      "info_request": "aadhaar",
+      "link": "fake_kyc"
+    },
+    {
+      "id": "kyc_26",
+      "category": "kyc_fraud",
+      "intent": "fear",
+      "impersonation": "bank",
+      "opener": "Airtel: Your number used in fraud. Block notice. Re-KYC at https://airtel-rekyc.in-gov.click or lose number.",
+      "escalation": "Same number reissued to another party if KYC not done today.",
+      "info_request": "aadhaar",
+      "link": "fake_kyc"
+    },
+    {
+      "id": "kyc_27",
+      "category": "kyc_fraud",
+      "intent": "urgency",
+      "impersonation": "bank",
+      "opener": "PMJDY account holders: Mandatory re-KYC. Update Aadhaar at https://pmjdy-rekyc.in-gov.ml",
+      "escalation": "DBT subsidies stop without KYC. Tap link fast.",
+      "info_request": "aadhaar",
+      "link": "fake_kyc"
+    },
+    {
+      "id": "kyc_28",
+      "category": "kyc_fraud",
+      "intent": "authority",
+      "impersonation": "government",
+      "opener": "FASTag KYC: Your vehicle FASTag deactivated. Re-KYC: https://fastag-rekyc-npci.click",
+      "escalation": "Toll penalty Rs 500 per crossing until fixed.",
+      "info_request": "bank_account",
+      "link": "fake_kyc"
+    },
+    {
+      "id": "kyc_29",
+      "category": "kyc_fraud",
+      "intent": "urgency",
+      "impersonation": "government",
+      "opener": "Driving License DL KYC: Aadhaar-DL linkage mandatory. Link at https://dl-aadhaar-link.in-gov.top",
+      "escalation": "DL suspended from next week. Link today.",
+      "info_request": "aadhaar",
+      "link": "fake_kyc"
+    },
+    {
+      "id": "kyc_30",
+      "category": "kyc_fraud",
+      "intent": "fear",
+      "impersonation": "bank",
+      "opener": "Aapka BHIM app KYC block ho gaya hai RBI ke orders par. Re-verify: https://bhim-rbi-reverify.co",
+      "escalation": "Saare UPI transactions ruk jayenge. 4 ghante mein verify karo.",
+      "info_request": "aadhaar",
+      "link": "fake_kyc"
+    },
+    {
+      "id": "loan_21",
+      "category": "loan_app_fraud",
+      "intent": "greed",
+      "impersonation": "employer",
+      "opener": "Vehicle loan Rs 8 lakh on your 2-wheeler + car combo. Instant disbursal: https://vehicle-loan-combo.top",
+      "escalation": "Pay Rs 1,899 valuation fee UPI. Disbursal today.",
+      "info_request": "bank_account",
+      "link": "fake_payment"
+    },
+    {
+      "id": "loan_22",
+      "category": "loan_app_fraud",
+      "intent": "empathy",
+      "impersonation": "employer",
+      "opener": "Student loan Rs 5 lakh for higher studies. 1% interest, no guarantor. Email documents to: student-loan@fakegmail.co",
+      "escalation": "Admission deadline pressure? Pay Rs 2,500 courier charge via UPI for docs.",
+      "info_request": "aadhaar",
+      "link": "fake_payment"
+    },
+    {
+      "id": "loan_23",
+      "category": "loan_app_fraud",
+      "intent": "urgency",
+      "impersonation": "employer",
+      "opener": "Agricultural loan Rs 3 lakh for farmers. Kisan Credit Card supplement. Register: https://kisan-credit-loan.top",
+      "escalation": "Kharif season closing. Rs 999 farmer ID verification via UPI.",
+      "info_request": "aadhaar",
+      "link": "fake_kyc"
+    },
+    {
+      "id": "loan_24",
+      "category": "loan_app_fraud",
+      "intent": "fear",
+      "impersonation": "employer",
+      "opener": "Settlement team: You have Rs 45,000 outstanding on Dhani loan from 2022. One-time settlement Rs 15,000 via UPI today only.",
+      "escalation": "Otherwise NCLT petition Monday. Pay now to close case.",
+      "info_request": "bank_account",
+      "link": null
+    },
+    {
+      "id": "loan_25",
+      "category": "loan_app_fraud",
+      "intent": "greed",
+      "impersonation": "employer",
+      "opener": "Business Expansion Loan Rs 20 lakh. MSME scheme. No collateral. Link: https://msme-expansion-loan.gov-in.click",
+      "escalation": "Govt subvention 5%. File fee Rs 4,999 via UPI to activate.",
+      "info_request": "bank_account",
+      "link": "fake_payment"
+    },
+    {
+      "id": "loan_26",
+      "category": "loan_app_fraud",
+      "intent": "empathy",
+      "impersonation": "employer",
+      "opener": "Hello sir, Navi loan se. Aapko Rs 1.5 lakh loan approved. Photo aur Aadhaar details WhatsApp karein 1 ghante mein paisa.",
+      "escalation": "Photo bhejne ke baad Rs 1,199 instant disbursal fee UPI.",
+      "info_request": "aadhaar",
+      "link": null
+    },
+    {
+      "id": "loan_27",
+      "category": "loan_app_fraud",
+      "intent": "urgency",
+      "impersonation": "employer",
+      "opener": "Wedding loan: Rs 10 lakh in 24 hrs. Marriage season offer. Click: https://wedding-loan-insta.click",
+      "escalation": "Last 50 applications. Pay Rs 2,999 doc fee UPI today.",
+      "info_request": "bank_account",
+      "link": "fake_payment"
+    },
+    {
+      "id": "loan_28",
+      "category": "loan_app_fraud",
+      "intent": "fear",
+      "impersonation": "employer",
+      "opener": "LazyPay: Your CIBIL report shows unpaid Rs 28,000 from our lender. Pay by EOD or SARFAESI action.",
+      "escalation": "Property attachment notice draft ready. Pay to stop.",
+      "info_request": "bank_account",
+      "link": null
+    },
+    {
+      "id": "loan_29",
+      "category": "loan_app_fraud",
+      "intent": "empathy",
+      "impersonation": "employer",
+      "opener": "Namaskaram sir. MoneyTap consultant Neha. Rs 75,000 loan approved instantly. PAN photo bhejein WhatsApp par.",
+      "escalation": "Processing fee Rs 799 UPI. Paisa 10 min mein.",
+      "info_request": "pan",
+      "link": null
+    },
+    {
+      "id": "loan_30",
+      "category": "loan_app_fraud",
+      "intent": "greed",
+      "impersonation": "employer",
+      "opener": "Crypto-backed loan Rs 2 lakh. Pledge BTC, no credit check. Apply: https://crypto-backed-loan.in-crypto.co",
+      "escalation": "Transfer 0.02 BTC to our escrow wallet to activate.",
+      "info_request": "bank_account",
+      "link": "fake_payment"
+    },
+    {
+      "id": "inv_21",
+      "category": "investment_fraud",
+      "intent": "empathy",
+      "impersonation": "family",
+      "opener": "Hi, matrimony.com par meri profile dekhi? I'm Ritu from Delhi, doctor. Want to discuss investment plan for our future together.",
+      "escalation": "Trusted crypto platform, Rs 50,000 se start karo. I'll guide you.",
+      "info_request": "bank_account",
+      "link": null
+    },
+    {
+      "id": "inv_22",
+      "category": "investment_fraud",
+      "intent": "greed",
+      "impersonation": "employer",
+      "opener": "Part-time job: Like YouTube videos, earn Rs 50/like. Daily Rs 3,000 possible. Link: https://youtube-like-earn.gq",
+      "escalation": "Registration Rs 799 UPI for task access. Recover in 3 days.",
+      "info_request": "bank_account",
+      "link": "fake_reward"
+    },
+    {
+      "id": "inv_23",
+      "category": "investment_fraud",
+      "intent": "urgency",
+      "impersonation": "employer",
+      "opener": "Work-from-home typist: Rs 15,000/month. No experience needed. Apply: https://wfh-typist-earn.top",
+      "escalation": "Security deposit Rs 1,500 UPI refundable. 10 seats left.",
+      "info_request": "bank_account",
+      "link": "fake_payment"
+    },
+    {
+      "id": "inv_24",
+      "category": "investment_fraud",
+      "intent": "greed",
+      "impersonation": "employer",
+      "opener": "Data entry home job: Rs 200/page, 50 pages/day possible. WhatsApp 9876543210 for details.",
+      "escalation": "Software installation fee Rs 499 via UPI. Start earning Monday.",
+      "info_request": "bank_account",
+      "link": null
+    },
+    {
+      "id": "inv_25",
+      "category": "investment_fraud",
+      "intent": "authority",
+      "impersonation": "employer",
+      "opener": "Amazon product review: Get paid Rs 150 per review. Official Amazon Vendor program. Register: https://amazon-vendor-review.click",
+      "escalation": "Onboarding fee Rs 999 UPI. Reviews start today.",
+      "info_request": "bank_account",
+      "link": "fake_payment"
+    },
+    {
+      "id": "inv_26",
+      "category": "investment_fraud",
+      "intent": "urgency",
+      "impersonation": "employer",
+      "opener": "Telegram task earning: Join VIP group, complete simple tasks, earn Rs 5,000 daily. Invite: t.me/taskearn-india",
+      "escalation": "Entry Rs 2,500 UPI. First withdrawal tomorrow.",
+      "info_request": "bank_account",
+      "link": null
+    },
+    {
+      "id": "inv_27",
+      "category": "investment_fraud",
+      "intent": "empathy",
+      "impersonation": "family",
+      "opener": "Beta, main aapka mamu. Ek scheme mila hai, Rs 10,000 daal ke Rs 50,000 3 mahine mein. Mujh par trust karo.",
+      "escalation": "Main bhi invest kar raha hoon. UPI send karo abhi.",
+      "info_request": "bank_account",
+      "link": null
+    },
+    {
+      "id": "inv_28",
+      "category": "investment_fraud",
+      "intent": "authority",
+      "impersonation": "employer",
+      "opener": "Deepfake CEO of Infosys here via video: Exclusive employee IPO allocation. Invest Rs 1 lakh via company portal.",
+      "escalation": "HR calling now for UPI transfer. Limited to first 100 employees.",
+      "info_request": "bank_account",
+      "link": null
+    },
+    {
+      "id": "inv_29",
+      "category": "investment_fraud",
+      "intent": "greed",
+      "impersonation": "employer",
+      "opener": "Pi Network crypto: Mine free on phone, each Pi = Rs 500 at listing. Invite link to join.",
+      "escalation": "Pay Rs 599 validator fee UPI to unlock mining. Listing next month.",
+      "info_request": "bank_account",
+      "link": null
+    },
+    {
+      "id": "inv_30",
+      "category": "investment_fraud",
+      "intent": "urgency",
+      "impersonation": "employer",
+      "opener": "Dream11 secret prediction group: Win 95% contests. Monthly Rs 50,000+ earnings.",
+      "escalation": "Entry Rs 1,999 UPI. Live tips before match.",
+      "info_request": "bank_account",
+      "link": null
+    },
+    {
+      "id": "imp_21",
+      "category": "impersonation",
+      "intent": "fear",
+      "impersonation": "government",
+      "opener": "Cyber Crime Branch Hyderabad: Drug parcel in your name seized at Mumbai airport. Video call in 10 min mandatory.",
+      "escalation": "Non-attendance = NDPS case. Resolve via Rs 85,000 compounding fee UPI.",
+      "info_request": "bank_account",
+      "link": null
+    },
+    {
+      "id": "imp_22",
+      "category": "impersonation",
+      "intent": "urgency",
+      "impersonation": "delivery",
+      "opener": "Amazon delivery agent: Your COD Rs 2,450 order stuck. Share UPI PIN to cancel and refund.",
+      "escalation": "Order auto-ships in 30 min. PIN to cancel.",
+      "info_request": "pin",
+      "link": null
+    },
+    {
+      "id": "imp_23",
+      "category": "impersonation",
+      "intent": "authority",
+      "impersonation": "bank",
+      "opener": "SBI WhatsApp banking: Update profile photo and bio to continue service. Click: https://sbi-wa-update.co",
+      "escalation": "Account viewing disabled tomorrow without update.",
+      "info_request": "bank_account",
+      "link": "fake_kyc"
+    },
+    {
+      "id": "imp_24",
+      "category": "impersonation",
+      "intent": "empathy",
+      "impersonation": "family",
+      "opener": "Mummy, this is Riya. College mein friend ko Rs 12,000 bhejna hai emergency, mera UPI kaam nahi kar raha. Aap transfer kardo please.",
+      "escalation": "Warden waiting. Send to friend-help@phonepe right now.",
+      "info_request": "bank_account",
+      "link": null
+    },
+    {
+      "id": "imp_25",
+      "category": "impersonation",
+      "intent": "fear",
+      "impersonation": "government",
+      "opener": "Income Tax Raid Notice: Your returns mismatched. Virtual hearing in 2 hrs. Non-attendance = asset freeze.",
+      "escalation": "Advance tax Rs 35,000 via UPI to avoid physical raid.",
+      "info_request": "bank_account",
+      "link": null
+    },
+    {
+      "id": "imp_26",
+      "category": "impersonation",
+      "intent": "urgency",
+      "impersonation": "bank",
+      "opener": "UPI collect request from school-fees-2026@okhdfc for Rs 45,000. Approve within 5 min for early-bird discount.",
+      "escalation": "Your child's admission seat at risk. Approve now.",
+      "info_request": "pin",
+      "link": null
+    },
+    {
+      "id": "imp_27",
+      "category": "impersonation",
+      "intent": "authority",
+      "impersonation": "government",
+      "opener": "EPFO Officer Patel: PF withdrawal Rs 2.1 lakh stuck. Video verification + OTP needed to release.",
+      "escalation": "Auto-reversal in 1 hr to employer. OTP now.",
+      "info_request": "otp",
+      "link": null
+    },
+    {
+      "id": "imp_28",
+      "category": "impersonation",
+      "intent": "empathy",
+      "impersonation": "family",
+      "opener": "Papa, hostel mein dinner ke liye paisa khatam. Rs 3,000 UPI send karo: student-helper@ybl. Kal return.",
+      "escalation": "Bhukha so jaunga agar aaj nahi mila. Please jaldi.",
+      "info_request": "bank_account",
+      "link": null
+    },
+    {
+      "id": "imp_29",
+      "category": "impersonation",
+      "intent": "urgency",
+      "impersonation": "delivery",
+      "opener": "BlueDart: International parcel Rs 30,000 value. Customs duty Rs 2,500 pending. Pay: https://bluedart-intl-customs.gq",
+      "escalation": "Parcel returned to origin in 4 hrs.",
+      "info_request": "bank_account",
+      "link": "fake_payment"
+    },
+    {
+      "id": "imp_30",
+      "category": "impersonation",
+      "intent": "fear",
+      "impersonation": "government",
+      "opener": "Supreme Court notice: Summons issued in your name. Appear virtually or contempt case. Video link will follow.",
+      "escalation": "Escape via Rs 45,000 legal settlement via UPI. One-time only.",
+      "info_request": "bank_account",
+      "link": null
+    },
+    {
+      "id": "kyc_31",
+      "category": "kyc_fraud",
+      "intent": "urgency",
+      "impersonation": "government",
+      "opener": "Ayushman Bharat: Health card expiring. Renew via https://pmjay-renew-2026.gov-in.top immediately.",
+      "escalation": "Free hospital benefits stop without renewal.",
+      "info_request": "aadhaar",
+      "link": "fake_kyc"
+    },
+    {
+      "id": "kyc_32",
+      "category": "kyc_fraud",
+      "intent": "authority",
+      "impersonation": "bank",
+      "opener": "Gpay Merchant: GST KYC mandatory for merchants receiving > Rs 20 lakh. Update: https://gpay-merchant-gst.click",
+      "escalation": "QR disabled if GST not linked. Act today.",
+      "info_request": "pan",
+      "link": "fake_kyc"
+    },
+    {
+      "id": "loan_31",
+      "category": "loan_app_fraud",
+      "intent": "fear",
+      "impersonation": "employer",
+      "opener": "PaySense notice: You took Rs 18,000 loan (Aug 2024), now Rs 32,000 with interest. Settle Rs 12,000 via UPI today.",
+      "escalation": "Recovery goons visiting tomorrow morning. Close case now.",
+      "info_request": "bank_account",
+      "link": null
+    },
+    {
+      "id": "loan_32",
+      "category": "loan_app_fraud",
+      "intent": "greed",
+      "impersonation": "employer",
+      "opener": "Overdraft facility Rs 3 lakh on SBI account. No ITR needed. Apply: https://sbi-overdraft-insta.top",
+      "escalation": "Activation fee Rs 1,499 via UPI. OD ready in 1 hour.",
+      "info_request": "bank_account",
+      "link": "fake_payment"
+    },
+    {
+      "id": "inv_31",
+      "category": "investment_fraud",
+      "intent": "greed",
+      "impersonation": "employer",
+      "opener": "Virtual real estate: Own plot in metaverse Mumbai for Rs 5,000. Appreciates 20x by 2027.",
+      "escalation": "Only 50 plots left. UPI metaverse-mumbai@ybl to claim.",
+      "info_request": "bank_account",
+      "link": null
+    },
+    {
+      "id": "inv_32",
+      "category": "investment_fraud",
+      "intent": "authority",
+      "impersonation": "employer",
+      "opener": "IIT Bombay startup XYZ: pre-IPO equity at Rs 100/share (listing Rs 800). Min Rs 20,000.",
+      "escalation": "Allocation closes tomorrow. UPI iitb-startup@sbi.",
+      "info_request": "bank_account",
+      "link": null
+    },
+    {
+      "id": "imp_31",
+      "category": "impersonation",
+      "intent": "fear",
+      "impersonation": "government",
+      "opener": "Election Commission Officer: Voter ID duplicate found in your name. Aadhaar + OTP to resolve + avoid Rs 10,000 fine.",
+      "escalation": "Voter ID cancelled in 24 hrs without verification.",
+      "info_request": "otp",
+      "link": null
+    },
+    {
+      "id": "imp_32",
+      "category": "impersonation",
+      "intent": "urgency",
+      "impersonation": "delivery",
+      "opener": "DominosPinza: Rs 1,850 prepaid order failed. Refund via UPI. Share PIN for instant reversal.",
+      "escalation": "Refund window 30 min. PIN to release.",
+      "info_request": "pin",
+      "link": null
+    },
+    {
+      "id": "otp_31",
+      "category": "otp_theft",
+      "intent": "fear",
+      "impersonation": "government",
+      "opener": "DRI officer calling: Illegal forex transfer in your name. Share OTP for preliminary investigation.",
+      "escalation": "FEMA case + 10-year jail possible. OTP to clarify.",
+      "info_request": "otp",
+      "link": null
+    },
+    {
+      "id": "otp_32",
+      "category": "otp_theft",
+      "intent": "authority",
+      "impersonation": "bank",
+      "opener": "SBI YONO app: Biometric mismatch detected. Share OTP to re-register biometric.",
+      "escalation": "App locked in 2 min. OTP urgent.",
+      "info_request": "otp",
+      "link": null
+    },
+    {
+      "id": "kyc_33",
+      "category": "kyc_fraud",
+      "intent": "urgency",
+      "impersonation": "bank",
+      "opener": "PMKisan beneficiary: Rs 2,000 installment held. Update bank KYC: https://pmkisan-kyc-update.in-gov.ml",
+      "escalation": "Amount reverts to treasury in 48 hrs. Click now.",
+      "info_request": "aadhaar",
+      "link": "fake_kyc"
+    },
+    {
+      "id": "kyc_34",
+      "category": "kyc_fraud",
+      "intent": "authority",
+      "impersonation": "government",
+      "opener": "ITR filing portal: PAN suspended pending KYC refresh. Login: https://itrfiling-kyc-refresh.gov-india.click",
+      "escalation": "Late fee Rs 5,000 from tomorrow. Refresh now.",
+      "info_request": "pan",
+      "link": "fake_kyc"
+    },
+    {
+      "id": "loan_33",
+      "category": "loan_app_fraud",
+      "intent": "empathy",
+      "impersonation": "employer",
+      "opener": "Greetings sir! I am Manoj from Bajaj Housing. Your home loan pre-approved Rs 25 lakh @ 7%. Just send Aadhaar + PAN WhatsApp.",
+      "escalation": "Processing fee Rs 2,499 via UPI. Loan disbursal in 72 hrs.",
+      "info_request": "aadhaar",
+      "link": null
+    },
+    {
+      "id": "loan_34",
+      "category": "loan_app_fraud",
+      "intent": "urgency",
+      "impersonation": "employer",
+      "opener": "Salary advance Rs 50,000 against next month. No interest for 30 days. Link: https://salary-advance-insta.co",
+      "escalation": "Rs 299 verification fee UPI unlocks instantly.",
+      "info_request": "bank_account",
+      "link": "fake_payment"
+    },
+    {
+      "id": "inv_33",
+      "category": "investment_fraud",
+      "intent": "urgency",
+      "impersonation": "employer",
+      "opener": "Sovereign Gold Bond 2026: Subscribe via special window, 2.5% + 10% gold appreciation guaranteed.",
+      "escalation": "Pay Rs 50,000 via UPI today. Allocation locks at 5 PM.",
+      "info_request": "bank_account",
+      "link": null
+    },
+    {
+      "id": "inv_34",
+      "category": "investment_fraud",
+      "intent": "greed",
+      "impersonation": "employer",
+      "opener": "Solar panel franchise: Govt subsidy 40%. Rs 1 lakh investment, Rs 10,000 monthly return from govt.",
+      "escalation": "Franchise fee Rs 20,000 UPI. Subsidy file submitted today.",
+      "info_request": "bank_account",
+      "link": null
+    },
+    {
+      "id": "imp_33",
+      "category": "impersonation",
+      "intent": "authority",
+      "impersonation": "bank",
+      "opener": "Kotak Bank video KYC pending completion. Officer will call in 10 min. Keep PAN + Aadhaar + signed cheque ready.",
+      "escalation": "Video call ready — share OTP to authenticate session.",
+      "info_request": "otp",
+      "link": null
+    },
+    {
+      "id": "imp_34",
+      "category": "impersonation",
+      "intent": "empathy",
+      "impersonation": "family",
+      "opener": "মা, হোস্টেলে টাকা দরকার। UPI একটু পাঠাবে? Rs 5,000 URGENT.",
+      "escalation": "এক ঘণ্টার মধ্যে লাগবে। Send hostel-urgent@ybl।",
+      "info_request": "bank_account",
+      "link": null
+    },
+    {
+      "id": "otp_33",
+      "category": "otp_theft",
+      "intent": "urgency",
+      "impersonation": "bank",
+      "opener": "Google Pay: Your account will be banned due to TOS violation. Share OTP to appeal.",
+      "escalation": "Ban final in 5 min. Cooperate.",
+      "info_request": "otp",
+      "link": null
+    },
+    {
+      "id": "kyc_35",
+      "category": "kyc_fraud",
+      "intent": "fear",
+      "impersonation": "bank",
+      "opener": "IDBI Bank: Frozen dormant account reactivation KYC. Click: https://idbi-reactivate.co or balance forfeited.",
+      "escalation": "Rs 1,20,000 balance to charity fund in 24 hrs.",
+      "info_request": "aadhaar",
+      "link": "fake_kyc"
+    },
+    {
+      "id": "loan_35",
+      "category": "loan_app_fraud",
+      "intent": "fear",
+      "impersonation": "employer",
+      "opener": "Bajaj Recovery: 30+ days overdue notice. Pay Rs 8,500 via UPI or we share your contacts with abuse messages.",
+      "escalation": "Your friends, family, boss will see your defaulter status.",
+      "info_request": "bank_account",
+      "link": null
+    },
+    {
+      "id": "inv_35",
+      "category": "investment_fraud",
+      "intent": "greed",
+      "impersonation": "employer",
+      "opener": "Upstox referral bonus: Open account with my link, get Rs 15,000 + free stock + intraday tips.",
+      "escalation": "Deposit Rs 2,000 UPI for account activation — tips start tomorrow.",
+      "info_request": "bank_account",
+      "link": null
+    },
+    {
+      "id": "imp_35",
+      "category": "impersonation",
+      "intent": "urgency",
+      "impersonation": "government",
+      "opener": "Municipal Corporation: Water supply disconnection in 6 hrs. Pay pending Rs 2,450: https://mcd-water-pay.click",
+      "escalation": "Reconnection Rs 1,500 extra. Pay UPI now.",
+      "info_request": "bank_account",
+      "link": "fake_payment"
+    },
+    {
+      "id": "otp_34",
+      "category": "otp_theft",
+      "intent": "empathy",
+      "impersonation": "bank",
+      "opener": "నమస్కారం, Canara Bank Hyderabad నుండి. Mee account debit hold avvindi. OTP share cheyyandi release cheyyadaniki.",
+      "escalation": "5 nimishalu undi. OTP quick please.",
+      "info_request": "otp",
+      "link": null
+    },
+    {
+      "id": "kyc_36",
+      "category": "kyc_fraud",
+      "intent": "urgency",
+      "impersonation": "government",
+      "opener": "Ration Card KYC: Aadhaar seeding mandatory. Link: https://ration-aadhaar-seed.gov-india.top",
+      "escalation": "PDS entitlements stop next month without linkage.",
+      "info_request": "aadhaar",
+      "link": "fake_kyc"
+    },
+    {
+      "id": "loan_36",
+      "category": "loan_app_fraud",
+      "intent": "greed",
+      "impersonation": "employer",
+      "opener": "Credit card loan Rs 5 lakh against any card limit. Balance transfer + cashout. https://cc-loan-cashout.top",
+      "escalation": "Rs 1,999 processing + CVV for verification via WhatsApp.",
+      "info_request": "cvv",
+      "link": "fake_payment"
+    },
+    {
+      "id": "inv_36",
+      "category": "investment_fraud",
+      "intent": "urgency",
+      "impersonation": "employer",
+      "opener": "Reliance Jio IPO pre-book: Rs 10,000 confirms allocation. Official link: https://jio-ipo-prebook.reliance-ipo.co",
+      "escalation": "Last 500 retail allocations. UPI urgently.",
+      "info_request": "bank_account",
+      "link": "fake_payment"
+    },
+    {
+      "id": "imp_36",
+      "category": "impersonation",
+      "intent": "fear",
+      "impersonation": "bank",
+      "opener": "Axis Bank fraud team: Your credit card transaction Rs 78,450 at Singapore Duty Free needs confirmation. OTP to confirm or dispute.",
+      "escalation": "Transaction finalizes in 3 min. OTP to dispute.",
+      "info_request": "otp",
+      "link": null
+    },
+    {
+      "id": "otp_35",
+      "category": "otp_theft",
+      "intent": "authority",
+      "impersonation": "delivery",
+      "opener": "ಅಮೆಜಾನ್ ಡೆಲಿವರಿ: ನಿಮ್ಮ order OTP share ಮಾಡಿ to deliver. OTP ನಾ SMS ನಲ್ಲಿ ಬಂದಿದೆ.",
+      "escalation": "Delivery cancel ಆಗುತ್ತೆ 10 min alli. Share fast.",
+      "info_request": "otp",
+      "link": null
+    },
+    {
+      "id": "kyc_37",
+      "category": "kyc_fraud",
+      "intent": "authority",
+      "impersonation": "bank",
+      "opener": "Mutual fund KYC common refresh: CAMS/Karvy requires update. Https://cams-kyc-refresh.in-gov.click",
+      "escalation": "Redemption blocked if KYC not refreshed. Investment frozen.",
+      "info_request": "pan",
+      "link": "fake_kyc"
+    },
+    {
+      "id": "loan_37",
+      "category": "loan_app_fraud",
+      "intent": "urgency",
+      "impersonation": "employer",
+      "opener": "Debt consolidation: Replace all your EMIs with single Rs 8,000/month. Apply: https://debt-consolidate-india.top",
+      "escalation": "Legal fee Rs 3,499 via UPI. Consolidation active Monday.",
+      "info_request": "bank_account",
+      "link": "fake_payment"
+    },
+    {
+      "id": "inv_37",
+      "category": "investment_fraud",
+      "intent": "authority",
+      "impersonation": "employer",
+      "opener": "NSE Certified Trainer Aditya: Learn options trading, earn Rs 1 lakh/month. Join class Rs 4,999.",
+      "escalation": "Only 10 seats. UPI to lock seat. Starting tomorrow.",
+      "info_request": "bank_account",
+      "link": null
+    },
+    {
+      "id": "imp_37",
+      "category": "impersonation",
+      "intent": "urgency",
+      "impersonation": "bank",
+      "opener": "HDFC credit card: Reward points Rs 18,500 expiring tonight. Convert to cashback via https://hdfc-rewards-convert.top",
+      "escalation": "Points expire 11:59 PM. Click to save them.",
+      "info_request": "cvv",
+      "link": "fake_kyc"
+    },
+    {
+      "id": "otp_36",
+      "category": "otp_theft",
+      "intent": "urgency",
+      "impersonation": "bank",
+      "opener": "RuPay card alert: International usage attempted. Share OTP to decline.",
+      "escalation": "Rs 45,000 being charged right now. OTP in seconds.",
+      "info_request": "otp",
+      "link": null
+    },
+    {
+      "id": "kyc_38",
+      "category": "kyc_fraud",
+      "intent": "urgency",
+      "impersonation": "bank",
+      "opener": "Mutual Fund SIP KYC: Auto-debit blocked. Update at https://sip-kyc-auto.in-gov.ml",
+      "escalation": "SIP missed next month → termination. Update today.",
+      "info_request": "pan",
+      "link": "fake_kyc"
+    },
+    {
+      "id": "loan_38",
+      "category": "loan_app_fraud",
+      "intent": "empathy",
+      "impersonation": "employer",
+      "opener": "Hi bhai, Flash Loan app se. You applied 6 months back. Now approved Rs 40,000. Just pay Rs 599 activation fee.",
+      "escalation": "UPI flash-loan-activation@ybl. Money in 1 hour.",
+      "info_request": "bank_account",
+      "link": null
+    },
+    {
+      "id": "inv_38",
+      "category": "investment_fraud",
+      "intent": "fear",
+      "impersonation": "government",
+      "opener": "SEBI Notice: You invested in unregistered PMS. Penalty Rs 1 lakh unless you switch to regulated fund today.",
+      "escalation": "Switch fee Rs 5,000 via UPI. Penalty waived.",
+      "info_request": "bank_account",
+      "link": null
+    },
+    {
+      "id": "imp_38",
+      "category": "impersonation",
+      "intent": "empathy",
+      "impersonation": "family",
+      "opener": "ಅಮ್ಮ, hostel ನಲ್ಲಿ mess bill ಕೊಡಲು Rs 6,000 ಬೇಕು urgent. UPI mess-hostel@ybl send ಮಾಡಿ.",
+      "escalation": "Warden ಕಾಯುತ್ತಿದ್ದಾರೆ. ಬೇಗ please.",
+      "info_request": "bank_account",
+      "link": null
+    },
+    {
+      "id": "otp_37",
+      "category": "otp_theft",
+      "intent": "fear",
+      "impersonation": "bank",
+      "opener": "ICICI lombard car insurance: Claim fraud attempt on your policy. Share OTP to block unauthorized claim.",
+      "escalation": "Claim goes through in 5 min. OTP fast.",
+      "info_request": "otp",
+      "link": null
+    },
+    {
+      "id": "kyc_39",
+      "category": "kyc_fraud",
+      "intent": "authority",
+      "impersonation": "bank",
+      "opener": "Demat account: NSDL/CDSL merge 2026. KYC reconciliation mandatory: https://demat-merge-kyc-2026.top",
+      "escalation": "Shares frozen without reconciliation. Update today.",
+      "info_request": "pan",
+      "link": "fake_kyc"
+    },
+    {
+      "id": "loan_39",
+      "category": "loan_app_fraud",
+      "intent": "greed",
+      "impersonation": "employer",
+      "opener": "PM Mudra Loan: Rs 10 lakh business loan govt subsidy. Apply: https://pmmudra-apply.gov-india.click",
+      "escalation": "Application fee Rs 2,499 via UPI. Govt processing.",
+      "info_request": "bank_account",
+      "link": "fake_payment"
+    },
+    {
+      "id": "inv_39",
+      "category": "investment_fraud",
+      "intent": "urgency",
+      "impersonation": "employer",
+      "opener": "NFO launch: New quant fund, institutional allocation. Rs 50,000 min via UPI today (public opens tomorrow at higher NAV).",
+      "escalation": "Transfer to nfo-priority@sbi right away.",
+      "info_request": "bank_account",
+      "link": null
+    },
+    {
+      "id": "imp_39",
+      "category": "impersonation",
+      "intent": "authority",
+      "impersonation": "bank",
+      "opener": "Karnataka Bank call center: Your net banking password expired. Reset with OTP verification now.",
+      "escalation": "Branch visit + 5 docs needed if OTP not shared. Prefer OTP route.",
+      "info_request": "otp",
+      "link": null
+    },
+    {
+      "id": "otp_38",
+      "category": "otp_theft",
+      "intent": "urgency",
+      "impersonation": "bank",
+      "opener": "WhatsApp Pay: Account about to be deleted per data retention policy. OTP to retain.",
+      "escalation": "Deletion finalizes in 10 min. OTP saves it.",
+      "info_request": "otp",
+      "link": null
+    },
+    {
+      "id": "kyc_40",
+      "category": "kyc_fraud",
+      "intent": "fear",
+      "impersonation": "government",
+      "opener": "TRAI: Your number flagged for spam calls. 10-digit suspension in 24 hrs without KYC at https://trai-spam-kyc.in-gov.gq",
+      "escalation": "Connectivity lost without re-KYC. Click now.",
+      "info_request": "aadhaar",
+      "link": "fake_kyc"
+    },
+    {
+      "id": "loan_40",
+      "category": "loan_app_fraud",
+      "intent": "urgency",
+      "impersonation": "employer",
+      "opener": "MoneyView: Top-up loan Rs 75,000 approved. 0 paperwork. UPI fee Rs 899 disburses instantly.",
+      "escalation": "Approval expires 6 PM. Pay now to lock.",
+      "info_request": "bank_account",
+      "link": null
+    },
+    {
+      "id": "inv_40",
+      "category": "investment_fraud",
+      "intent": "empathy",
+      "impersonation": "family",
+      "opener": "Bhaiya, aapke childhood friend Rakesh here. Abroad se hoon. Business partner chahiye India mein. Rs 50,000 se start Rs 5 lakh monthly passive income.",
+      "escalation": "UPI send karo, baaki hum scale karenge. Trust me bro.",
+      "info_request": "bank_account",
+      "link": null
+    },
+    {
+      "id": "imp_40",
+      "category": "impersonation",
+      "intent": "fear",
+      "impersonation": "bank",
+      "opener": "SBI Cards: Your card used for Rs 1.5 lakh at Dubai airport 5 min ago. Share OTP to block urgently.",
+      "escalation": "Second transaction attempted now. OTP within 60 seconds.",
+      "info_request": "otp",
+      "link": null
+    },
+    {
+      "id": "otp_39",
+      "category": "otp_theft",
+      "intent": "urgency",
+      "impersonation": "bank",
+      "opener": "Standard Chartered Priority: Your Rs 5 lakh FD maturing today. Share OTP to renew at old rate (8.1%) else rollover at 6.5%.",
+      "escalation": "Rate locks in 10 min. OTP to preserve 8.1%.",
+      "info_request": "otp",
+      "link": null
+    },
+    {
+      "id": "otp_40",
+      "category": "otp_theft",
+      "intent": "authority",
+      "impersonation": "government",
+      "opener": "NPS subscriber: Tier-2 account freeze per PFRDA. Share OTP on phone to unfreeze immediately.",
+      "escalation": "Rs 2 lakh accumulated corpus locked in 1 hour. OTP please.",
+      "info_request": "otp",
+      "link": null
     }
   ]
 }

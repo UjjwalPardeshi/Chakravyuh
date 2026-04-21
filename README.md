@@ -82,17 +82,36 @@ print(f"Scammer reward: {reward.scammer}")
 
 ## Day-1 Baseline Results
 
-100 episodes across mixed victim profiles, scripted agents only:
+300 episodes across mixed victim profiles, **200 attack templates**, scripted agents only:
 
 | Metric | Value |
 |---|---|
-| Analyzer detection rate | ~38% |
-| Scam extraction rate | ~20% |
-| Victim refusal rate | ~22% |
-| Bank freeze rate | ~8% |
-| Avg detection turn | 3.05 |
+| Analyzer detection rate | **47%** |
+| Scam extraction rate | 18% |
+| Victim refusal rate | 20% |
+| Victim sought verification | 13% |
+| Bank freeze rate | 6% |
+| Avg detection turn | ~3 |
 
-The scripted Analyzer is intentionally weak — it's the baseline we beat with a LoRA-trained Qwen2.5-7B on Day 2.
+**Per-category detection** (shows where LoRA training will help most):
+
+| Category | Rate |
+|---|---|
+| KYC fraud | 70% |
+| OTP theft | 58% |
+| Loan-app fraud | 52% |
+| Impersonation | 34% |
+| Investment fraud | 26% |
+
+The scripted Analyzer is intentionally a *competent-but-beatable* baseline — strong on explicit info-request patterns (OTP, KYC links), weak on subtler financial-lure language, multi-lingual attacks (Hindi/Tamil/Telugu/Bengali/Kannada), deepfake voice, digital-arrest, matrimonial, and modern 2025–2026 attack vectors. These hard cases are the gap a LoRA-trained Qwen2.5-7B Analyzer closes on Day 2 (target: 75%+).
+
+### Attack Distribution (200 templates)
+
+- 5 categories × 40 templates each (balanced)
+- 5 intents (urgency, authority, empathy, greed, fear)
+- 5 impersonation roles (bank, govt, family, delivery, employer)
+- Mixed regional language (English, Hindi, Tamil, Telugu, Kannada, Bengali)
+- 2025–2026 attack patterns: digital arrest, crypto exchange spoofing, deepfake CEO, UPI collect request, matrimonial scams, FASTag KYC, ABHA Health ID, Aadhaar-DL linkage
 
 ## Repo Layout
 
