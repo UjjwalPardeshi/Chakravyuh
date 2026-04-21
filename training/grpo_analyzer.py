@@ -45,7 +45,11 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
-from chakravyuh_env.agents.llm_analyzer import parse_analyzer_response
+from chakravyuh_env.agents.llm_analyzer import (
+    DEFAULT_SYSTEM_PROMPT,
+    DEFAULT_USER_PROMPT_TEMPLATE,
+    parse_analyzer_response,
+)
 from chakravyuh_env.explanation_judge import build_judge
 from chakravyuh_env.schemas import AnalyzerSignal
 
@@ -328,19 +332,26 @@ def examples_to_hf_dataset(examples: list[TrainingExample]) -> Any:
 
 # ---------------------------------------------------------------------------
 # Prompt template used at TRAINING time
+#
+# IMPORTANT: must match LLMAnalyzer's inference prompt exactly, else the LoRA
+# trains on one distribution and evaluates on another. We reuse the same
+# constants (DEFAULT_SYSTEM_PROMPT, DEFAULT_USER_PROMPT_TEMPLATE) so prompt
+# drift is impossible.
 # ---------------------------------------------------------------------------
 
 
-SYSTEM_PROMPT_TRAIN = """You are Chakravyuh's Behavioral Analyzer. \
-Score messages 0.0 (safe) to 1.0 (scam). Output JSON: \
-{"score": <0-1>, "signals": [...], "explanation": "<30 words>"}"""
-
-
 def _build_instruction_prompt(scammer_text: str) -> str:
-    """The string we hand to GRPOTrainer as each row's 'prompt'."""
+    """The string we hand to GRPOTrainer as each row's 'prompt'.
+
+    Produces the same Qwen2.5 ChatML string that `LLMAnalyzer.build_prompt()`
+    yields at inference time, modulo the formatted {chat} body (inference
+    passes dash-bulleted lines; training passes the raw template text).
+    """
+    chat_body = "\n".join(f"- {line}" for line in scammer_text.split("\n") if line.strip())
+    user_msg = DEFAULT_USER_PROMPT_TEMPLATE.format(chat=chat_body or "- (no messages)")
     return (
-        f"<|im_start|>system\n{SYSTEM_PROMPT_TRAIN}<|im_end|>\n"
-        f"<|im_start|>user\nMessages:\n{scammer_text}<|im_end|>\n"
+        f"<|im_start|>system\n{DEFAULT_SYSTEM_PROMPT}<|im_end|>\n"
+        f"<|im_start|>user\n{user_msg}<|im_end|>\n"
         f"<|im_start|>assistant\n"
     )
 
