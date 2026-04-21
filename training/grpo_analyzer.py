@@ -58,6 +58,7 @@ DEFAULT_BENIGN_PATH = _ENV_DIR / "benign_templates.json"
 DEFAULT_PARAPHRASE_PATH = _ENV_DIR / "paraphrase_templates.json"
 DEFAULT_REGIONAL_PATH = _ENV_DIR / "regional_templates.json"
 DEFAULT_MULTITURN_PATH = _ENV_DIR / "multiturn_templates.json"
+DEFAULT_AUGMENTED_PATH = _ENV_DIR / "augmented_templates.json"
 
 # Test-set path — used ONLY to verify no overlap with training data, never for training.
 TEST_SET_PATH = Path("data/chakravyuh-bench-v0/scenarios.jsonl")
@@ -197,6 +198,7 @@ def build_training_examples(
     paraphrase_path: Path = DEFAULT_PARAPHRASE_PATH,
     regional_path: Path = DEFAULT_REGIONAL_PATH,
     multiturn_path: Path = DEFAULT_MULTITURN_PATH,
+    augmented_path: Path = DEFAULT_AUGMENTED_PATH,
     benign_ratio: float = 0.2,
     seed: int = 42,
 ) -> list[TrainingExample]:
@@ -223,10 +225,11 @@ def build_training_examples(
     # and are already guaranteed disjoint, so they skip the filter.
     test_texts = _load_test_set_scammer_texts(TEST_SET_PATH)
 
-    # --- Scam examples from all 4 scam sources ---
+    # --- Scam examples from all scam sources ---
     for source_path, kind in (
         (templates_path, "canonical"),
         (paraphrase_path, "paraphrase"),
+        (augmented_path, "augmented"),
         (regional_path, "regional"),
     ):
         raw_templates = _load_json_templates(source_path)
