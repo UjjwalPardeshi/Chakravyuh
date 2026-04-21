@@ -80,7 +80,40 @@ print(f"Analyzer flagged: {info['outcome'].analyzer_flagged}")
 print(f"Scammer reward: {reward.scammer}")
 ```
 
-## Day-1 Baseline Results
+## Mode C Benchmark Results (`chakravyuh-bench-v0`, n=110)
+
+Scripted rule-based baseline against 110 real-grounded scenarios (90 scams + 20 benign/borderline):
+
+| Metric | Value | 95% CI |
+|---|---|---|
+| **Detection rate (recall)** | **76.7%** | [66.7%, 84.4%] |
+| Precision | 92.0% | — |
+| F1 score | 0.836 | — |
+| False positive rate | 30.0% | — |
+| Accuracy | 75.5% | — |
+
+### Per-category detection
+
+| Category | n | Detection |
+|---|---|---|
+| OTP theft | 18 | 94% |
+| KYC fraud | 17 | 94% |
+| Impersonation | 19 | 84% |
+| Loan-app fraud | 16 | 69% |
+| Investment fraud | 20 | 45% |
+
+### Per-difficulty detection
+
+| Difficulty | n | Detection |
+|---|---|---|
+| Easy | 29 | 88% |
+| Medium | 59 | 81% |
+| Hard | 17 | 43% |
+| **Novel (post-2024)** | 5 | **20%** |
+
+**The "novel post-2024" gap (20% catch rate) is the headline Day 3 finding** — scripted rules fail on attack patterns released after their design. A LoRA-trained Analyzer trained on 2022–2024 data is expected to generalize significantly better (target: 70%+).
+
+## Day-1 Env Baseline Results
 
 300 episodes across mixed victim profiles, **200 attack templates**, scripted agents only:
 

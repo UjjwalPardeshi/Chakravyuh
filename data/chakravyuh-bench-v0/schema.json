@@ -1,0 +1,76 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Chakravyuh Bench v0 Scenario",
+  "type": "object",
+  "required": ["id", "source", "attack_sequence", "ground_truth", "metadata"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^modec_[0-9]{3}$",
+      "description": "Unique scenario ID"
+    },
+    "source": {
+      "type": "object",
+      "required": ["category", "attribution"],
+      "properties": {
+        "category": {
+          "type": "string",
+          "enum": ["rbi_report", "i4c_alert", "npci_bulletin", "news_media", "reddit_public", "synthetic_benign", "novel_post_2024"]
+        },
+        "attribution": {
+          "type": "string",
+          "description": "Source citation (report name + year, or news outlet + date)"
+        },
+        "date_range": {
+          "type": "string",
+          "pattern": "^[0-9]{4}(-Q[1-4])?$"
+        }
+      }
+    },
+    "attack_sequence": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 6,
+      "items": {
+        "type": "object",
+        "required": ["turn", "sender", "text"],
+        "properties": {
+          "turn": {"type": "integer", "minimum": 1},
+          "sender": {"type": "string", "enum": ["scammer", "victim", "bank_official"]},
+          "text": {"type": "string", "minLength": 1, "maxLength": 1000},
+          "language": {"type": "string"}
+        }
+      }
+    },
+    "ground_truth": {
+      "type": "object",
+      "required": ["is_scam", "category"],
+      "properties": {
+        "is_scam": {"type": "boolean"},
+        "category": {
+          "type": "string",
+          "enum": ["otp_theft", "kyc_fraud", "loan_app_fraud", "investment_fraud", "impersonation", "benign", "borderline"]
+        },
+        "signals": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Expected signals a perfect detector should flag"
+        },
+        "difficulty": {
+          "type": "string",
+          "enum": ["easy", "medium", "hard", "novel"]
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "victim_profile": {"type": "string", "enum": ["senior", "young_urban", "semi_urban", "unknown"]},
+        "loss_amount_inr": {"type": ["number", "null"]},
+        "language": {"type": "string"},
+        "channel": {"type": "string", "enum": ["sms", "whatsapp", "voice", "email", "telegram"]},
+        "outcome": {"type": "string", "enum": ["money_extracted", "detected_and_refused", "detected_and_verified", "unknown"]}
+      }
+    }
+  }
+}
