@@ -577,17 +577,36 @@ def _load_training_model(
         except ImportError:
             logger.warning("Unsloth not installed; falling back to plain PEFT.")
 
-    from peft import LoraConfig, get_peft_model  # type: ignore[import-not-found]
-    from transformers import AutoModelForCausalLM, AutoTokenizer  # type: ignore[import-not-found]
+    # PEFT fallback — loads the base model in 4-bit via bitsandbytes so T4 can
+    # fit Qwen2.5-3B + TRL's GRPO deepcopy'd reference model in ~14 GB VRAM.
+    # Without 4-bit, the reference-model deepcopy at GRPOTrainer init OOMs.
+    import torch  # type: ignore[import-not-found]
+    from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training  # type: ignore[import-not-found]
+    from transformers import (  # type: ignore[import-not-found]
+        AutoModelForCausalLM,
+        AutoTokenizer,
+        BitsAndBytesConfig,
+    )
 
     tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token_id = tokenizer.eos_token_id
+
+    # T4 is Turing (sm_75) — no bfloat16 support. Use float16 compute dtype.
+    compute_dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
+    bnb_config = BitsAndBytesConfig(
+        load_in_4bit=True,
+        bnb_4bit_compute_dtype=compute_dtype,
+        bnb_4bit_quant_type="nf4",
+        bnb_4bit_use_double_quant=True,
+    )
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
         device_map="auto",
         trust_remote_code=True,
+        quantization_config=bnb_config,
     )
+    model = prepare_model_for_kbit_training(model, use_gradient_checkpointing=True)
     lora_config = LoraConfig(
         r=lora_rank,
         lora_alpha=lora_alpha,
