@@ -32,6 +32,7 @@ llm = [
     "trl>=0.12",
     "accelerate>=0.33",
     "bitsandbytes>=0.44",
+    "datasets>=2.19",
 ]
 demo = [
     "gradio>=5.0",
@@ -46,6 +47,14 @@ eval = [
     "scipy>=1.13",
     "pandas>=2.2",
     "matplotlib>=3.9",
+]
+frontier = [
+    # OpenAI-compatible: works for OpenAI + Groq + other compat providers
+    "openai>=1.40",
+    # Anthropic Claude
+    "anthropic>=0.39",
+    # Google Gemini
+    "google-generativeai>=0.8",
 ]
 dev = [
     "pytest>=8.0",
