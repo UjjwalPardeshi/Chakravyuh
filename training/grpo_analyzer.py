@@ -129,6 +129,68 @@ def _load_json_templates(path: Path) -> list[dict]:
         return json.load(f).get("templates", [])
 
 
+def _normalize_for_overlap(text: str) -> str:
+    """Case-insensitive, whitespace-collapsed form used for leakage detection."""
+    return " ".join(text.lower().split())
+
+
+def _load_test_set_scammer_texts(test_path: Path = TEST_SET_PATH) -> set[str]:
+    """Load every scammer utterance from the benchmark test set (normalized).
+
+    Used ONLY by `_filter_soft_leakage` to drop training templates whose
+    wording appears in the published test set.
+    """
+    texts: set[str] = set()
+    if not test_path.exists():
+        return texts
+    with test_path.open(encoding="utf-8") as f:
+        for line in f:
+            if not line.strip():
+                continue
+            scenario = json.loads(line)
+            for step in scenario.get("attack_sequence", []):
+                if step.get("sender") == "scammer":
+                    texts.add(_normalize_for_overlap(step.get("text", "")))
+    return texts
+
+
+def _filter_soft_leakage(
+    templates: list[dict], test_texts: set[str], min_chars: int = 40
+) -> tuple[list[dict], int]:
+    """Drop any canonical template whose opener or escalation appears as a
+    substring of any test-set scammer text.
+
+    The benchmark scenarios were authored from the canonical-template
+    patterns. 41/200 canonical openers appear verbatim inside test
+    scenarios — which is not full-text leakage but is *soft* leakage: the
+    LoRA would see verbatim n-grams at training time that also appear at
+    test time. Filtering these out at training load time gives a
+    methodologically clean training corpus.
+
+    Returns (surviving_templates, n_filtered).
+    """
+    surviving: list[dict] = []
+    filtered = 0
+    for t in templates:
+        candidates = [t.get("opener", ""), t.get("escalation", "")]
+        overlapping = False
+        for c in candidates:
+            n = _normalize_for_overlap(c)
+            if len(n) < min_chars:
+                continue
+            for t_text in test_texts:
+                if n in t_text:
+                    overlapping = True
+                    break
+            if overlapping:
+                break
+        if overlapping:
+            filtered += 1
+        else:
+            surviving.append(t)
+    return surviving, filtered
+
+
 def build_training_examples(
     templates_path: Path = DEFAULT_TEMPLATES_PATH,
     benign_path: Path = DEFAULT_BENIGN_PATH,
@@ -156,13 +218,28 @@ def build_training_examples(
     rng = random.Random(seed)
     examples: list[TrainingExample] = []
 
+    # Load test set texts once, for soft-leakage filtering of canonical templates.
+    # The paraphrase/regional/multiturn sources were hand-written post-benchmark
+    # and are already guaranteed disjoint, so they skip the filter.
+    test_texts = _load_test_set_scammer_texts(TEST_SET_PATH)
+
     # --- Scam examples from all 4 scam sources ---
     for source_path, kind in (
         (templates_path, "canonical"),
         (paraphrase_path, "paraphrase"),
         (regional_path, "regional"),
     ):
-        for t in _load_json_templates(source_path):
+        raw_templates = _load_json_templates(source_path)
+        if kind == "canonical" and test_texts:
+            filtered, n_drop = _filter_soft_leakage(raw_templates, test_texts)
+            if n_drop:
+                logger.info(
+                    "Filtered %d/%d canonical templates whose opener/escalation "
+                    "overlap test-set text (soft leakage)",
+                    n_drop, len(raw_templates),
+                )
+            raw_templates = filtered
+        for t in raw_templates:
             prompt, signals = _flat_template_to_prompt(t)
             if not prompt:
                 continue

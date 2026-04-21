@@ -59,15 +59,18 @@ def test_all_training_source_files_exist():
 
 @pytest.mark.unit
 def test_training_examples_include_all_five_sources():
-    """Built corpus should include scams from templates+paraphrase+regional+multiturn and benign from benign_templates."""
+    """Built corpus should include scams from templates+paraphrase+regional+multiturn and benign from benign_templates.
+
+    After soft-leakage filter drops ~53/200 canonical templates, corpus is
+    ~227 scams + ~55 benign = ~283. Floor is set accordingly.
+    """
     examples = build_training_examples()
-    assert len(examples) >= 300, f"Expected 300+ training examples, got {len(examples)}"
+    assert len(examples) >= 270, f"Expected 270+ training examples, got {len(examples)}"
 
     scams = [e for e in examples if e.is_scam]
     benigns = [e for e in examples if not e.is_scam]
 
-    # 200 canonical + 40 paraphrase + 15 regional + 10 multi-turn = 265 scams
-    assert len(scams) >= 260, f"Expected 260+ scams, got {len(scams)}"
+    assert len(scams) >= 220, f"Expected 220+ scams after filter, got {len(scams)}"
     assert len(benigns) >= 50, f"Expected 50+ benigns, got {len(benigns)}"
 
 
@@ -95,6 +98,36 @@ def test_no_training_scam_duplicates_test_set_scam():
     assert not overlaps, (
         f"Found {len(overlaps)} training-scam / test-set overlaps. "
         f"First 3: {overlaps[:3]}"
+    )
+
+
+@pytest.mark.unit
+def test_no_soft_substring_leakage_in_built_corpus():
+    """CRITICAL: after soft-leakage filter, no training line is a substring of
+    any test-set scammer text (and vice versa).
+
+    This is the stronger leakage guarantee — catches cases where a canonical
+    template opener appears verbatim inside a longer test scenario.
+    """
+    test_texts = _load_test_set_texts()
+    examples = build_training_examples()
+
+    violations: list[tuple[str, str]] = []
+    for ex in examples:
+        if not ex.is_scam:
+            continue
+        for line in ex.prompt_text.split("\n"):
+            line_norm = _normalize(line)
+            if len(line_norm) < 40:
+                continue
+            for t_text in test_texts:
+                if line_norm in t_text or t_text in line_norm:
+                    violations.append((ex.category, line_norm[:80]))
+                    break
+
+    assert not violations, (
+        f"Soft-leakage filter failed: {len(violations)} training lines are "
+        f"substrings of test-set messages. First 3: {violations[:3]}"
     )
 
 
