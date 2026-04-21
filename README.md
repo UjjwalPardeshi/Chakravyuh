@@ -80,27 +80,27 @@ print(f"Analyzer flagged: {info['outcome'].analyzer_flagged}")
 print(f"Scammer reward: {reward.scammer}")
 ```
 
-## Mode C Benchmark Results (`chakravyuh-bench-v0`, n=110)
+## Mode C Benchmark Results (`chakravyuh-bench-v0`, n=135)
 
-Scripted rule-based baseline against 110 real-grounded scenarios (90 scams + 20 benign/borderline):
+Scripted rule-based baseline against 135 real-grounded scenarios (115 scams + 20 benign/borderline):
 
 | Metric | Value | 95% CI |
 |---|---|---|
-| **Detection rate (recall)** | **76.7%** | [66.7%, 84.4%] |
-| Precision | 92.0% | — |
-| F1 score | 0.836 | — |
+| **Detection rate (recall)** | **72.2%** | [63.5%, 80.0%] |
+| Precision | 93.3% | — |
+| F1 score | 0.814 | — |
 | False positive rate | 30.0% | — |
-| Accuracy | 75.5% | — |
+| Accuracy | 71.9% | — |
 
 ### Per-category detection
 
 | Category | n | Detection |
 |---|---|---|
-| OTP theft | 18 | 94% |
-| KYC fraud | 17 | 94% |
-| Impersonation | 19 | 84% |
-| Loan-app fraud | 16 | 69% |
-| Investment fraud | 20 | 45% |
+| OTP theft | 19 | 95% |
+| KYC fraud | 22 | 95% |
+| Impersonation | 30 | 77% |
+| Loan-app fraud | 18 | 67% |
+| Investment fraud | 26 | 35% |
 
 ### Per-difficulty detection
 
@@ -109,9 +109,21 @@ Scripted rule-based baseline against 110 real-grounded scenarios (90 scams + 20 
 | Easy | 29 | 88% |
 | Medium | 59 | 81% |
 | Hard | 17 | 43% |
-| **Novel (post-2024)** | 5 | **20%** |
+| **Novel (post-2024)** | **30** | **50%** |
 
-**The "novel post-2024" gap (20% catch rate) is the headline Day 3 finding** — scripted rules fail on attack patterns released after their design. A LoRA-trained Analyzer trained on 2022–2024 data is expected to generalize significantly better (target: 70%+).
+### The headline finding — temporal generalization gap
+
+| Subset | Detection | 95% CI | n |
+|---|---|---|---|
+| **Known (pre-2024) scams** | **80.0%** | [70.6%, 88.2%] | 85 |
+| **Novel (post-2024) scams** | **50.0%** | [30.0%, 66.7%] | 30 |
+| **Gap** | **30pp** | — | |
+
+- **Permutation test p-value**: 0.0028 (highly significant)
+- **Cohen's d**: 0.694 (medium-to-large effect)
+- 95% CIs **do not overlap** — this is a real distribution-shift gap, not noise
+
+Rule-based detectors catch 80% of pre-2024 scam patterns but only 50% of novel post-2024 attacks (matrimonial crypto grooming, deepfake CEO, digital arrest, metaverse real estate, AI chatbot trading). **This is the gap the LoRA-trained Analyzer is designed to close** (Day 2–3 target: ≥75% detection on novel subset).
 
 ## Day-1 Env Baseline Results
 

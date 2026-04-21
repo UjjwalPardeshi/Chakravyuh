@@ -16,9 +16,10 @@ from eval.mode_c_real_cases import (
 
 
 @pytest.mark.unit
-def test_dataset_loads_and_is_110_scenarios():
+def test_dataset_loads_and_is_expected_size():
     data = load_dataset(DEFAULT_DATASET)
-    assert len(data) == 110
+    # Lower bound — may grow over time as community contributes
+    assert len(data) >= 130
 
 
 @pytest.mark.unit
@@ -28,7 +29,15 @@ def test_dataset_has_scam_and_benign():
     benign = sum(1 for s in data if not s["ground_truth"]["is_scam"])
     assert scam > 0
     assert benign > 0
-    assert scam + benign == 110
+    assert scam + benign == len(data)
+
+
+@pytest.mark.unit
+def test_dataset_has_novel_subset_for_temporal_eval():
+    """Temporal generalization eval requires n>=30 for statistical power."""
+    data = load_dataset(DEFAULT_DATASET)
+    novel = [s for s in data if s["ground_truth"]["difficulty"] == "novel"]
+    assert len(novel) >= 30, f"Only {len(novel)} novel scenarios — need 30+ for CI"
 
 
 @pytest.mark.unit

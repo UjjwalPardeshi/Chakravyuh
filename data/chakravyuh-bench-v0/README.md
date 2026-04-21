@@ -2,11 +2,11 @@
 
 **A benchmark for Indian UPI fraud detection across 5 scam categories + benign + borderline cases.**
 
-- **Total scenarios**: 110
-- **Scam scenarios**: 85 (5 categories × 17 each)
+- **Total scenarios**: 135
+- **Scam scenarios**: 115 (5 categories × ~20 each, including 30 novel post-2024)
 - **Benign scenarios**: 15 (legitimate bank/delivery/utility messages)
 - **Borderline scenarios**: 5 (ambiguous, tests false-positive discipline)
-- **Novel post-2024 scenarios**: 5 (temporal generalization subset)
+- **Novel post-2024 scenarios**: 30 (temporal generalization subset)
 - **License**: CC-BY-4.0
 
 ## Purpose
@@ -28,26 +28,25 @@ Scam reconstructions are labeled with `source.attribution` citing the public sou
 
 ## Scenario Distribution
 
-### By category
+### By ground-truth category
 | Category | Count |
 |---|---|
-| OTP theft | 17 |
-| KYC fraud | 17 |
-| Loan-app fraud | 17 |
-| Investment fraud | 17 |
-| Impersonation | 17 |
+| OTP theft | 19 |
+| KYC fraud | 22 |
+| Loan-app fraud | 18 |
+| Investment fraud | 26 |
+| Impersonation | 30 |
 | Benign | 15 |
 | Borderline | 5 |
-| Novel (post-2024) | 5 |
-| **Total** | **110** |
+| **Total** | **135** |
 
 ### By difficulty
 | Difficulty | Count |
 |---|---|
-| Easy (clear keyword match) | ~40 |
-| Medium (requires context) | ~40 |
-| Hard (subtle manipulation) | ~20 |
-| Novel (post-training distribution) | ~10 |
+| Easy (clear keyword match) | 29 |
+| Medium (requires context) | 59 |
+| Hard (subtle manipulation) | 17 |
+| **Novel (post-2024 distribution)** | **30** |
 
 ### By language
 - English: ~65
