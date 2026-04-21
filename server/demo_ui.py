@@ -4,6 +4,12 @@ Replay-first design (per CHAKRAVYUH_WIN_PLAN.md Part 8.0):
   - Primary: 5 curated deterministic episodes (zero inference risk)
   - Secondary: Live inference tab for Q&A (custom scam message → suspicion score)
 
+Features:
+  - Auto-play or step-through turn-by-turn (Prev / Next buttons)
+  - Keyword highlighting on scammer messages (urgency / info_request / impersonation)
+  - Suspicion timeline — watch the score climb across analyzer turns
+  - Bank Monitor panel — independent oversight, separate from Analyzer
+
 Launch:
     pip install -e '.[demo]'
     python -m server.demo_ui
@@ -20,125 +26,240 @@ from chakravyuh_env.agents.analyzer import ScriptedAnalyzer
 from chakravyuh_env.schemas import AnalyzerScore, ChatMessage, Observation
 from server.episode_curator import (
     CURATED_EPISODES,
+    ReplayedEpisode,
+    format_bank_panel,
     format_chat_html,
+    format_suspicion_timeline,
+    max_turn,
     outcome_badge,
     replay,
+    suspicion_score_for_turn,
 )
 
 logger = logging.getLogger("chakravyuh.demo")
 
-# ---------------------------------------------------------------------------
-# UI config
-# ---------------------------------------------------------------------------
-
 TITLE = "Chakravyuh — 5-Agent Fraud Arena"
 SUBTITLE = (
     "A self-improving benchmark for Indian UPI fraud detection. "
-    "Every episode below is deterministic (seed-reproducible) and grounded in real RBI/NPCI case studies."
+    "Every episode is deterministic (seed-reproducible) and grounded in real RBI/NPCI case studies."
 )
 
 CUSTOM_CSS = """
 #suspicion-panel {
   border-radius: 8px;
-  padding: 20px;
-  margin-top: 12px;
+  padding: 16px;
   text-align: center;
 }
 #suspicion-score {
-  font-size: 48px;
+  font-size: 44px;
   font-weight: 800;
-  margin: 0;
+  margin: 4px 0;
+  line-height: 1;
 }
 #suspicion-label {
-  font-size: 14px;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 2px;
-  color: #666;
+  margin: 0;
 }
 #suspicion-explanation {
-  font-size: 16px;
-  margin-top: 8px;
-  color: #333;
+  font-size: 13px;
+  margin-top: 6px;
 }
 .outcome-badge {
-  font-size: 20px;
-  font-weight: 600;
-  padding: 12px;
+  font-size: 18px;
+  font-weight: 700;
+  padding: 14px;
   border-radius: 6px;
   text-align: center;
-  margin-top: 12px;
+}
+#playback-controls button {
+  min-width: 120px;
 }
 """
 
+# Replay mode labels (strings used directly in radio/state)
+MODE_AUTO = "Auto-play (full episode)"
+MODE_STEP = "Step-through (turn by turn)"
+
 
 def _suspicion_color(score: float) -> tuple[str, str]:
-    """Return (background, text) colors for a suspicion score."""
+    """Return (background, foreground) colors for a suspicion score."""
     if score >= 0.7:
-        return ("#FDECEA", "#C92A2A")  # red
+        return ("#FDECEA", "#C92A2A")
     if score >= 0.4:
-        return ("#FFF9DB", "#E67E22")  # yellow
-    return ("#E8F6E9", "#2B8A3E")  # green
+        return ("#FFF9DB", "#E67E22")
+    return ("#E8F6E9", "#2B8A3E")
 
 
-def _render_suspicion_panel(score: float, explanation: str) -> str:
+def _render_suspicion_score(score: float, explanation: str) -> str:
     bg, fg = _suspicion_color(score)
     return (
         f'<div id="suspicion-panel" style="background:{bg};">'
         f'<p id="suspicion-label" style="color:{fg};">Suspicion Score</p>'
         f'<p id="suspicion-score" style="color:{fg};">{score:.2f}</p>'
-        f'<p id="suspicion-explanation">{explanation or "No signals detected."}</p>'
+        f'<p id="suspicion-explanation" style="color:#333;">'
+        f"{explanation or 'No signals detected.'}</p>"
         "</div>"
     )
 
 
+def _render_outcome_badge(text: str) -> str:
+    return (
+        '<div class="outcome-badge" style="background:#F8F9FA;'
+        'border:1px solid #DEE2E6;color:#1a1a1a;">'
+        f"{text}</div>"
+    )
+
+
+def _render_metadata(ep: ReplayedEpisode, current_turn: int, total_turns: int) -> str:
+    return (
+        f"**Seed**: `{ep.seed}` &nbsp;&nbsp; "
+        f"**Profile**: `{ep.profile.value}` &nbsp;&nbsp; "
+        f"**Scam category**: `{ep.outcome.scam_category.value}` &nbsp;&nbsp; "
+        f"**Turn**: `{current_turn}/{total_turns}`"
+    )
+
+
 # ---------------------------------------------------------------------------
-# Tab 1 — Replay mode (primary demo)
+# State model
 # ---------------------------------------------------------------------------
+# State dict flows through gr.State:
+#   {
+#     "label": str,         # episode label currently loaded
+#     "mode": str,          # MODE_AUTO or MODE_STEP
+#     "current_turn": int,  # 0 = nothing shown yet; total = full
+#     "total_turns": int,   # max turn number in the episode
+#     "episode_cache": dict  # ReplayedEpisode cached as dict is hard; we re-replay
+#   }
+#
+# Because ReplayedEpisode isn't trivially JSON-serializable by Gradio State,
+# we re-run replay() on state changes (fast: ~milliseconds for scripted env).
 
 
-def on_replay_select(label: str) -> tuple[str, str, str, str]:
-    """Replay the chosen curated episode; return HTML for each UI panel."""
-    episode = next((e for e in CURATED_EPISODES if e.label == label), None)
-    if episode is None:
-        return ("", _render_suspicion_panel(0.0, ""), "—", "")
-    result = replay(episode)
-    chat_html = format_chat_html(result.chat_history)
+def _load_episode(label: str) -> ReplayedEpisode:
+    ep = next((e for e in CURATED_EPISODES if e.label == label), None)
+    if ep is None:
+        ep = CURATED_EPISODES[0]
+    return replay(ep)
 
-    # Use max analyzer score across turns as the "final" panel display
-    if result.analyzer_scores_per_turn:
-        max_score = max(s for _, s, _ in result.analyzer_scores_per_turn)
-        explanation = next(
-            (e for _, s, e in result.analyzer_scores_per_turn if s == max_score),
-            "",
-        )
+
+def _render_all(
+    label: str, mode: str, current_turn: int
+) -> tuple[str, str, str, str, str, str, gr.update, gr.update]:
+    """Produce all UI outputs for a given (label, mode, turn)."""
+    episode = _load_episode(label)
+    total = max_turn(episode)
+
+    visible_turn = total if mode == MODE_AUTO else max(0, min(current_turn, total))
+
+    chat_html = format_chat_html(
+        episode.chat_history, up_to_turn=visible_turn if mode == MODE_STEP else None
+    )
+    score, explanation = suspicion_score_for_turn(
+        episode.analyzer_snapshots,
+        up_to_turn=visible_turn if mode == MODE_STEP else None,
+    )
+    suspicion_html = _render_suspicion_score(score, explanation)
+    timeline_html = format_suspicion_timeline(
+        episode.analyzer_snapshots,
+        up_to_turn=visible_turn if mode == MODE_STEP else None,
+    )
+    bank_html = format_bank_panel(
+        episode.bank_snapshots,
+        episode.transaction,
+        up_to_turn=visible_turn if mode == MODE_STEP else None,
+    )
+    # Outcome only shown at the very end (step mode) or always (auto mode)
+    if mode == MODE_AUTO or visible_turn >= total:
+        outcome_html = _render_outcome_badge(outcome_badge(episode.outcome))
     else:
-        max_score = 0.0
-        explanation = ""
-    suspicion_html = _render_suspicion_panel(max_score, explanation)
+        outcome_html = _render_outcome_badge("— Episode in progress —")
 
-    outcome_html = (
-        f'<div class="outcome-badge" style="background:#F8F9FA;border:1px solid #DEE2E6;">'
-        f"{outcome_badge(result.outcome)}</div>"
+    metadata = _render_metadata(
+        episode,
+        current_turn=visible_turn,
+        total_turns=total,
     )
 
-    info = (
-        f"**Seed**: `{result.seed}` &nbsp;&nbsp; "
-        f"**Profile**: `{result.profile.value}` &nbsp;&nbsp; "
-        f"**Scam category**: `{result.outcome.scam_category.value}` &nbsp;&nbsp; "
-        f"**Turns used**: `{result.outcome.turns_used}`"
+    # Button visibility — only relevant in step mode
+    show_controls = mode == MODE_STEP
+    prev_update = gr.update(interactive=show_controls and visible_turn > 0)
+    next_update = gr.update(interactive=show_controls and visible_turn < total)
+
+    return (
+        chat_html,
+        suspicion_html,
+        timeline_html,
+        bank_html,
+        outcome_html,
+        metadata,
+        prev_update,
+        next_update,
     )
-    return (chat_html, suspicion_html, outcome_html, info)
+
+
+def on_episode_change(label: str, mode: str) -> tuple:
+    """User picked a different episode. Reset turn counter."""
+    # In step-through mode, reset to turn 0 (nothing shown yet)
+    # In auto-play, jump to end
+    episode = _load_episode(label)
+    total = max_turn(episode)
+    current = 0 if mode == MODE_STEP else total
+    ui = _render_all(label, mode, current)
+    # Return new state + all UI outputs
+    return (
+        {"label": label, "mode": mode, "current_turn": current, "total_turns": total},
+        *ui,
+    )
+
+
+def on_mode_change(label: str, mode: str, state: dict | None) -> tuple:
+    """Toggle auto-play vs step-through."""
+    episode = _load_episode(label)
+    total = max_turn(episode)
+    current = 0 if mode == MODE_STEP else total
+    ui = _render_all(label, mode, current)
+    return (
+        {"label": label, "mode": mode, "current_turn": current, "total_turns": total},
+        *ui,
+    )
+
+
+def on_next_turn(state: dict) -> tuple:
+    if not state:
+        return (state, *_render_all(CURATED_EPISODES[0].label, MODE_STEP, 0))
+    new_turn = min(state["total_turns"], state["current_turn"] + 1)
+    new_state = {**state, "current_turn": new_turn}
+    ui = _render_all(state["label"], state["mode"], new_turn)
+    return (new_state, *ui)
+
+
+def on_prev_turn(state: dict) -> tuple:
+    if not state:
+        return (state, *_render_all(CURATED_EPISODES[0].label, MODE_STEP, 0))
+    new_turn = max(0, state["current_turn"] - 1)
+    new_state = {**state, "current_turn": new_turn}
+    ui = _render_all(state["label"], state["mode"], new_turn)
+    return (new_state, *ui)
+
+
+def on_reset(state: dict) -> tuple:
+    if not state:
+        return (state, *_render_all(CURATED_EPISODES[0].label, MODE_STEP, 0))
+    new_state = {**state, "current_turn": 0}
+    ui = _render_all(state["label"], state["mode"], 0)
+    return (new_state, *ui)
 
 
 # ---------------------------------------------------------------------------
-# Tab 2 — Live inference (for Q&A)
+# Live Q&A tab
 # ---------------------------------------------------------------------------
 
 
 def on_live_analyze(user_text: str) -> str:
-    """Score an arbitrary user-entered scam message. Rule-based until Day 2."""
     if not user_text.strip():
-        return _render_suspicion_panel(0.0, "Enter a message above.")
+        return _render_suspicion_score(0.0, "Enter a message above.")
     analyzer = ScriptedAnalyzer()
     obs = Observation(
         agent_role="analyzer",
@@ -147,8 +268,8 @@ def on_live_analyze(user_text: str) -> str:
     )
     action = analyzer.act(obs)
     if isinstance(action, AnalyzerScore):
-        return _render_suspicion_panel(action.score, action.explanation)
-    return _render_suspicion_panel(0.0, "Analyzer returned no score.")
+        return _render_suspicion_score(action.score, action.explanation)
+    return _render_suspicion_score(0.0, "Analyzer returned no score.")
 
 
 # ---------------------------------------------------------------------------
@@ -158,69 +279,138 @@ def on_live_analyze(user_text: str) -> str:
 
 def build_app() -> gr.Blocks:
     labels = [e.label for e in CURATED_EPISODES]
-    with gr.Blocks(title=TITLE, css=CUSTOM_CSS, theme=gr.themes.Soft()) as app:
+    default_label = labels[0]
+    default_mode = MODE_AUTO
+
+    with gr.Blocks(title=TITLE) as app:
         gr.Markdown(f"# {TITLE}")
         gr.Markdown(SUBTITLE)
 
         with gr.Tabs():
-            # -- Replay Tab --
+            # ============= Replay Tab =============
             with gr.Tab("🎬 Replay (5 Cherry-Picked Episodes)"):
-                with gr.Row():
-                    episode_picker = gr.Radio(
-                        choices=labels,
-                        value=labels[0],
-                        label="Select episode",
-                    )
+                episode_picker = gr.Radio(
+                    choices=labels,
+                    value=default_label,
+                    label="Select episode",
+                )
+
+                mode_picker = gr.Radio(
+                    choices=[MODE_AUTO, MODE_STEP],
+                    value=default_mode,
+                    label="Playback mode",
+                )
+
                 info_panel = gr.Markdown("")
+
                 with gr.Row():
                     with gr.Column(scale=2):
                         gr.Markdown("### Conversation")
-                        chat_display = gr.HTML(
-                            value=format_chat_html([]),
-                            label="Chat",
-                        )
+                        chat_display = gr.HTML(value=format_chat_html([]))
                     with gr.Column(scale=1):
-                        gr.Markdown("### Analyzer Verdict")
-                        suspicion_display = gr.HTML(
-                            value=_render_suspicion_panel(0.0, ""),
-                            label="Suspicion",
+                        gr.Markdown("### 🔍 Analyzer Verdict")
+                        suspicion_display = gr.HTML(value=_render_suspicion_score(0.0, ""))
+                        gr.Markdown("**Suspicion Timeline**")
+                        timeline_display = gr.HTML(
+                            value=format_suspicion_timeline([])
                         )
-                        outcome_display = gr.HTML(value="")
+                        gr.Markdown("### 🏦 Bank Monitor")
+                        bank_display = gr.HTML(value=format_bank_panel([], None))
 
-                episode_picker.change(
-                    on_replay_select,
-                    inputs=[episode_picker],
-                    outputs=[chat_display, suspicion_display, outcome_display, info_panel],
+                outcome_display = gr.HTML(value=_render_outcome_badge("—"))
+
+                with gr.Row(elem_id="playback-controls"):
+                    prev_btn = gr.Button("◀ Prev Turn", interactive=False)
+                    next_btn = gr.Button("Next Turn ▶", interactive=False)
+                    reset_btn = gr.Button("↻ Reset to Start")
+
+                # State: track current episode + mode + turn
+                state = gr.State(
+                    value={
+                        "label": default_label,
+                        "mode": default_mode,
+                        "current_turn": 0,
+                        "total_turns": 0,
+                    }
                 )
 
-                # Initial render with first episode
-                chat0, susp0, outcome0, info0 = on_replay_select(labels[0])
-                chat_display.value = chat0
-                suspicion_display.value = susp0
-                outcome_display.value = outcome0
-                info_panel.value = info0
+                ui_outputs = [
+                    chat_display,
+                    suspicion_display,
+                    timeline_display,
+                    bank_display,
+                    outcome_display,
+                    info_panel,
+                    prev_btn,
+                    next_btn,
+                ]
 
-            # -- Live Inference Tab --
+                episode_picker.change(
+                    on_episode_change,
+                    inputs=[episode_picker, mode_picker],
+                    outputs=[state, *ui_outputs],
+                )
+                mode_picker.change(
+                    on_mode_change,
+                    inputs=[episode_picker, mode_picker, state],
+                    outputs=[state, *ui_outputs],
+                )
+                next_btn.click(
+                    on_next_turn,
+                    inputs=[state],
+                    outputs=[state, *ui_outputs],
+                )
+                prev_btn.click(
+                    on_prev_turn,
+                    inputs=[state],
+                    outputs=[state, *ui_outputs],
+                )
+                reset_btn.click(
+                    on_reset,
+                    inputs=[state],
+                    outputs=[state, *ui_outputs],
+                )
+
+                # Prime UI with the default episode in auto-play
+                (
+                    initial_chat,
+                    initial_susp,
+                    initial_timeline,
+                    initial_bank,
+                    initial_outcome,
+                    initial_info,
+                    _,
+                    _,
+                ) = _render_all(default_label, default_mode, 0)
+                chat_display.value = initial_chat
+                suspicion_display.value = initial_susp
+                timeline_display.value = initial_timeline
+                bank_display.value = initial_bank
+                outcome_display.value = initial_outcome
+                info_panel.value = initial_info
+                state.value = {
+                    "label": default_label,
+                    "mode": default_mode,
+                    "current_turn": max_turn(_load_episode(default_label)),
+                    "total_turns": max_turn(_load_episode(default_label)),
+                }
+
+            # ============= Live Q&A Tab =============
             with gr.Tab("🔬 Live (Try Your Own Message)"):
                 gr.Markdown(
                     "Paste a suspicious message and the Analyzer will score it live. "
                     "Day 1 uses a rule-based baseline; Day 2+ swaps in the LoRA-trained Qwen2.5-7B."
                 )
-                with gr.Row():
-                    user_input = gr.Textbox(
-                        label="Message to analyze",
-                        placeholder="e.g. 'Your SBI KYC expires today, share OTP to verify...'",
-                        lines=4,
-                    )
+                user_input = gr.Textbox(
+                    label="Message to analyze",
+                    placeholder="e.g. 'Your SBI KYC expires today, share OTP to verify...'",
+                    lines=4,
+                )
                 analyze_btn = gr.Button("🔎 Analyze", variant="primary")
                 live_suspicion = gr.HTML(
-                    value=_render_suspicion_panel(0.0, "Enter a message and click Analyze.")
+                    value=_render_suspicion_score(0.0, "Enter a message and click Analyze.")
                 )
-                analyze_btn.click(
-                    on_live_analyze,
-                    inputs=[user_input],
-                    outputs=[live_suspicion],
-                )
+                analyze_btn.click(on_live_analyze, inputs=[user_input], outputs=[live_suspicion])
                 gr.Examples(
                     examples=[
                         "Dear customer, your SBI KYC expires today. Click https://sbi-kyc.xyz to update within 2 hours or account frozen.",
@@ -240,7 +430,12 @@ def build_app() -> gr.Blocks:
 def main() -> None:
     logging.basicConfig(level=logging.INFO)
     app = build_app()
-    app.launch(server_name="0.0.0.0", server_port=7860, show_api=False)
+    app.launch(
+        server_name="0.0.0.0",
+        server_port=7860,
+        css=CUSTOM_CSS,
+        theme=gr.themes.Soft(),
+    )
 
 
 if __name__ == "__main__":

@@ -1,15 +1,42 @@
 """Episode curator: replays deterministic seeds to produce demo-ready episodes.
 
 Separated from Gradio UI so it's testable without demo deps installed.
+
+This module captures FULL turn-by-turn state for each replay:
+  - Chat messages (for the conversation panel)
+  - Analyzer suspicion scores with explanations (for the verdict timeline)
+  - Bank Monitor actions with amount/payee info (for the bank panel)
+
+Both the Gradio UI and the unit tests consume this structured output.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import re
+from dataclasses import dataclass, field
 from typing import Literal
 
 from chakravyuh_env import ChakravyuhEnv
-from chakravyuh_env.schemas import ChatMessage, EpisodeOutcome, VictimProfile
+from chakravyuh_env.agents.analyzer import (
+    _FINANCIAL_LURE_KEYWORDS,
+    _IMPERSONATION_PHRASES,
+    _INFO_KEYWORDS,
+    _SUSPICIOUS_TLDS,
+    _URGENCY_KEYWORDS,
+    _URL_PATTERN,
+    _URL_SHORTENERS,
+)
+from chakravyuh_env.schemas import (
+    AnalyzerScore,
+    AnalyzerSignal,
+    BankApprove,
+    BankFlag,
+    BankFreeze,
+    ChatMessage,
+    EpisodeOutcome,
+    TransactionMeta,
+    VictimProfile,
+)
 
 
 OutcomeKind = Literal[
@@ -105,6 +132,23 @@ CURATED_EPISODES: tuple[CuratedEpisode, ...] = (
 
 
 @dataclass(frozen=True)
+class AnalyzerSnapshot:
+    turn: int
+    score: float
+    explanation: str
+    signals: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class BankSnapshot:
+    turn: int
+    decision: Literal["approve", "flag", "freeze"]
+    amount_inr: float
+    receiver_new: bool
+    reason: str
+
+
+@dataclass(frozen=True)
 class ReplayedEpisode:
     """Full result of replaying a curated episode."""
 
@@ -114,8 +158,9 @@ class ReplayedEpisode:
     profile: VictimProfile
     chat_history: list[ChatMessage]
     outcome: EpisodeOutcome
-    analyzer_scores_per_turn: list[tuple[int, float, str]]
-    # (turn, suspicion_score, explanation) for each analyzer call
+    analyzer_snapshots: list[AnalyzerSnapshot] = field(default_factory=list)
+    bank_snapshots: list[BankSnapshot] = field(default_factory=list)
+    transaction: TransactionMeta | None = None
 
 
 def replay(episode: CuratedEpisode) -> ReplayedEpisode:
@@ -129,17 +174,54 @@ def replay(episode: CuratedEpisode) -> ReplayedEpisode:
     )
     env.reset(seed=episode.seed)
 
-    # Capture analyzer scores during each turn by intercepting the analyzer action
-    analyzer_scores: list[tuple[int, float, str]] = []
-    original_act = env.analyzer.act
+    analyzer_snapshots: list[AnalyzerSnapshot] = []
+    bank_snapshots: list[BankSnapshot] = []
 
-    def capturing_act(obs):
-        action = original_act(obs)
-        if hasattr(action, "score"):
-            analyzer_scores.append((obs.turn, action.score, action.explanation))
+    original_analyzer_act = env.analyzer.act
+    original_bank_act = env.bank_monitor.act
+
+    def capturing_analyzer(obs):
+        action = original_analyzer_act(obs)
+        if isinstance(action, AnalyzerScore):
+            analyzer_snapshots.append(
+                AnalyzerSnapshot(
+                    turn=obs.turn,
+                    score=round(action.score, 3),
+                    explanation=action.explanation,
+                    signals=tuple(s.value for s in action.signals),
+                )
+            )
         return action
 
-    env.analyzer.act = capturing_act  # type: ignore[method-assign]
+    def capturing_bank(obs):
+        action = original_bank_act(obs)
+        tx = obs.transaction
+        if tx is None:
+            return action
+        if isinstance(action, BankApprove):
+            decision: Literal["approve", "flag", "freeze"] = "approve"
+            reason = f"confidence={action.confidence:.2f}"
+        elif isinstance(action, BankFlag):
+            decision = "flag"
+            reason = action.signal
+        elif isinstance(action, BankFreeze):
+            decision = "freeze"
+            reason = action.reason
+        else:
+            return action
+        bank_snapshots.append(
+            BankSnapshot(
+                turn=obs.turn,
+                decision=decision,
+                amount_inr=tx.amount,
+                receiver_new=tx.receiver_new,
+                reason=reason,
+            )
+        )
+        return action
+
+    env.analyzer.act = capturing_analyzer  # type: ignore[method-assign]
+    env.bank_monitor.act = capturing_bank  # type: ignore[method-assign]
 
     done = False
     info: dict = {}
@@ -153,13 +235,20 @@ def replay(episode: CuratedEpisode) -> ReplayedEpisode:
         profile=episode.profile,
         chat_history=list(env._state.chat_history) if env._state else [],
         outcome=info["outcome"],
-        analyzer_scores_per_turn=analyzer_scores,
+        analyzer_snapshots=analyzer_snapshots,
+        bank_snapshots=bank_snapshots,
+        transaction=env._state.transaction if env._state else None,
     )
 
 
 def replay_all() -> list[ReplayedEpisode]:
     """Replay all curated episodes. Used for smoke testing."""
     return [replay(ep) for ep in CURATED_EPISODES]
+
+
+# ---------------------------------------------------------------------------
+# UI helpers — HTML rendering for Gradio panels
+# ---------------------------------------------------------------------------
 
 
 def outcome_badge(outcome: EpisodeOutcome) -> str:
@@ -177,21 +266,206 @@ def outcome_badge(outcome: EpisodeOutcome) -> str:
     return "— No action taken"
 
 
-def format_chat_html(chat: list[ChatMessage]) -> str:
-    """Render chat as HTML for Gradio display."""
+# -- (B) Keyword highlighting ------------------------------------------------
+
+# Patterns to highlight inside scammer messages. Ordered by priority:
+# highest-risk categories highlighted most prominently.
+_HIGHLIGHT_PATTERNS: tuple[tuple[str, str, str], ...] = (
+    # (category, color, regex)
+    (
+        "info",
+        "#C92A2A",
+        r"\b(otp|aadhaar|adhar|pan|cvv|pin|upi\s+pin|card\s+number|bank\s+details)\b",
+    ),
+    (
+        "urgency",
+        "#E67E22",
+        r"\b(urgent|urgently|immediately|now|expires?|expired|minutes?|hours?\s+left|within\s+\d+|last\s+chance|hurry|act\s+fast|deadline|suspended|block(?:ed)?)\b",
+    ),
+    (
+        "impersonation",
+        "#8E44AD",
+        r"\b(sbi|hdfc|icici|axis\s+bank|yes\s+bank|kotak|canara|pnb|rbi|uidai|income\s+tax|epfo|cbi|police|cyber\s+cell|customer\s+care|fraud\s+team|manager|officer)\b",
+    ),
+)
+
+
+def _highlight_keywords(text: str) -> str:
+    """Wrap keyword matches in colored <mark> tags. HTML-safe."""
+    escaped = _html_escape(text)
+    # Also highlight suspicious URLs
+    def _url_replacer(match: re.Match) -> str:
+        url = match.group(0)
+        low = url.lower()
+        if any(tld in low for tld in _SUSPICIOUS_TLDS) or any(
+            short in low for short in _URL_SHORTENERS
+        ):
+            return (
+                f'<mark style="background:#FFE4B3;color:#C92A2A;'
+                f'padding:2px 4px;border-radius:3px;font-weight:600;">'
+                f"{url}</mark>"
+            )
+        return url
+
+    escaped = _URL_PATTERN.sub(_url_replacer, escaped)
+    for _, color, pattern in _HIGHLIGHT_PATTERNS:
+        escaped = re.sub(
+            pattern,
+            lambda m, c=color: (
+                f'<mark style="background:#FFF3CD;color:{c};'
+                f'padding:1px 4px;border-radius:3px;font-weight:600;">'
+                f"{m.group(0)}</mark>"
+            ),
+            escaped,
+            flags=re.IGNORECASE,
+        )
+    return escaped
+
+
+def format_chat_html(
+    chat: list[ChatMessage], up_to_turn: int | None = None, highlight: bool = True
+) -> str:
+    """Render chat as HTML for Gradio display.
+
+    Args:
+        chat: full chat history
+        up_to_turn: only show messages with turn <= this value (for step-through)
+        highlight: if True, wrap suspicious keywords in <mark> tags (scammer only)
+    """
     rows = []
     for msg in chat:
+        if up_to_turn is not None and msg.turn > up_to_turn:
+            continue
         who = "Scammer" if msg.sender == "scammer" else "Victim"
-        color = "#E85A4F" if msg.sender == "scammer" else "#4F81E8"
+        accent = "#E85A4F" if msg.sender == "scammer" else "#4F81E8"
         bg = "#FEF2F1" if msg.sender == "scammer" else "#F1F5FE"
+        text_color = "#1a1a1a"
+        body = (
+            _highlight_keywords(msg.text)
+            if (highlight and msg.sender == "scammer")
+            else _html_escape(msg.text)
+        )
         rows.append(
             f'<div style="margin:8px 0;padding:12px;background:{bg};'
-            f'border-left:4px solid {color};border-radius:4px;">'
-            f'<b style="color:{color}">T{msg.turn} — {who}:</b> '
-            f'{_html_escape(msg.text)}'
+            f'border-left:4px solid {accent};border-radius:4px;'
+            f'color:{text_color};font-size:14px;line-height:1.55;">'
+            f'<b style="color:{accent}">T{msg.turn} — {who}:</b> '
+            f'<span style="color:{text_color}">{body}</span>'
             f"</div>"
         )
     return "".join(rows) or '<i style="color:#888">No messages yet.</i>'
+
+
+# -- (A) Suspicion timeline --------------------------------------------------
+
+
+def format_suspicion_timeline(
+    snapshots: list[AnalyzerSnapshot], up_to_turn: int | None = None
+) -> str:
+    """Render a mini-timeline of suspicion scores across analyzer turns."""
+    visible = [s for s in snapshots if up_to_turn is None or s.turn <= up_to_turn]
+    if not visible:
+        return (
+            '<div style="padding:12px;color:#888;font-style:italic;font-size:13px;">'
+            "Analyzer has not evaluated yet."
+            "</div>"
+        )
+    rows = ['<div style="padding:8px 4px;">']
+    for snap in visible:
+        pct = int(snap.score * 100)
+        # Color by severity
+        if snap.score >= 0.70:
+            bar_color = "#E03131"
+        elif snap.score >= 0.40:
+            bar_color = "#E67E22"
+        else:
+            bar_color = "#2B8A3E"
+        rows.append(
+            f'<div style="margin:6px 0;font-size:13px;">'
+            f'<div style="display:flex;align-items:center;gap:8px;">'
+            f'<span style="color:#666;min-width:42px;font-weight:600;">T{snap.turn}</span>'
+            f'<div style="flex:1;background:#eee;border-radius:3px;height:16px;position:relative;overflow:hidden;">'
+            f'<div style="background:{bar_color};width:{pct}%;height:100%;"></div>'
+            f'</div>'
+            f'<span style="color:{bar_color};font-weight:700;min-width:44px;text-align:right;">{snap.score:.2f}</span>'
+            f'</div>'
+            f'</div>'
+        )
+    rows.append("</div>")
+    return "".join(rows)
+
+
+def suspicion_score_for_turn(
+    snapshots: list[AnalyzerSnapshot], up_to_turn: int | None = None
+) -> tuple[float, str]:
+    """Return the MAX suspicion score seen so far + its explanation."""
+    visible = [s for s in snapshots if up_to_turn is None or s.turn <= up_to_turn]
+    if not visible:
+        return 0.0, "Analyzer has not evaluated yet."
+    best = max(visible, key=lambda s: s.score)
+    return best.score, best.explanation
+
+
+# -- (C) Bank monitor panel --------------------------------------------------
+
+
+def format_bank_panel(
+    snapshots: list[BankSnapshot],
+    transaction: TransactionMeta | None,
+    up_to_turn: int | None = None,
+) -> str:
+    """Render the Bank Monitor oversight panel."""
+    visible = [s for s in snapshots if up_to_turn is None or s.turn <= up_to_turn]
+
+    if not visible and transaction is None:
+        return (
+            '<div style="padding:16px;border:1px dashed #ccc;border-radius:6px;'
+            'color:#888;font-size:13px;text-align:center;">'
+            "Bank Monitor inactive — no transaction attempted yet."
+            "</div>"
+        )
+
+    # Latest bank decision (or pending)
+    if visible:
+        latest = visible[-1]
+        decision_color = {
+            "approve": ("#2B8A3E", "#E8F6E9", "APPROVED"),
+            "flag": ("#E67E22", "#FFF9DB", "FLAGGED"),
+            "freeze": ("#C92A2A", "#FDECEA", "FROZEN"),
+        }[latest.decision]
+        fg, bg, label = decision_color
+        tx = transaction
+        rows = [
+            f'<div style="background:{bg};border-left:4px solid {fg};'
+            f'border-radius:4px;padding:14px;">',
+            f'<div style="font-size:12px;letter-spacing:1px;color:#666;'
+            f'text-transform:uppercase;margin-bottom:8px;">Bank Monitor · T{latest.turn}</div>',
+            f'<div style="font-size:22px;font-weight:800;color:{fg};'
+            f'margin-bottom:8px;">{label}</div>',
+        ]
+        if tx is not None:
+            rows.append(
+                f'<div style="color:#333;font-size:13px;line-height:1.7;">'
+                f'<b>Amount:</b> ₹{tx.amount:,.0f}<br>'
+                f'<b>Receiver:</b> {"🆕 NEW PAYEE" if tx.receiver_new else "Known"}<br>'
+                f'<b>Frequency (24h):</b> {tx.frequency_24h} txns<br>'
+                f'<b>Reason:</b> {_html_escape(latest.reason)}'
+                f"</div>"
+            )
+        rows.append("</div>")
+        return "".join(rows)
+
+    # Pending — tx exists but bank hasn't acted yet
+    return (
+        '<div style="padding:14px;border:1px solid #ddd;border-radius:4px;'
+        'color:#666;font-size:13px;">'
+        f"Transaction pending bank review: ₹{transaction.amount:,.0f}"
+        f" to {'new' if transaction.receiver_new else 'known'} payee."
+        "</div>"
+    )
+
+
+# -- Misc helpers ------------------------------------------------------------
 
 
 def _html_escape(text: str) -> str:
@@ -200,3 +474,15 @@ def _html_escape(text: str) -> str:
         .replace("<", "&lt;")
         .replace(">", "&gt;")
     )
+
+
+def max_turn(episode: ReplayedEpisode) -> int:
+    """Highest turn number across chat/analyzer/bank. Used for step-through bounds."""
+    t = 0
+    for msg in episode.chat_history:
+        t = max(t, msg.turn)
+    for snap in episode.analyzer_snapshots:
+        t = max(t, snap.turn)
+    for snap in episode.bank_snapshots:
+        t = max(t, snap.turn)
+    return t

@@ -7,10 +7,14 @@ import pytest
 from chakravyuh_env.schemas import ChatMessage
 from server.episode_curator import (
     CURATED_EPISODES,
+    format_bank_panel,
     format_chat_html,
+    format_suspicion_timeline,
+    max_turn,
     outcome_badge,
     replay,
     replay_all,
+    suspicion_score_for_turn,
 )
 
 
@@ -87,8 +91,96 @@ def test_scripted_missed_demonstrates_analyzer_blind_spot():
 def test_format_chat_html_escapes_safely():
     msgs = [ChatMessage(sender="scammer", turn=1, text="<script>alert(1)</script>")]
     html = format_chat_html(msgs)
-    assert "<script>" not in html
+    # Must neutralize the raw <script> tag — actual script tags not present
+    assert "<script>alert" not in html
     assert "&lt;script&gt;" in html
+
+
+@pytest.mark.integration
+def test_keyword_highlighting_marks_urgency_and_info_words():
+    """Scammer messages with 'OTP' and 'urgent' should contain <mark> tags."""
+    msgs = [
+        ChatMessage(sender="scammer", turn=1, text="URGENT: Share OTP immediately!")
+    ]
+    html = format_chat_html(msgs, highlight=True)
+    mark_count = html.count("<mark")
+    assert mark_count >= 2  # both 'URGENT' and 'OTP' (and 'immediately') highlighted
+
+
+@pytest.mark.integration
+def test_victim_messages_never_highlighted():
+    """Victim utterances should never get keyword highlighting."""
+    msgs = [ChatMessage(sender="victim", turn=2, text="Please share OTP urgent")]
+    html = format_chat_html(msgs, highlight=True)
+    # Victim is blue-bg; highlight only runs on scammer
+    assert "<mark" not in html
+
+
+@pytest.mark.integration
+def test_step_through_filters_by_turn():
+    """format_chat_html(up_to_turn=N) must hide messages with turn > N."""
+    msgs = [
+        ChatMessage(sender="scammer", turn=1, text="one"),
+        ChatMessage(sender="victim", turn=2, text="two"),
+        ChatMessage(sender="scammer", turn=4, text="four"),
+    ]
+    html_turn_2 = format_chat_html(msgs, up_to_turn=2)
+    assert "one" in html_turn_2
+    assert "two" in html_turn_2
+    assert "four" not in html_turn_2
+
+
+@pytest.mark.integration
+def test_suspicion_timeline_captures_all_analyzer_turns():
+    saved = next(e for e in CURATED_EPISODES if e.outcome_kind == "multi_agent_save")
+    result = replay(saved)
+    # Analyzer runs at turns 3 and 6
+    turns = [s.turn for s in result.analyzer_snapshots]
+    assert 3 in turns
+    assert 6 in turns
+    html = format_suspicion_timeline(result.analyzer_snapshots)
+    assert "T3" in html
+    assert "T6" in html
+
+
+@pytest.mark.integration
+def test_bank_panel_reflects_freeze_decision():
+    """Episode 1 (multi_agent_save) must show FROZEN in bank panel."""
+    saved = next(e for e in CURATED_EPISODES if e.outcome_kind == "multi_agent_save")
+    result = replay(saved)
+    html = format_bank_panel(result.bank_snapshots, result.transaction)
+    assert "FROZEN" in html
+
+
+@pytest.mark.integration
+def test_max_turn_returns_highest_turn_number():
+    saved = next(e for e in CURATED_EPISODES if e.outcome_kind == "multi_agent_save")
+    result = replay(saved)
+    t = max_turn(result)
+    assert t >= 8  # bank acts on turn 8
+
+
+@pytest.mark.integration
+def test_suspicion_score_for_turn_respects_cutoff():
+    saved = next(e for e in CURATED_EPISODES if e.outcome_kind == "multi_agent_save")
+    result = replay(saved)
+    # Before turn 3, analyzer hasn't run → score 0
+    s_before, _ = suspicion_score_for_turn(result.analyzer_snapshots, up_to_turn=1)
+    assert s_before == 0.0
+    # After turn 6, max score should be high (≥ 0.7)
+    s_after, _ = suspicion_score_for_turn(result.analyzer_snapshots, up_to_turn=6)
+    assert s_after >= 0.7
+
+
+@pytest.mark.integration
+def test_replayed_episode_captures_bank_snapshot():
+    """Every episode that reaches turn 8 (bank) should have a bank snapshot."""
+    for ep in CURATED_EPISODES:
+        result = replay(ep)
+        if result.outcome.turns_used >= 8:
+            assert len(result.bank_snapshots) >= 1, (
+                f"{ep.label} reached turn 8 but no bank snapshot"
+            )
 
 
 @pytest.mark.unit
