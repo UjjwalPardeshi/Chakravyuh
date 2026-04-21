@@ -1,11 +1,16 @@
 """Chakravyuh demo server — Gradio UI + replay curator."""
 
 from server.episode_curator import (
+    AGENT_COLORS,
     CURATED_EPISODES,
+    AgentState,
     AnalyzerSnapshot,
     BankSnapshot,
     CuratedEpisode,
     ReplayedEpisode,
+    compute_agent_states,
+    format_agent_cards_html,
+    format_attack_timeline_html,
     format_bank_panel,
     format_chat_html,
     format_suspicion_timeline,
@@ -17,11 +22,16 @@ from server.episode_curator import (
 )
 
 __all__ = [
-    "CURATED_EPISODES",
+    "AGENT_COLORS",
+    "AgentState",
     "AnalyzerSnapshot",
     "BankSnapshot",
+    "CURATED_EPISODES",
     "CuratedEpisode",
     "ReplayedEpisode",
+    "compute_agent_states",
+    "format_agent_cards_html",
+    "format_attack_timeline_html",
     "format_bank_panel",
     "format_chat_html",
     "format_suspicion_timeline",

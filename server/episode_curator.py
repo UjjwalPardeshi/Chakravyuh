@@ -486,3 +486,286 @@ def max_turn(episode: ReplayedEpisode) -> int:
     for snap in episode.bank_snapshots:
         t = max(t, snap.turn)
     return t
+
+
+# ---------------------------------------------------------------------------
+# Agent-state derivation + card/timeline rendering
+# ---------------------------------------------------------------------------
+
+# Per-agent brand colors (ACCESSIBLE on both light + dark backgrounds)
+AGENT_COLORS: dict[str, dict[str, str]] = {
+    "scammer":   {"accent": "#E85A4F", "soft": "rgba(232, 90, 79, 0.12)",  "icon": "🎭"},
+    "victim":    {"accent": "#4F81E8", "soft": "rgba(79, 129, 232, 0.12)", "icon": "👤"},
+    "analyzer":  {"accent": "#8E44AD", "soft": "rgba(142, 68, 173, 0.12)", "icon": "🔍"},
+    "bank":      {"accent": "#2B8A3E", "soft": "rgba(43, 138, 62, 0.12)",  "icon": "🏦"},
+    "regulator": {"accent": "#E67E22", "soft": "rgba(230, 126, 34, 0.12)", "icon": "📜"},
+}
+
+
+@dataclass(frozen=True)
+class AgentState:
+    """Snapshot of one agent's state at a specific turn."""
+
+    agent: Literal["scammer", "victim", "analyzer", "bank", "regulator"]
+    status: str   # "Attacking", "Complied", "HIGH RISK", etc.
+    detail: str   # 1-line description
+    tone: Literal["idle", "active", "warning", "critical", "safe"]
+
+
+_TONE_COLOR: dict[str, str] = {
+    "idle":     "#888",
+    "active":   "#4F81E8",
+    "warning":  "#E67E22",
+    "critical": "#C92A2A",
+    "safe":     "#2B8A3E",
+}
+
+
+def compute_agent_states(
+    episode: ReplayedEpisode, up_to_turn: int | None = None
+) -> list[AgentState]:
+    """Derive each agent's visible state at the given turn cutoff."""
+    cutoff = up_to_turn if up_to_turn is not None else max_turn(episode)
+
+    # Scammer state
+    scammer_msgs = [
+        m for m in episode.chat_history
+        if m.sender == "scammer" and m.turn <= cutoff
+    ]
+    # Turn 7 in env schedule = scammer requests transaction (env-level action,
+    # not always a chat message). Check transaction existence directly.
+    tx_requested = episode.transaction is not None and cutoff >= 7
+    if not scammer_msgs:
+        scammer = AgentState("scammer", "Idle", "Awaiting target", "idle")
+    elif tx_requested:
+        scammer = AgentState(
+            "scammer", "Transaction ask", "Requesting money transfer", "critical"
+        )
+    elif any(m.turn >= 4 for m in scammer_msgs):
+        scammer = AgentState(
+            "scammer", "Escalating", "Applying pressure on victim", "warning"
+        )
+    else:
+        scammer = AgentState(
+            "scammer", "Pretexting", "Opening attack narrative", "active"
+        )
+
+    # Victim state — derive from most recent victim message
+    victim_msgs = [
+        m for m in episode.chat_history
+        if m.sender == "victim" and m.turn <= cutoff
+    ]
+    if not victim_msgs:
+        victim = AgentState("victim", "Idle", "Has not responded", "idle")
+    else:
+        latest = victim_msgs[-1].text
+        if "[CALLED BANK" in latest:
+            victim = AgentState(
+                "victim", "Verifying", "Called bank to confirm — ideal", "safe"
+            )
+        elif "[REFUSED" in latest:
+            victim = AgentState(
+                "victim", "Refused", "Rejected scammer request", "safe"
+            )
+        elif "[COMPLIED" in latest:
+            victim = AgentState(
+                "victim", "Complied", "Shared sensitive info", "critical"
+            )
+        else:
+            victim = AgentState(
+                "victim", "Engaging", "Replying cautiously", "active"
+            )
+
+    # Analyzer state
+    visible_analyzer = [s for s in episode.analyzer_snapshots if s.turn <= cutoff]
+    if not visible_analyzer:
+        analyzer = AgentState(
+            "analyzer", "Watching", "Monitoring chat", "idle"
+        )
+    else:
+        best = max(visible_analyzer, key=lambda s: s.score)
+        if best.score >= 0.7:
+            analyzer = AgentState(
+                "analyzer", f"HIGH · {best.score:.2f}", best.explanation[:60], "critical"
+            )
+        elif best.score >= 0.4:
+            analyzer = AgentState(
+                "analyzer", f"MEDIUM · {best.score:.2f}", best.explanation[:60], "warning"
+            )
+        else:
+            analyzer = AgentState(
+                "analyzer", f"LOW · {best.score:.2f}", "No strong signals yet", "active"
+            )
+
+    # Bank state
+    visible_bank = [s for s in episode.bank_snapshots if s.turn <= cutoff]
+    if not visible_bank:
+        if episode.transaction is not None and cutoff >= 7:
+            bank = AgentState(
+                "bank", "Reviewing",
+                f"Tx Rs {episode.transaction.amount:,.0f} pending", "active"
+            )
+        else:
+            bank = AgentState("bank", "Dormant", "No transaction yet", "idle")
+    else:
+        latest = visible_bank[-1]
+        if latest.decision == "freeze":
+            bank = AgentState(
+                "bank", "FROZEN",
+                f"Rs {latest.amount_inr:,.0f} blocked", "safe"
+            )
+        elif latest.decision == "flag":
+            bank = AgentState(
+                "bank", "Flagged",
+                f"Confidence {latest.reason[:50]}", "warning"
+            )
+        else:
+            bank = AgentState(
+                "bank", "Approved",
+                f"Rs {latest.amount_inr:,.0f} cleared", "active"
+            )
+
+    # Regulator state
+    if cutoff >= 10 or episode.outcome.turns_used <= cutoff:
+        regulator = AgentState(
+            "regulator", "Logged",
+            "Outcome recorded; rules may update", "active"
+        )
+    else:
+        regulator = AgentState(
+            "regulator", "Passive",
+            "Awaiting episode end", "idle"
+        )
+
+    return [scammer, victim, analyzer, bank, regulator]
+
+
+def format_agent_cards_html(states: list[AgentState]) -> str:
+    """Render 5-agent status cards as a horizontal grid."""
+    cells = []
+    for st in states:
+        brand = AGENT_COLORS[st.agent]
+        tone_color = _TONE_COLOR[st.tone]
+        name = st.agent.capitalize()
+        # Tone dot — small pulsing circle that signals "live"
+        pulse = "pulse" if st.tone in ("critical", "warning") else ""
+        cells.append(
+            f'<div class="agent-card agent-card-{st.agent}" '
+            f'style="background:{brand["soft"]};'
+            f'border-top:3px solid {brand["accent"]};'
+            f'border-radius:10px;padding:14px 12px;'
+            f'display:flex;flex-direction:column;gap:6px;min-height:130px;">'
+            # Header row
+            f'<div style="display:flex;align-items:center;gap:6px;font-size:12px;'
+            f'letter-spacing:1px;color:var(--body-text-color-subdued, #888);'
+            f'text-transform:uppercase;font-weight:700;">'
+            f'<span style="font-size:18px;">{brand["icon"]}</span>'
+            f"{name}"
+            f"</div>"
+            # Status line
+            f'<div class="{pulse}" '
+            f'style="font-size:15px;font-weight:700;color:{tone_color};'
+            f'line-height:1.2;">{_html_escape(st.status)}</div>'
+            # Detail
+            f'<div style="font-size:12px;color:var(--body-text-color, #333);'
+            f'line-height:1.35;opacity:0.78;">{_html_escape(st.detail)}</div>'
+            f"</div>"
+        )
+    return (
+        '<div class="agent-grid" style="display:grid;'
+        "grid-template-columns:repeat(5, minmax(0, 1fr));"
+        'gap:10px;margin:8px 0 16px;">'
+        + "".join(cells)
+        + "</div>"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Attack timeline — icon per turn
+# ---------------------------------------------------------------------------
+
+
+def _turn_icon(episode: ReplayedEpisode, turn: int) -> tuple[str, str, str]:
+    """Return (icon, accent_color, tooltip_text) for one turn in the timeline."""
+    # Map by turn role per env schedule:
+    #   1,4 scammer  2,5 victim  3,6 analyzer  7 scammer(tx)  8 bank  9 final
+    if turn in (1, 4):
+        return ("🎭", AGENT_COLORS["scammer"]["accent"], f"Turn {turn} — Scammer acts")
+    if turn in (2, 5):
+        # Check if victim complied/refused/verified
+        vmsg = next(
+            (m for m in episode.chat_history if m.sender == "victim" and m.turn == turn),
+            None,
+        )
+        if vmsg and "[REFUSED" in vmsg.text:
+            return ("🙅", AGENT_COLORS["victim"]["accent"], f"Turn {turn} — Victim refused")
+        if vmsg and "[CALLED" in vmsg.text:
+            return ("📞", AGENT_COLORS["victim"]["accent"], f"Turn {turn} — Victim called bank")
+        if vmsg and "[COMPLIED" in vmsg.text:
+            return ("⚠️", AGENT_COLORS["victim"]["accent"], f"Turn {turn} — Victim complied")
+        return ("💬", AGENT_COLORS["victim"]["accent"], f"Turn {turn} — Victim replied")
+    if turn in (3, 6):
+        snap = next(
+            (s for s in episode.analyzer_snapshots if s.turn == turn), None
+        )
+        if snap and snap.score >= 0.7:
+            return ("🚨", AGENT_COLORS["analyzer"]["accent"], f"Turn {turn} — Analyzer HIGH RISK {snap.score:.2f}")
+        if snap and snap.score >= 0.4:
+            return ("🔍", AGENT_COLORS["analyzer"]["accent"], f"Turn {turn} — Analyzer MEDIUM {snap.score:.2f}")
+        return ("🔍", AGENT_COLORS["analyzer"]["accent"], f"Turn {turn} — Analyzer low")
+    if turn == 7:
+        return ("💰", AGENT_COLORS["scammer"]["accent"], "Turn 7 — Transaction requested")
+    if turn == 8:
+        snap = next(iter(episode.bank_snapshots), None)
+        if snap and snap.decision == "freeze":
+            return ("🛡️", AGENT_COLORS["bank"]["accent"], "Turn 8 — Bank FROZE")
+        if snap and snap.decision == "flag":
+            return ("🚩", AGENT_COLORS["bank"]["accent"], "Turn 8 — Bank flagged")
+        return ("✓", AGENT_COLORS["bank"]["accent"], "Turn 8 — Bank approved")
+    if turn == 9:
+        if episode.outcome.money_extracted:
+            return ("💸", "#C92A2A", "Turn 9 — Money extracted")
+        if episode.outcome.bank_froze:
+            return ("🔒", "#2B8A3E", "Turn 9 — Transaction blocked")
+        return ("✅", "#2B8A3E", "Turn 9 — Outcome logged")
+    return ("·", "#888", f"Turn {turn}")
+
+
+def format_attack_timeline_html(
+    episode: ReplayedEpisode, up_to_turn: int | None = None
+) -> str:
+    """Render a horizontal attack timeline — one icon per turn."""
+    total = max(max_turn(episode), 9)  # always at least 9 turns
+    cutoff = up_to_turn if up_to_turn is not None else total
+    cells = []
+    for t in range(1, total + 1):
+        icon, color, tooltip = _turn_icon(episode, t)
+        visible = t <= cutoff
+        opacity = "1" if visible else "0.25"
+        active_ring = (
+            f"box-shadow:0 0 0 2px {color}, 0 2px 6px rgba(0,0,0,0.1);"
+            if t == cutoff and visible
+            else ""
+        )
+        cells.append(
+            f'<div title="{_html_escape(tooltip)}" '
+            f'class="timeline-step" '
+            f'style="display:flex;flex-direction:column;align-items:center;'
+            f"gap:4px;opacity:{opacity};transition:opacity 0.3s ease;\">"
+            f'<div style="width:34px;height:34px;border-radius:50%;'
+            f"background:{color}20;border:2px solid {color};"
+            f"display:flex;align-items:center;justify-content:center;"
+            f'font-size:16px;{active_ring}">'
+            f"{icon}"
+            f"</div>"
+            f'<div style="font-size:10px;color:var(--body-text-color-subdued, #888);'
+            f'font-weight:600;">T{t}</div>'
+            f"</div>"
+        )
+    return (
+        '<div class="attack-timeline" '
+        'style="display:flex;justify-content:space-between;align-items:flex-start;'
+        'gap:4px;padding:12px 4px;max-width:640px;margin:0 auto;">'
+        + "".join(cells)
+        + "</div>"
+    )
