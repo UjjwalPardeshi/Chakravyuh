@@ -54,7 +54,7 @@ You understand Hindi + English + regional code-switching.
 Output ONLY valid JSON with these exact keys:
 {
   "score": <float 0.0 to 1.0>,
-  "signals": <list of strings from: urgency, impersonation, info_request, suspicious_link, unusual_amount, unknown_sender>,
+  "signals": <list of strings from: urgency, impersonation, info_request, suspicious_link, unusual_amount, unknown_sender, authority, fear, greed, empathy, financial_lure>,
   "explanation": <one sentence, <30 words, plain English>
 }"""
 

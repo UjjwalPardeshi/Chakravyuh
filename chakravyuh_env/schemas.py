@@ -73,6 +73,11 @@ class AnalyzerSignal(str, Enum):
     SUSPICIOUS_LINK = "suspicious_link"
     UNUSUAL_AMOUNT = "unusual_amount"
     UNKNOWN_SENDER = "unknown_sender"
+    AUTHORITY = "authority"
+    FEAR = "fear"
+    GREED = "greed"
+    EMPATHY = "empathy"
+    FINANCIAL_LURE = "financial_lure"
 
 
 # ---------------------------------------------------------------------------

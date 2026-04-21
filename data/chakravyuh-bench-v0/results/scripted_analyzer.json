@@ -1,0 +1,1694 @@
+{
+  "analyzer": "ScriptedAnalyzer (rule-based baseline)",
+  "n": 175,
+  "detection_rate": 0.8402777777777778,
+  "false_positive_rate": 0.0967741935483871,
+  "precision": 0.9758064516129032,
+  "recall": 0.8402777777777778,
+  "f1": 0.9029850746268657,
+  "accuracy": 0.8514285714285714,
+  "detection_ci_95": [
+    0.7777777777777778,
+    0.8958333333333334
+  ],
+  "per_category": {
+    "benign": {
+      "n": 15,
+      "detection_rate": 0.0,
+      "false_positive_rate": 0.06666666666666667,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "accuracy": 0.9333333333333333
+    },
+    "borderline": {
+      "n": 16,
+      "detection_rate": 0.0,
+      "false_positive_rate": 0.125,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "accuracy": 0.875
+    },
+    "impersonation": {
+      "n": 37,
+      "detection_rate": 0.8378378378378378,
+      "false_positive_rate": 0.0,
+      "precision": 1.0,
+      "recall": 0.8378378378378378,
+      "f1": 0.911764705882353,
+      "accuracy": 0.8378378378378378
+    },
+    "investment_fraud": {
+      "n": 32,
+      "detection_rate": 0.78125,
+      "false_positive_rate": 0.0,
+      "precision": 1.0,
+      "recall": 0.78125,
+      "f1": 0.8771929824561403,
+      "accuracy": 0.78125
+    },
+    "kyc_fraud": {
+      "n": 28,
+      "detection_rate": 0.7857142857142857,
+      "false_positive_rate": 0.0,
+      "precision": 1.0,
+      "recall": 0.7857142857142857,
+      "f1": 0.88,
+      "accuracy": 0.7857142857142857
+    },
+    "loan_app_fraud": {
+      "n": 23,
+      "detection_rate": 0.8260869565217391,
+      "false_positive_rate": 0.0,
+      "precision": 1.0,
+      "recall": 0.8260869565217391,
+      "f1": 0.9047619047619047,
+      "accuracy": 0.8260869565217391
+    },
+    "otp_theft": {
+      "n": 24,
+      "detection_rate": 1.0,
+      "false_positive_rate": 0.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "accuracy": 1.0
+    }
+  },
+  "per_difficulty": {
+    "easy": {
+      "n": 30,
+      "detection_rate": 0.9615384615384616,
+      "false_positive_rate": 0.0,
+      "precision": 1.0,
+      "recall": 0.9615384615384616,
+      "f1": 0.9803921568627451,
+      "accuracy": 0.9666666666666667
+    },
+    "hard": {
+      "n": 33,
+      "detection_rate": 0.7222222222222222,
+      "false_positive_rate": 0.2,
+      "precision": 0.8125,
+      "recall": 0.7222222222222222,
+      "f1": 0.7647058823529411,
+      "accuracy": 0.7575757575757576
+    },
+    "medium": {
+      "n": 78,
+      "detection_rate": 0.8636363636363636,
+      "false_positive_rate": 0.0,
+      "precision": 1.0,
+      "recall": 0.8636363636363636,
+      "f1": 0.9268292682926829,
+      "accuracy": 0.8846153846153846
+    },
+    "novel": {
+      "n": 34,
+      "detection_rate": 0.7647058823529411,
+      "false_positive_rate": 0.0,
+      "precision": 1.0,
+      "recall": 0.7647058823529411,
+      "f1": 0.8666666666666666,
+      "accuracy": 0.7647058823529411
+    }
+  },
+  "scenarios": [
+    {
+      "scenario_id": "modec_001",
+      "is_scam_truth": true,
+      "predicted_score": 1.0,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "otp_theft",
+      "difficulty": "easy"
+    },
+    {
+      "scenario_id": "modec_002",
+      "is_scam_truth": true,
+      "predicted_score": 0.97,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "otp_theft",
+      "difficulty": "easy"
+    },
+    {
+      "scenario_id": "modec_003",
+      "is_scam_truth": true,
+      "predicted_score": 0.65,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "otp_theft",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_004",
+      "is_scam_truth": true,
+      "predicted_score": 0.97,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "otp_theft",
+      "difficulty": "easy"
+    },
+    {
+      "scenario_id": "modec_005",
+      "is_scam_truth": true,
+      "predicted_score": 0.65,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "otp_theft",
+      "difficulty": "easy"
+    },
+    {
+      "scenario_id": "modec_006",
+      "is_scam_truth": true,
+      "predicted_score": 1.0,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "otp_theft",
+      "difficulty": "easy"
+    },
+    {
+      "scenario_id": "modec_007",
+      "is_scam_truth": true,
+      "predicted_score": 0.65,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "otp_theft",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_008",
+      "is_scam_truth": true,
+      "predicted_score": 0.93,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "otp_theft",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_009",
+      "is_scam_truth": true,
+      "predicted_score": 0.93,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "otp_theft",
+      "difficulty": "easy"
+    },
+    {
+      "scenario_id": "modec_010",
+      "is_scam_truth": true,
+      "predicted_score": 0.97,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "otp_theft",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_011",
+      "is_scam_truth": true,
+      "predicted_score": 0.97,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "otp_theft",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_012",
+      "is_scam_truth": true,
+      "predicted_score": 0.6900000000000001,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "otp_theft",
+      "difficulty": "easy"
+    },
+    {
+      "scenario_id": "modec_013",
+      "is_scam_truth": true,
+      "predicted_score": 0.89,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "otp_theft",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_014",
+      "is_scam_truth": true,
+      "predicted_score": 0.77,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "otp_theft",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_015",
+      "is_scam_truth": true,
+      "predicted_score": 1.0,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "otp_theft",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_016",
+      "is_scam_truth": true,
+      "predicted_score": 0.89,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "otp_theft",
+      "difficulty": "easy"
+    },
+    {
+      "scenario_id": "modec_017",
+      "is_scam_truth": true,
+      "predicted_score": 0.97,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "otp_theft",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_018",
+      "is_scam_truth": true,
+      "predicted_score": 0.8300000000000001,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "kyc_fraud",
+      "difficulty": "easy"
+    },
+    {
+      "scenario_id": "modec_019",
+      "is_scam_truth": true,
+      "predicted_score": 0.5900000000000001,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "kyc_fraud",
+      "difficulty": "easy"
+    },
+    {
+      "scenario_id": "modec_020",
+      "is_scam_truth": true,
+      "predicted_score": 0.7500000000000001,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "kyc_fraud",
+      "difficulty": "easy"
+    },
+    {
+      "scenario_id": "modec_021",
+      "is_scam_truth": true,
+      "predicted_score": 0.77,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "kyc_fraud",
+      "difficulty": "easy"
+    },
+    {
+      "scenario_id": "modec_022",
+      "is_scam_truth": true,
+      "predicted_score": 0.89,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "kyc_fraud",
+      "difficulty": "easy"
+    },
+    {
+      "scenario_id": "modec_023",
+      "is_scam_truth": true,
+      "predicted_score": 0.25,
+      "predicted_flag": false,
+      "correct": false,
+      "category": "kyc_fraud",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_024",
+      "is_scam_truth": true,
+      "predicted_score": 0.25,
+      "predicted_flag": false,
+      "correct": false,
+      "category": "kyc_fraud",
+      "difficulty": "easy"
+    },
+    {
+      "scenario_id": "modec_025",
+      "is_scam_truth": true,
+      "predicted_score": 0.55,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "kyc_fraud",
+      "difficulty": "easy"
+    },
+    {
+      "scenario_id": "modec_026",
+      "is_scam_truth": true,
+      "predicted_score": 0.67,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "kyc_fraud",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_027",
+      "is_scam_truth": true,
+      "predicted_score": 0.77,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "kyc_fraud",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_028",
+      "is_scam_truth": true,
+      "predicted_score": 0.55,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "kyc_fraud",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_029",
+      "is_scam_truth": true,
+      "predicted_score": 0.55,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "kyc_fraud",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_030",
+      "is_scam_truth": true,
+      "predicted_score": 0.53,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "kyc_fraud",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_031",
+      "is_scam_truth": true,
+      "predicted_score": 0.55,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "kyc_fraud",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_032",
+      "is_scam_truth": true,
+      "predicted_score": 0.77,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "kyc_fraud",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_033",
+      "is_scam_truth": true,
+      "predicted_score": 1.0,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "kyc_fraud",
+      "difficulty": "hard"
+    },
+    {
+      "scenario_id": "modec_034",
+      "is_scam_truth": true,
+      "predicted_score": 0.05,
+      "predicted_flag": false,
+      "correct": false,
+      "category": "kyc_fraud",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_035",
+      "is_scam_truth": true,
+      "predicted_score": 0.61,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "loan_app_fraud",
+      "difficulty": "easy"
+    },
+    {
+      "scenario_id": "modec_036",
+      "is_scam_truth": true,
+      "predicted_score": 1.0,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "loan_app_fraud",
+      "difficulty": "easy"
+    },
+    {
+      "scenario_id": "modec_037",
+      "is_scam_truth": true,
+      "predicted_score": 1.0,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "loan_app_fraud",
+      "difficulty": "easy"
+    },
+    {
+      "scenario_id": "modec_038",
+      "is_scam_truth": true,
+      "predicted_score": 0.45,
+      "predicted_flag": false,
+      "correct": false,
+      "category": "loan_app_fraud",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_039",
+      "is_scam_truth": true,
+      "predicted_score": 0.61,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "loan_app_fraud",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_040",
+      "is_scam_truth": true,
+      "predicted_score": 0.5900000000000001,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "loan_app_fraud",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_041",
+      "is_scam_truth": true,
+      "predicted_score": 0.53,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "loan_app_fraud",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_042",
+      "is_scam_truth": true,
+      "predicted_score": 0.41,
+      "predicted_flag": false,
+      "correct": false,
+      "category": "loan_app_fraud",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_043",
+      "is_scam_truth": true,
+      "predicted_score": 0.7100000000000001,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "loan_app_fraud",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_044",
+      "is_scam_truth": true,
+      "predicted_score": 0.53,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "loan_app_fraud",
+      "difficulty": "hard"
+    },
+    {
+      "scenario_id": "modec_045",
+      "is_scam_truth": true,
+      "predicted_score": 0.49,
+      "predicted_flag": false,
+      "correct": false,
+      "category": "loan_app_fraud",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_046",
+      "is_scam_truth": true,
+      "predicted_score": 0.7100000000000001,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "loan_app_fraud",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_047",
+      "is_scam_truth": true,
+      "predicted_score": 0.55,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "loan_app_fraud",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_048",
+      "is_scam_truth": true,
+      "predicted_score": 0.55,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "loan_app_fraud",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_049",
+      "is_scam_truth": true,
+      "predicted_score": 0.65,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "loan_app_fraud",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_050",
+      "is_scam_truth": true,
+      "predicted_score": 0.49,
+      "predicted_flag": false,
+      "correct": false,
+      "category": "loan_app_fraud",
+      "difficulty": "hard"
+    },
+    {
+      "scenario_id": "modec_051",
+      "is_scam_truth": true,
+      "predicted_score": 0.51,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "investment_fraud",
+      "difficulty": "easy"
+    },
+    {
+      "scenario_id": "modec_052",
+      "is_scam_truth": true,
+      "predicted_score": 0.9700000000000001,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "investment_fraud",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_053",
+      "is_scam_truth": true,
+      "predicted_score": 1.0,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "investment_fraud",
+      "difficulty": "easy"
+    },
+    {
+      "scenario_id": "modec_054",
+      "is_scam_truth": true,
+      "predicted_score": 0.39,
+      "predicted_flag": false,
+      "correct": false,
+      "category": "investment_fraud",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_055",
+      "is_scam_truth": true,
+      "predicted_score": 0.5900000000000001,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "investment_fraud",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_056",
+      "is_scam_truth": true,
+      "predicted_score": 1.0,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "investment_fraud",
+      "difficulty": "easy"
+    },
+    {
+      "scenario_id": "modec_057",
+      "is_scam_truth": true,
+      "predicted_score": 0.81,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "investment_fraud",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_058",
+      "is_scam_truth": true,
+      "predicted_score": 0.55,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "investment_fraud",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_059",
+      "is_scam_truth": true,
+      "predicted_score": 0.5900000000000001,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "investment_fraud",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_060",
+      "is_scam_truth": true,
+      "predicted_score": 0.51,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "investment_fraud",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_061",
+      "is_scam_truth": true,
+      "predicted_score": 0.7300000000000001,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "investment_fraud",
+      "difficulty": "hard"
+    },
+    {
+      "scenario_id": "modec_062",
+      "is_scam_truth": true,
+      "predicted_score": 0.47000000000000003,
+      "predicted_flag": false,
+      "correct": false,
+      "category": "investment_fraud",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_063",
+      "is_scam_truth": true,
+      "predicted_score": 0.6300000000000001,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "investment_fraud",
+      "difficulty": "easy"
+    },
+    {
+      "scenario_id": "modec_064",
+      "is_scam_truth": true,
+      "predicted_score": 0.5900000000000001,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "investment_fraud",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_065",
+      "is_scam_truth": true,
+      "predicted_score": 0.05,
+      "predicted_flag": false,
+      "correct": false,
+      "category": "investment_fraud",
+      "difficulty": "hard"
+    },
+    {
+      "scenario_id": "modec_066",
+      "is_scam_truth": true,
+      "predicted_score": 0.77,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "investment_fraud",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_067",
+      "is_scam_truth": true,
+      "predicted_score": 0.8300000000000001,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "impersonation",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_068",
+      "is_scam_truth": true,
+      "predicted_score": 1.0,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "impersonation",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_069",
+      "is_scam_truth": true,
+      "predicted_score": 1.0,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "impersonation",
+      "difficulty": "easy"
+    },
+    {
+      "scenario_id": "modec_070",
+      "is_scam_truth": true,
+      "predicted_score": 0.5900000000000001,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "impersonation",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_071",
+      "is_scam_truth": true,
+      "predicted_score": 0.97,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "impersonation",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_072",
+      "is_scam_truth": true,
+      "predicted_score": 1.0,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "impersonation",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_073",
+      "is_scam_truth": true,
+      "predicted_score": 0.89,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "impersonation",
+      "difficulty": "easy"
+    },
+    {
+      "scenario_id": "modec_074",
+      "is_scam_truth": true,
+      "predicted_score": 0.65,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "impersonation",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_075",
+      "is_scam_truth": true,
+      "predicted_score": 0.89,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "impersonation",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_076",
+      "is_scam_truth": true,
+      "predicted_score": 1.0,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "impersonation",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_077",
+      "is_scam_truth": true,
+      "predicted_score": 0.65,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "impersonation",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_078",
+      "is_scam_truth": true,
+      "predicted_score": 0.55,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "impersonation",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_079",
+      "is_scam_truth": true,
+      "predicted_score": 0.9900000000000001,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "impersonation",
+      "difficulty": "hard"
+    },
+    {
+      "scenario_id": "modec_080",
+      "is_scam_truth": true,
+      "predicted_score": 0.37,
+      "predicted_flag": false,
+      "correct": false,
+      "category": "impersonation",
+      "difficulty": "hard"
+    },
+    {
+      "scenario_id": "modec_081",
+      "is_scam_truth": true,
+      "predicted_score": 0.97,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "impersonation",
+      "difficulty": "easy"
+    },
+    {
+      "scenario_id": "modec_082",
+      "is_scam_truth": true,
+      "predicted_score": 0.8300000000000001,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "impersonation",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_083",
+      "is_scam_truth": true,
+      "predicted_score": 0.65,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "impersonation",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_084",
+      "is_scam_truth": true,
+      "predicted_score": 0.7500000000000001,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "impersonation",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_085",
+      "is_scam_truth": true,
+      "predicted_score": 0.55,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "impersonation",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_086",
+      "is_scam_truth": false,
+      "predicted_score": 0.37,
+      "predicted_flag": false,
+      "correct": true,
+      "category": "benign",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_087",
+      "is_scam_truth": false,
+      "predicted_score": 0.25,
+      "predicted_flag": false,
+      "correct": true,
+      "category": "benign",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_088",
+      "is_scam_truth": false,
+      "predicted_score": 0.0,
+      "predicted_flag": false,
+      "correct": true,
+      "category": "benign",
+      "difficulty": "easy"
+    },
+    {
+      "scenario_id": "modec_089",
+      "is_scam_truth": false,
+      "predicted_score": 0.65,
+      "predicted_flag": true,
+      "correct": false,
+      "category": "benign",
+      "difficulty": "hard"
+    },
+    {
+      "scenario_id": "modec_090",
+      "is_scam_truth": false,
+      "predicted_score": 0.15,
+      "predicted_flag": false,
+      "correct": true,
+      "category": "benign",
+      "difficulty": "easy"
+    },
+    {
+      "scenario_id": "modec_091",
+      "is_scam_truth": false,
+      "predicted_score": 0.27,
+      "predicted_flag": false,
+      "correct": true,
+      "category": "benign",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_092",
+      "is_scam_truth": false,
+      "predicted_score": 0.27,
+      "predicted_flag": false,
+      "correct": true,
+      "category": "benign",
+      "difficulty": "hard"
+    },
+    {
+      "scenario_id": "modec_093",
+      "is_scam_truth": false,
+      "predicted_score": 0.05,
+      "predicted_flag": false,
+      "correct": true,
+      "category": "benign",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_094",
+      "is_scam_truth": false,
+      "predicted_score": 0.0,
+      "predicted_flag": false,
+      "correct": true,
+      "category": "benign",
+      "difficulty": "hard"
+    },
+    {
+      "scenario_id": "modec_095",
+      "is_scam_truth": false,
+      "predicted_score": 0.49,
+      "predicted_flag": false,
+      "correct": true,
+      "category": "benign",
+      "difficulty": "easy"
+    },
+    {
+      "scenario_id": "modec_096",
+      "is_scam_truth": false,
+      "predicted_score": 0.25,
+      "predicted_flag": false,
+      "correct": true,
+      "category": "benign",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_097",
+      "is_scam_truth": false,
+      "predicted_score": 0.0,
+      "predicted_flag": false,
+      "correct": true,
+      "category": "benign",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_098",
+      "is_scam_truth": false,
+      "predicted_score": 0.25,
+      "predicted_flag": false,
+      "correct": true,
+      "category": "benign",
+      "difficulty": "hard"
+    },
+    {
+      "scenario_id": "modec_099",
+      "is_scam_truth": false,
+      "predicted_score": 0.05,
+      "predicted_flag": false,
+      "correct": true,
+      "category": "benign",
+      "difficulty": "easy"
+    },
+    {
+      "scenario_id": "modec_100",
+      "is_scam_truth": false,
+      "predicted_score": 0.15,
+      "predicted_flag": false,
+      "correct": true,
+      "category": "benign",
+      "difficulty": "hard"
+    },
+    {
+      "scenario_id": "modec_101",
+      "is_scam_truth": false,
+      "predicted_score": 0.05,
+      "predicted_flag": false,
+      "correct": true,
+      "category": "borderline",
+      "difficulty": "hard"
+    },
+    {
+      "scenario_id": "modec_102",
+      "is_scam_truth": false,
+      "predicted_score": 0.47000000000000003,
+      "predicted_flag": false,
+      "correct": true,
+      "category": "borderline",
+      "difficulty": "hard"
+    },
+    {
+      "scenario_id": "modec_103",
+      "is_scam_truth": false,
+      "predicted_score": 0.08999999999999997,
+      "predicted_flag": false,
+      "correct": true,
+      "category": "borderline",
+      "difficulty": "hard"
+    },
+    {
+      "scenario_id": "modec_104",
+      "is_scam_truth": false,
+      "predicted_score": 0.6100000000000001,
+      "predicted_flag": true,
+      "correct": false,
+      "category": "borderline",
+      "difficulty": "hard"
+    },
+    {
+      "scenario_id": "modec_105",
+      "is_scam_truth": false,
+      "predicted_score": 0.5900000000000001,
+      "predicted_flag": true,
+      "correct": false,
+      "category": "borderline",
+      "difficulty": "hard"
+    },
+    {
+      "scenario_id": "modec_106",
+      "is_scam_truth": true,
+      "predicted_score": 0.05,
+      "predicted_flag": false,
+      "correct": false,
+      "category": "investment_fraud",
+      "difficulty": "novel"
+    },
+    {
+      "scenario_id": "modec_107",
+      "is_scam_truth": true,
+      "predicted_score": 0.05,
+      "predicted_flag": false,
+      "correct": false,
+      "category": "investment_fraud",
+      "difficulty": "novel"
+    },
+    {
+      "scenario_id": "modec_108",
+      "is_scam_truth": true,
+      "predicted_score": 0.6500000000000001,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "otp_theft",
+      "difficulty": "novel"
+    },
+    {
+      "scenario_id": "modec_109",
+      "is_scam_truth": true,
+      "predicted_score": 0.16999999999999998,
+      "predicted_flag": false,
+      "correct": false,
+      "category": "investment_fraud",
+      "difficulty": "novel"
+    },
+    {
+      "scenario_id": "modec_110",
+      "is_scam_truth": true,
+      "predicted_score": 0.55,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "investment_fraud",
+      "difficulty": "novel"
+    },
+    {
+      "scenario_id": "modec_111",
+      "is_scam_truth": true,
+      "predicted_score": 0.5900000000000001,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "impersonation",
+      "difficulty": "novel"
+    },
+    {
+      "scenario_id": "modec_112",
+      "is_scam_truth": true,
+      "predicted_score": 0.55,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "kyc_fraud",
+      "difficulty": "novel"
+    },
+    {
+      "scenario_id": "modec_113",
+      "is_scam_truth": true,
+      "predicted_score": 0.27,
+      "predicted_flag": false,
+      "correct": false,
+      "category": "investment_fraud",
+      "difficulty": "novel"
+    },
+    {
+      "scenario_id": "modec_114",
+      "is_scam_truth": true,
+      "predicted_score": 1.0,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "impersonation",
+      "difficulty": "novel"
+    },
+    {
+      "scenario_id": "modec_115",
+      "is_scam_truth": true,
+      "predicted_score": 0.25,
+      "predicted_flag": false,
+      "correct": false,
+      "category": "impersonation",
+      "difficulty": "novel"
+    },
+    {
+      "scenario_id": "modec_116",
+      "is_scam_truth": true,
+      "predicted_score": 0.37,
+      "predicted_flag": false,
+      "correct": false,
+      "category": "impersonation",
+      "difficulty": "novel"
+    },
+    {
+      "scenario_id": "modec_117",
+      "is_scam_truth": true,
+      "predicted_score": 0.55,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "kyc_fraud",
+      "difficulty": "novel"
+    },
+    {
+      "scenario_id": "modec_118",
+      "is_scam_truth": true,
+      "predicted_score": 0.77,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "impersonation",
+      "difficulty": "novel"
+    },
+    {
+      "scenario_id": "modec_119",
+      "is_scam_truth": true,
+      "predicted_score": 0.5900000000000001,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "impersonation",
+      "difficulty": "novel"
+    },
+    {
+      "scenario_id": "modec_120",
+      "is_scam_truth": true,
+      "predicted_score": 0.7100000000000001,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "loan_app_fraud",
+      "difficulty": "novel"
+    },
+    {
+      "scenario_id": "modec_121",
+      "is_scam_truth": true,
+      "predicted_score": 0.65,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "impersonation",
+      "difficulty": "novel"
+    },
+    {
+      "scenario_id": "modec_122",
+      "is_scam_truth": true,
+      "predicted_score": 0.5900000000000001,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "investment_fraud",
+      "difficulty": "novel"
+    },
+    {
+      "scenario_id": "modec_123",
+      "is_scam_truth": true,
+      "predicted_score": 0.77,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "kyc_fraud",
+      "difficulty": "novel"
+    },
+    {
+      "scenario_id": "modec_124",
+      "is_scam_truth": true,
+      "predicted_score": 0.5700000000000001,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "kyc_fraud",
+      "difficulty": "novel"
+    },
+    {
+      "scenario_id": "modec_125",
+      "is_scam_truth": true,
+      "predicted_score": 0.7100000000000001,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "investment_fraud",
+      "difficulty": "novel"
+    },
+    {
+      "scenario_id": "modec_126",
+      "is_scam_truth": true,
+      "predicted_score": 0.61,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "investment_fraud",
+      "difficulty": "novel"
+    },
+    {
+      "scenario_id": "modec_127",
+      "is_scam_truth": true,
+      "predicted_score": 0.25,
+      "predicted_flag": false,
+      "correct": false,
+      "category": "kyc_fraud",
+      "difficulty": "novel"
+    },
+    {
+      "scenario_id": "modec_128",
+      "is_scam_truth": true,
+      "predicted_score": 0.55,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "investment_fraud",
+      "difficulty": "novel"
+    },
+    {
+      "scenario_id": "modec_129",
+      "is_scam_truth": true,
+      "predicted_score": 1.0,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "loan_app_fraud",
+      "difficulty": "novel"
+    },
+    {
+      "scenario_id": "modec_130",
+      "is_scam_truth": true,
+      "predicted_score": 0.57,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "impersonation",
+      "difficulty": "novel"
+    },
+    {
+      "scenario_id": "modec_131",
+      "is_scam_truth": true,
+      "predicted_score": 1.0,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "impersonation",
+      "difficulty": "novel"
+    },
+    {
+      "scenario_id": "modec_132",
+      "is_scam_truth": true,
+      "predicted_score": 0.67,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "impersonation",
+      "difficulty": "novel"
+    },
+    {
+      "scenario_id": "modec_133",
+      "is_scam_truth": true,
+      "predicted_score": 0.51,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "investment_fraud",
+      "difficulty": "novel"
+    },
+    {
+      "scenario_id": "modec_134",
+      "is_scam_truth": true,
+      "predicted_score": 0.8300000000000001,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "impersonation",
+      "difficulty": "novel"
+    },
+    {
+      "scenario_id": "modec_135",
+      "is_scam_truth": true,
+      "predicted_score": 0.77,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "otp_theft",
+      "difficulty": "novel"
+    },
+    {
+      "scenario_id": "modec_136",
+      "is_scam_truth": false,
+      "predicted_score": 0.0,
+      "predicted_flag": false,
+      "correct": true,
+      "category": "borderline",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_137",
+      "is_scam_truth": false,
+      "predicted_score": 0.25,
+      "predicted_flag": false,
+      "correct": true,
+      "category": "borderline",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_138",
+      "is_scam_truth": false,
+      "predicted_score": 0.05,
+      "predicted_flag": false,
+      "correct": true,
+      "category": "borderline",
+      "difficulty": "hard"
+    },
+    {
+      "scenario_id": "modec_139",
+      "is_scam_truth": false,
+      "predicted_score": 0.13,
+      "predicted_flag": false,
+      "correct": true,
+      "category": "borderline",
+      "difficulty": "hard"
+    },
+    {
+      "scenario_id": "modec_140",
+      "is_scam_truth": false,
+      "predicted_score": 0.0,
+      "predicted_flag": false,
+      "correct": true,
+      "category": "borderline",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_141",
+      "is_scam_truth": false,
+      "predicted_score": 0.0,
+      "predicted_flag": false,
+      "correct": true,
+      "category": "borderline",
+      "difficulty": "hard"
+    },
+    {
+      "scenario_id": "modec_142",
+      "is_scam_truth": false,
+      "predicted_score": 0.0,
+      "predicted_flag": false,
+      "correct": true,
+      "category": "borderline",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_143",
+      "is_scam_truth": false,
+      "predicted_score": 0.0,
+      "predicted_flag": false,
+      "correct": true,
+      "category": "borderline",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_144",
+      "is_scam_truth": false,
+      "predicted_score": 0.37,
+      "predicted_flag": false,
+      "correct": true,
+      "category": "borderline",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_145",
+      "is_scam_truth": false,
+      "predicted_score": 0.0,
+      "predicted_flag": false,
+      "correct": true,
+      "category": "borderline",
+      "difficulty": "hard"
+    },
+    {
+      "scenario_id": "modec_146",
+      "is_scam_truth": true,
+      "predicted_score": 0.65,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "otp_theft",
+      "difficulty": "hard"
+    },
+    {
+      "scenario_id": "modec_147",
+      "is_scam_truth": true,
+      "predicted_score": 1.0,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "kyc_fraud",
+      "difficulty": "hard"
+    },
+    {
+      "scenario_id": "modec_148",
+      "is_scam_truth": true,
+      "predicted_score": 0.53,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "loan_app_fraud",
+      "difficulty": "hard"
+    },
+    {
+      "scenario_id": "modec_149",
+      "is_scam_truth": true,
+      "predicted_score": 0.77,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "investment_fraud",
+      "difficulty": "hard"
+    },
+    {
+      "scenario_id": "modec_150",
+      "is_scam_truth": true,
+      "predicted_score": 0.53,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "impersonation",
+      "difficulty": "novel"
+    },
+    {
+      "scenario_id": "modec_151",
+      "is_scam_truth": true,
+      "predicted_score": 0.77,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "otp_theft",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_152",
+      "is_scam_truth": true,
+      "predicted_score": 0.93,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "otp_theft",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_153",
+      "is_scam_truth": true,
+      "predicted_score": 0.25,
+      "predicted_flag": false,
+      "correct": false,
+      "category": "kyc_fraud",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_154",
+      "is_scam_truth": true,
+      "predicted_score": 0.25,
+      "predicted_flag": false,
+      "correct": false,
+      "category": "kyc_fraud",
+      "difficulty": "hard"
+    },
+    {
+      "scenario_id": "modec_155",
+      "is_scam_truth": true,
+      "predicted_score": 0.89,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "loan_app_fraud",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_156",
+      "is_scam_truth": true,
+      "predicted_score": 0.5900000000000001,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "loan_app_fraud",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_157",
+      "is_scam_truth": true,
+      "predicted_score": 0.6100000000000001,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "investment_fraud",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_158",
+      "is_scam_truth": true,
+      "predicted_score": 0.7100000000000001,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "investment_fraud",
+      "difficulty": "hard"
+    },
+    {
+      "scenario_id": "modec_159",
+      "is_scam_truth": true,
+      "predicted_score": 0.49,
+      "predicted_flag": false,
+      "correct": false,
+      "category": "impersonation",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_160",
+      "is_scam_truth": true,
+      "predicted_score": 0.77,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "impersonation",
+      "difficulty": "hard"
+    },
+    {
+      "scenario_id": "modec_161",
+      "is_scam_truth": true,
+      "predicted_score": 0.97,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "otp_theft",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_162",
+      "is_scam_truth": true,
+      "predicted_score": 0.9700000000000001,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "kyc_fraud",
+      "difficulty": "hard"
+    },
+    {
+      "scenario_id": "modec_163",
+      "is_scam_truth": true,
+      "predicted_score": 0.8700000000000001,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "loan_app_fraud",
+      "difficulty": "hard"
+    },
+    {
+      "scenario_id": "modec_164",
+      "is_scam_truth": true,
+      "predicted_score": 0.6100000000000001,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "investment_fraud",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_165",
+      "is_scam_truth": true,
+      "predicted_score": 0.9700000000000001,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "impersonation",
+      "difficulty": "novel"
+    },
+    {
+      "scenario_id": "modec_166",
+      "is_scam_truth": true,
+      "predicted_score": 1.0,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "otp_theft",
+      "difficulty": "easy"
+    },
+    {
+      "scenario_id": "modec_167",
+      "is_scam_truth": true,
+      "predicted_score": 0.7500000000000001,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "kyc_fraud",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_168",
+      "is_scam_truth": true,
+      "predicted_score": 0.97,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "impersonation",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_169",
+      "is_scam_truth": true,
+      "predicted_score": 0.6100000000000001,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "investment_fraud",
+      "difficulty": "novel"
+    },
+    {
+      "scenario_id": "modec_170",
+      "is_scam_truth": false,
+      "predicted_score": 0.05,
+      "predicted_flag": false,
+      "correct": true,
+      "category": "borderline",
+      "difficulty": "hard"
+    },
+    {
+      "scenario_id": "modec_171",
+      "is_scam_truth": true,
+      "predicted_score": 1.0,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "loan_app_fraud",
+      "difficulty": "hard"
+    },
+    {
+      "scenario_id": "modec_172",
+      "is_scam_truth": true,
+      "predicted_score": 0.7500000000000001,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "kyc_fraud",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_173",
+      "is_scam_truth": true,
+      "predicted_score": 0.7300000000000001,
+      "predicted_flag": true,
+      "correct": true,
+      "category": "investment_fraud",
+      "difficulty": "medium"
+    },
+    {
+      "scenario_id": "modec_174",
+      "is_scam_truth": true,
+      "predicted_score": 0.47000000000000003,
+      "predicted_flag": false,
+      "correct": false,
+      "category": "impersonation",
+      "difficulty": "hard"
+    },
+    {
+      "scenario_id": "modec_175",
+      "is_scam_truth": true,
+      "predicted_score": 0.47000000000000003,
+      "predicted_flag": false,
+      "correct": false,
+      "category": "impersonation",
+      "difficulty": "novel"
+    }
+  ]
+}

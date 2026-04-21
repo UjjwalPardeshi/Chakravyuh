@@ -2,12 +2,17 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Chakravyuh Bench v0 Scenario",
   "type": "object",
-  "required": ["id", "source", "attack_sequence", "ground_truth", "metadata"],
+  "required": ["id", "source", "attack_sequence", "ground_truth", "metadata", "split"],
   "properties": {
     "id": {
       "type": "string",
       "pattern": "^modec_[0-9]{3}$",
       "description": "Unique scenario ID"
+    },
+    "split": {
+      "type": "string",
+      "enum": ["test"],
+      "description": "Dataset split — v0.2 ships only a test split. Train detectors elsewhere (e.g. Chakravyuh env rollouts) and evaluate here."
     },
     "source": {
       "type": "object",
@@ -15,7 +20,7 @@
       "properties": {
         "category": {
           "type": "string",
-          "enum": ["rbi_report", "i4c_alert", "npci_bulletin", "news_media", "reddit_public", "synthetic_benign", "novel_post_2024"]
+          "enum": ["rbi_report", "i4c_alert", "npci_bulletin", "news_media", "reddit_public", "synthetic_benign", "novel_post_2024", "adversarial_paraphrase", "multi_turn_rollout"]
         },
         "attribution": {
           "type": "string",
@@ -24,6 +29,11 @@
         "date_range": {
           "type": "string",
           "pattern": "^[0-9]{4}(-Q[1-4])?$"
+        },
+        "paraphrase_of": {
+          "type": "string",
+          "pattern": "^modec_[0-9]{3}$",
+          "description": "For adversarial_paraphrase scenarios: the original scenario ID this was rephrased from"
         }
       }
     },
@@ -69,7 +79,8 @@
         "loss_amount_inr": {"type": ["number", "null"]},
         "language": {"type": "string"},
         "channel": {"type": "string", "enum": ["sms", "whatsapp", "voice", "email", "telegram"]},
-        "outcome": {"type": "string", "enum": ["money_extracted", "detected_and_refused", "detected_and_verified", "unknown"]}
+        "outcome": {"type": "string", "enum": ["money_extracted", "detected_and_refused", "detected_and_verified", "unknown"]},
+        "multi_turn": {"type": "boolean", "description": "True if attack_sequence has more than 1 turn"}
       }
     }
   }

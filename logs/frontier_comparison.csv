@@ -1,0 +1,2 @@
+provider,n,detection_rate,ci_low,ci_high,false_positive_rate,precision,f1
+scripted,5,1.0000,1.0000,1.0000,0.0000,1.0000,1.0000

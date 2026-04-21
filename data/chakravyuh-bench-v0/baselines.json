@@ -1,0 +1,172 @@
+{
+  "$schema_version": "1.0",
+  "description": "Published baselines for chakravyuh-bench-v0. Numbers reflect evaluation against all 175 `split=test` scenarios at threshold 0.5.",
+  "dataset_version": "0.2.0",
+  "dataset_n": 175,
+  "threshold": 0.5,
+  "metrics_definition": {
+    "detection_rate": "Scam recall: fraction of is_scam=true scenarios correctly flagged",
+    "false_positive_rate": "FPR: fraction of is_scam=false scenarios incorrectly flagged as scam",
+    "precision": "Of flagged items, fraction that are actually scams",
+    "f1": "Harmonic mean of precision and recall",
+    "novel_detection": "Detection rate restricted to difficulty='novel' subset (post-2024 attacks)"
+  },
+  "baselines": [
+    {
+      "name": "ScriptedAnalyzer",
+      "method": "keyword + regex rules",
+      "params": {
+        "urgency_lexicon_size": 25,
+        "impersonation_phrases": 18,
+        "info_keywords": 14,
+        "suspicious_tlds": 22,
+        "url_shorteners": 8,
+        "flag_threshold": 0.50
+      },
+      "pretrained": false,
+      "ran_on": "2026-04-21",
+      "runtime_env": "CPU-only, Python 3.12",
+      "version": "v0.3 — 11-signal taxonomy + legit-domain allowlist + OTP-provided heuristic",
+      "results": {
+        "overall": {
+          "n": 175,
+          "detection_rate": 0.840,
+          "detection_rate_ci_95": [0.778, 0.896],
+          "false_positive_rate": 0.097,
+          "precision": 0.976,
+          "f1": 0.903,
+          "accuracy": 0.851,
+          "bootstrap_resamples": 2000
+        },
+        "by_category": {
+          "otp_theft": {"n": 24, "detection_rate": 1.000},
+          "kyc_fraud": {"n": 28, "detection_rate": 0.786},
+          "loan_app_fraud": {"n": 23, "detection_rate": 0.826},
+          "investment_fraud": {"n": 32, "detection_rate": 0.781},
+          "impersonation": {"n": 37, "detection_rate": 0.838},
+          "benign": {"n": 15, "false_positive_rate": 0.067},
+          "borderline": {"n": 16, "false_positive_rate": 0.125}
+        },
+        "by_difficulty": {
+          "easy": {"n": 30, "detection_rate": 0.962},
+          "medium": {"n": 78, "detection_rate": 0.864},
+          "hard": {"n": 33, "detection_rate": 0.722},
+          "novel": {"n": 34, "detection_rate": 0.765}
+        },
+        "known_vs_novel": {
+          "known_subset": {
+            "n": 110,
+            "detection_rate": 0.864,
+            "ci_95": [0.800, 0.927]
+          },
+          "novel_subset": {
+            "n": 34,
+            "detection_rate": 0.765,
+            "ci_95": [0.618, 0.882]
+          },
+          "gap_pp": 9.9,
+          "permutation_p_value": 0.184,
+          "significant_at_p01": false,
+          "cohens_d": 0.270,
+          "effect_size": "small"
+        },
+        "rule_vs_expert_agreement": {
+          "n_compared": 174,
+          "raw_agreement": 0.851,
+          "cohens_kappa": 0.586,
+          "landis_koch_band": "moderate"
+        },
+        "v0_2_baseline_comparison": {
+          "previous_f1": 0.795,
+          "previous_fpr": 0.290,
+          "previous_kappa": 0.277,
+          "previous_investment": 0.312,
+          "delta_f1": 0.108,
+          "delta_fpr_reduction": 0.193,
+          "delta_kappa": 0.309,
+          "delta_investment": 0.469
+        }
+      }
+    },
+    {
+      "name": "Llama-3.3-70B-versatile (Groq, zero-shot)",
+      "method": "zero-shot prompting via OpenAI-compatible SDK",
+      "params": {
+        "temperature": 0.2,
+        "max_tokens": 300,
+        "system_prompt": "fraud_analyzer_v1"
+      },
+      "pretrained": true,
+      "ran_on": null,
+      "runtime_env": "Groq API",
+      "results": null,
+      "_note": "Populated when GROQ_API_KEY available. Run: python -m eval.frontier_baseline --providers groq"
+    },
+    {
+      "name": "GPT-4o-mini (OpenAI, zero-shot)",
+      "method": "zero-shot prompting",
+      "params": {
+        "temperature": 0.2,
+        "max_tokens": 300,
+        "system_prompt": "fraud_analyzer_v1"
+      },
+      "pretrained": true,
+      "ran_on": null,
+      "runtime_env": "OpenAI API",
+      "results": null,
+      "_note": "Populated when OPENAI_API_KEY available. Run: python -m eval.frontier_baseline --providers openai"
+    },
+    {
+      "name": "Claude 3.5 Haiku (Anthropic, zero-shot)",
+      "method": "zero-shot prompting",
+      "params": {
+        "temperature": 0.2,
+        "max_tokens": 300,
+        "system_prompt": "fraud_analyzer_v1"
+      },
+      "pretrained": true,
+      "ran_on": null,
+      "runtime_env": "Anthropic API",
+      "results": null,
+      "_note": "Populated when ANTHROPIC_API_KEY available. Run: python -m eval.frontier_baseline --providers anthropic"
+    },
+    {
+      "name": "Gemini 2.0 Flash (Google, zero-shot)",
+      "method": "zero-shot prompting",
+      "params": {
+        "temperature": 0.2,
+        "max_tokens": 300,
+        "system_prompt": "fraud_analyzer_v1"
+      },
+      "pretrained": true,
+      "ran_on": null,
+      "runtime_env": "Google Generative AI API",
+      "results": null,
+      "_note": "Populated when GEMINI_API_KEY available. Run: python -m eval.frontier_baseline --providers gemini"
+    },
+    {
+      "name": "Chakravyuh-Qwen2.5-7B-LoRA (trained)",
+      "method": "GRPO RLHF on Chakravyuh env rollouts + 200 scam templates",
+      "params": {
+        "base_model": "Qwen/Qwen2.5-7B-Instruct",
+        "method": "GRPO via TRL",
+        "episodes": 200,
+        "kl_penalty": 0.04,
+        "lora_rank": 16,
+        "target_modules": ["q_proj","k_proj","v_proj","o_proj","gate_proj","up_proj","down_proj"]
+      },
+      "pretrained": false,
+      "ran_on": null,
+      "runtime_env": "RunPod A100 (80GB) or Colab T4 fallback with Qwen2.5-3B",
+      "results": null,
+      "_note": "Populated after training completes on 2026-04-22. Run: python -m training.self_play_loop --lora-path <path>"
+    }
+  ],
+  "reproduction": {
+    "scripted": "python -m eval.mode_c_real_cases --analyzer scripted",
+    "scripted_with_bootstrap": "python -m eval.mode_c_real_cases --analyzer scripted --bootstrap 1000",
+    "frontier": "python -m eval.frontier_baseline --providers groq,openai,anthropic,gemini",
+    "full_suite": "bash scripts/run_all_baselines.sh  # (not yet written)"
+  },
+  "citation_hint": "If you run a new baseline on this dataset, please PR your numbers into baselines.json with your method name, params, and CSV of per-scenario predictions for reproducibility."
+}

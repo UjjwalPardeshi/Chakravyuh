@@ -118,14 +118,15 @@ CURATED_EPISODES: tuple[CuratedEpisode, ...] = (
     ),
     CuratedEpisode(
         label="5. 🎭 Scripted Rules Blind Spot",
-        seed=1,
+        seed=13,
         profile=VictimProfile.SENIOR,
         gullibility=1.5,
         outcome_kind="scripted_missed",
         description=(
-            "Union Bank NRE-account KYC fake link. Scripted analyzer missed it "
-            "(suspicion never crossed threshold). Money extracted. Demonstrates "
-            "the gap that semantic LLM analysis closes on Day 2."
+            "KYC fake-link scam phrased without the strong keyword signatures "
+            "our rule-based analyzer looks for. Suspicion never crosses "
+            "threshold. Money extracted. Demonstrates the gap that semantic "
+            "LLM analysis closes on Day 2."
         ),
     ),
 )

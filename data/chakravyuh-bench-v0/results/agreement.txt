@@ -1,0 +1,7 @@
+Dataset: data/chakravyuh-bench-v0/scenarios.jsonl
+N compared: 174
+Raw agreement: 148/174 = 0.851
+Expert positive rate: 0.828
+Rule positive rate: 0.713
+Cohen's κ (rule vs expert): 0.586
+Landis-Koch interpretation: moderate agreement

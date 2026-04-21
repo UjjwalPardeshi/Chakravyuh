@@ -1,0 +1,26 @@
+{
+  "n_known": 110,
+  "n_novel": 34,
+  "known": {
+    "detection_rate": 0.8636363636363636,
+    "ci_95": [
+      0.8,
+      0.9272727272727272
+    ]
+  },
+  "novel": {
+    "detection_rate": 0.7647058823529411,
+    "ci_95": [
+      0.6176470588235294,
+      0.8823529411764706
+    ]
+  },
+  "gap_pp": 9.893048128342253,
+  "permutation_p_value": 0.1842,
+  "cohens_d": 0.2699441890962785,
+  "interpretation": {
+    "p_significant_at_05": false,
+    "p_significant_at_01": false,
+    "effect_size": "small"
+  }
+}

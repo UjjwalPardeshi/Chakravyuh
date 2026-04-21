@@ -275,6 +275,7 @@ def train(
     wandb_project: str | None = "chakravyuh-run-1",
     seed: int = 42,
     dry_run: bool = False,
+    resume_from_checkpoint: bool = False,
 ) -> None:
     """Main training entrypoint. `dry_run=True` only builds dataset + reward."""
     logging.basicConfig(
@@ -367,7 +368,7 @@ def train(
         wandb.init(project=wandb_project, name=cfg.run_name)
 
     logger.info("Launching GRPO training for %d steps...", n_steps)
-    trainer.train()
+    trainer.train(resume_from_checkpoint=resume_from_checkpoint or None)
     trainer.save_model(str(output_dir))
     tokenizer.save_pretrained(str(output_dir))
     logger.info("Training complete. Adapter saved to %s", output_dir)
@@ -450,6 +451,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--no-wandb", action="store_true")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--resume", action="store_true", help="Resume from latest checkpoint in --output dir")
     args = parser.parse_args(argv)
 
     train(
@@ -467,6 +469,7 @@ def main(argv: list[str] | None = None) -> int:
         wandb_project=None if args.no_wandb else args.wandb_project,
         seed=args.seed,
         dry_run=args.dry_run,
+        resume_from_checkpoint=args.resume,
     )
     return 0
 
