@@ -608,6 +608,12 @@ def train(
     )
     logger.info("Prompt preview: %r", first_prompt[:200].replace("\n", "\\n"))
 
+    # Sanity generation: call model.generate directly (NOT through TRL) to
+    # verify the model can produce coherent JSON at all. If this works but
+    # GRPOTrainer still produces gibberish, the bug is in TRL's generation
+    # path. If this ALSO produces gibberish, the bug is in model loading.
+    _sanity_generate(model, tokenizer, first_prompt)
+
     judge = build_judge(mock=False)
 
     # TRL's reward_funcs signature: (prompts, completions, **kwargs) -> list[float]
@@ -772,9 +778,18 @@ def _load_training_model(
             trust_remote_code=True,
             torch_dtype=torch.bfloat16,
         )
-        # Explicit gradient checkpointing (prepare_model_for_kbit_training handles
-        # this for the 4-bit path; we do it manually here).
-        model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
+        # Gradient checkpointing trades memory for compute by forcing
+        # `use_cache=False` during forward. Qwen2's use_cache=False attention
+        # path produces GIBBERISH during generation inside GRPOTrainer (even
+        # though the weights are fine) — this is the root cause of the
+        # {"status_t 0000..." output pattern we saw at every temperature.
+        # Fix: only enable GC when VRAM is actually tight (<60 GB).
+        # On A100 80GB / H100, skip GC entirely — we have memory to spare.
+        if vram_gb < 60:
+            logger.info("VRAM=%.1f GB < 60 GB → enabling gradient checkpointing", vram_gb)
+            model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
+        else:
+            logger.info("VRAM=%.1f GB ≥ 60 GB → skipping gradient checkpointing (Qwen2 generation bug)", vram_gb)
         model.enable_input_require_grads()
     else:
         logger.info(
@@ -815,6 +830,49 @@ def _load_training_model(
         repetition_penalty=repetition_penalty,
     )
     return model, tokenizer, eff_temp
+
+
+def _sanity_generate(model: Any, tokenizer: Any, prompt: str) -> None:
+    """Run one direct `model.generate()` call before training starts.
+
+    Bypasses TRL entirely. If this produces coherent JSON but GRPOTrainer
+    still produces gibberish, the bug is TRL-side (gradient checkpointing
+    interaction, training-mode generation, etc.). If this ALSO produces
+    gibberish, the bug is upstream in model loading / prompt / PEFT.
+
+    This is CRITICAL diagnostic — don't remove without replacing.
+    """
+    import torch  # type: ignore[import-not-found]
+
+    was_training = model.training
+    model.eval()  # disable dropout; mirrors inference-time conditions
+    try:
+        inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+        with torch.inference_mode():
+            out = model.generate(
+                **inputs,
+                max_new_tokens=80,
+                do_sample=True,
+                temperature=0.8,
+                top_p=0.9,
+                top_k=50,
+                repetition_penalty=1.1,
+                pad_token_id=tokenizer.pad_token_id or tokenizer.eos_token_id,
+            )
+        gen_ids = out[0][inputs["input_ids"].shape[-1]:]
+        text = tokenizer.decode(gen_ids, skip_special_tokens=True)
+        logger.info("=== SANITY GENERATION (direct model.generate, pre-TRL) ===")
+        logger.info("  output: %r", text[:300].replace("\n", " | "))
+        if '{"score"' in text or '"score":' in text:
+            logger.info("  ✓ LOOKS GOOD — model produces expected JSON format")
+        else:
+            logger.warning(
+                "  ✗ UNEXPECTED — no 'score' key in output. "
+                "Either prompt/tokenization is wrong OR LoRA init is corrupting logits."
+            )
+    finally:
+        if was_training:
+            model.train()
 
 
 def _apply_generation_config(
