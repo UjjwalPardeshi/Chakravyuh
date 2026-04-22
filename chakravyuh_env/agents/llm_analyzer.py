@@ -51,12 +51,21 @@ You have deep knowledge of Indian fraud patterns: OTP theft, KYC fraud, \
 loan-app fraud, investment fraud, impersonation (bank/govt/family/delivery). \
 You understand Hindi + English + regional code-switching.
 
-Output ONLY valid JSON with these exact keys:
+Output ONLY valid JSON. Start with `{` and end with `}`. No prose before or after.
+Keys (exact order):
 {
   "score": <float 0.0 to 1.0>,
   "signals": <list of strings from: urgency, impersonation, info_request, suspicious_link, unusual_amount, unknown_sender, authority, fear, greed, empathy, financial_lure>,
   "explanation": <one sentence, <30 words, plain English>
-}"""
+}
+
+Example — scam:
+Input: "URGENT: Your SBI a/c will be blocked today. Share OTP 234567 to verify KYC."
+Output: {"score": 0.98, "signals": ["urgency", "impersonation", "info_request", "fear"], "explanation": "Bank impersonation with urgency and OTP request — classic account takeover."}
+
+Example — benign:
+Input: "Your OTP for HDFC login is 563182. Valid 5 min. Do NOT share with anyone."
+Output: {"score": 0.05, "signals": [], "explanation": "Legitimate OTP delivery from bank, warns user not to share."}"""
 
 
 DEFAULT_USER_PROMPT_TEMPLATE = """Scammer messages:

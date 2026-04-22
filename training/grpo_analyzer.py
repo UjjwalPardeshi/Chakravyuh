@@ -40,6 +40,7 @@ import argparse
 import json
 import logging
 import random
+import re
 import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -361,6 +362,28 @@ def _build_instruction_prompt(scammer_text: str) -> str:
 # ---------------------------------------------------------------------------
 
 
+_JSON_CHECK_PATTERN = re.compile(r"\{.*?\}", re.DOTALL)
+
+
+def _emits_valid_json(completion: str) -> bool:
+    """Return True if the completion contains a parseable JSON object with score.
+
+    Used by the format reward to give an immediate gradient signal toward
+    "emit JSON first." Without this, GRPO can stall in a flat valley where
+    both generations emit garbage, both parse to score=0.0, and reward_std=0.
+    """
+    match = _JSON_CHECK_PATTERN.search(completion)
+    if not match:
+        return False
+    try:
+        data = json.loads(match.group(0))
+    except (json.JSONDecodeError, ValueError, TypeError):
+        return False
+    if not isinstance(data, dict):
+        return False
+    return "score" in data
+
+
 @dataclass(frozen=True)
 class RewardParts:
     detection: float
@@ -368,6 +391,7 @@ class RewardParts:
     explanation: float
     false_positive_penalty: float
     signal_bonus: float
+    format: float
     total: float
 
 
@@ -378,9 +402,14 @@ def compute_reward(
 ) -> RewardParts:
     """Reward a single completion given its ground truth.
 
-    Total reward is bounded in roughly [-0.5, +1.7].
+    Total reward is bounded in roughly [-0.5, +1.85].
     """
     score, signals, explanation = parse_analyzer_response(completion)
+
+    # Format reward: +0.15 for a parseable JSON object with a 'score' key.
+    # This is the KEY fix for grad_norm=0 — it gives the model a non-flat
+    # gradient even when content is wrong, so GRPO has variance to learn from.
+    format_r = 0.15 if _emits_valid_json(completion) else 0.0
 
     # Detection: +1 if correctly classified, -0.5 if wrong
     predicted_scam = score >= 0.5
@@ -415,7 +444,9 @@ def compute_reward(
         except Exception as e:  # noqa: BLE001
             logger.debug("Explanation judge error (non-fatal): %s", e)
 
-    total = detection_r + fp_penalty + calibration_r + signal_bonus + explanation_r
+    total = (
+        detection_r + fp_penalty + calibration_r + signal_bonus + explanation_r + format_r
+    )
 
     return RewardParts(
         detection=round(detection_r, 4),
@@ -423,6 +454,7 @@ def compute_reward(
         explanation=round(explanation_r, 4),
         false_positive_penalty=round(fp_penalty, 4),
         signal_bonus=round(signal_bonus, 4),
+        format=round(format_r, 4),
         total=round(total, 4),
     )
 
@@ -437,15 +469,15 @@ def train(
     episodes: int = 200,
     output_dir: Path = Path("checkpoints/analyzer_lora"),
     use_unsloth: bool = True,
-    lora_rank: int = 16,
-    lora_alpha: int = 32,
-    learning_rate: float = 1e-5,
+    lora_rank: int = 32,                 # was 16 — more capacity, fits in A100 easily
+    lora_alpha: int = 64,                # scaled with rank (alpha = 2*rank is standard)
+    learning_rate: float = 5e-5,         # was 1e-5 — LoRA needs higher LR than full-ft
     batch_size: int = 4,
     grad_accum: int = 2,
     num_generations: int = 4,
-    beta: float = 0.04,          # KL penalty
+    beta: float = 0.04,                  # KL penalty
     max_prompt_length: int = 512,
-    max_completion_length: int = 256,
+    max_completion_length: int = 128,    # was 256 — JSON target is ~50 tokens, forces concise
     wandb_project: str | None = "chakravyuh-run-1",
     seed: int = 42,
     dry_run: bool = False,
@@ -517,8 +549,9 @@ def train(
         per_device_train_batch_size=batch_size,
         gradient_accumulation_steps=grad_accum,
         learning_rate=learning_rate,
-        logging_steps=10,
-        save_steps=max(1, n_steps // 4),
+        logging_steps=5,                          # more granular loss curves
+        save_steps=max(1, n_steps // 20),         # ~20 checkpoints → max 5% loss on crash
+        save_total_limit=5,                       # prune old checkpoints, keep Drive tidy
         num_generations=num_generations,
         max_prompt_length=max_prompt_length,
         max_completion_length=max_completion_length,
@@ -577,9 +610,11 @@ def _load_training_model(
         except ImportError:
             logger.warning("Unsloth not installed; falling back to plain PEFT.")
 
-    # PEFT fallback — loads the base model in 4-bit via bitsandbytes so T4 can
-    # fit Qwen2.5-3B + TRL's GRPO deepcopy'd reference model in ~14 GB VRAM.
-    # Without 4-bit, the reference-model deepcopy at GRPOTrainer init OOMs.
+    # PEFT path: auto-select precision based on available VRAM.
+    #   >= 30 GB (A100 40/80, L4, H100): native bf16, no quantization —
+    #     cleaner gradients, faster training, no deepcopy-of-quantized-model risks
+    #   < 30 GB (T4 16, V100 16): 4-bit nf4 via bitsandbytes with double quant,
+    #     the only way GRPO's reference-model deepcopy fits alongside the policy
     import torch  # type: ignore[import-not-found]
     from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training  # type: ignore[import-not-found]
     from transformers import (  # type: ignore[import-not-found]
@@ -592,21 +627,48 @@ def _load_training_model(
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token_id = tokenizer.eos_token_id
 
-    # T4 is Turing (sm_75) — no bfloat16 support. Use float16 compute dtype.
-    compute_dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
-    bnb_config = BitsAndBytesConfig(
-        load_in_4bit=True,
-        bnb_4bit_compute_dtype=compute_dtype,
-        bnb_4bit_quant_type="nf4",
-        bnb_4bit_use_double_quant=True,
+    vram_gb = (
+        torch.cuda.get_device_properties(0).total_memory / 1e9
+        if torch.cuda.is_available()
+        else 0.0
     )
-    model = AutoModelForCausalLM.from_pretrained(
-        model_name,
-        device_map="auto",
-        trust_remote_code=True,
-        quantization_config=bnb_config,
-    )
-    model = prepare_model_for_kbit_training(model, use_gradient_checkpointing=True)
+    bf16_supported = torch.cuda.is_available() and torch.cuda.is_bf16_supported()
+
+    if vram_gb >= 30 and bf16_supported:
+        logger.info(
+            "VRAM=%.1f GB with bf16 support → loading %s in native bf16 (no quantization)",
+            vram_gb, model_name,
+        )
+        model = AutoModelForCausalLM.from_pretrained(
+            model_name,
+            device_map="auto",
+            trust_remote_code=True,
+            torch_dtype=torch.bfloat16,
+        )
+        # Explicit gradient checkpointing (prepare_model_for_kbit_training handles
+        # this for the 4-bit path; we do it manually here).
+        model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
+        model.enable_input_require_grads()
+    else:
+        logger.info(
+            "VRAM=%.1f GB (bf16=%s) → loading %s in 4-bit nf4 for memory fit",
+            vram_gb, bf16_supported, model_name,
+        )
+        compute_dtype = torch.bfloat16 if bf16_supported else torch.float16
+        bnb_config = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_compute_dtype=compute_dtype,
+            bnb_4bit_quant_type="nf4",
+            bnb_4bit_use_double_quant=True,
+        )
+        model = AutoModelForCausalLM.from_pretrained(
+            model_name,
+            device_map="auto",
+            trust_remote_code=True,
+            quantization_config=bnb_config,
+        )
+        model = prepare_model_for_kbit_training(model, use_gradient_checkpointing=True)
+
     lora_config = LoraConfig(
         r=lora_rank,
         lora_alpha=lora_alpha,
@@ -633,9 +695,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--episodes", type=int, default=200)
     parser.add_argument("--output", type=Path, default=Path("checkpoints/analyzer_lora"))
     parser.add_argument("--no-unsloth", action="store_true")
-    parser.add_argument("--lora-rank", type=int, default=16)
-    parser.add_argument("--lora-alpha", type=int, default=32)
-    parser.add_argument("--learning-rate", type=float, default=1e-5)
+    parser.add_argument("--lora-rank", type=int, default=32)
+    parser.add_argument("--lora-alpha", type=int, default=64)
+    parser.add_argument("--learning-rate", type=float, default=5e-5)
+    parser.add_argument("--max-completion-length", type=int, default=128)
     parser.add_argument("--batch-size", type=int, default=4)
     parser.add_argument("--grad-accum", type=int, default=2)
     parser.add_argument("--num-generations", type=int, default=4)
@@ -659,6 +722,7 @@ def main(argv: list[str] | None = None) -> int:
         grad_accum=args.grad_accum,
         num_generations=args.num_generations,
         beta=args.beta,
+        max_completion_length=args.max_completion_length,
         wandb_project=None if args.no_wandb else args.wandb_project,
         seed=args.seed,
         dry_run=args.dry_run,
