@@ -445,33 +445,57 @@ def compute_reward(
     completion: str,
     ground_truth: TrainingExample,
     explanation_judge: Any | None = None,
+    reward_profile: str = "v1",
 ) -> RewardParts:
     """Reward a single completion given its ground truth.
 
-    Total reward is bounded in roughly [-0.5, +1.85].
+    reward_profile:
+      "v1" — original weights (FP=-0.3, format=0.15, calibration=0.3).
+             Trained LoRA v1 with this; produced F1=0.963 but FPR=35.5%.
+             The model collapsed to "always score high" because format reward
+             is paid regardless of correctness + FP penalty was too light.
+
+      "v2" — anti-collapse weights (FP=-0.8, format=0 on benign, calib=0.5 on benign):
+         - FP penalty -0.3 → -0.8: over-flagging is now expensive
+         - Format reward REMOVED on benign: no free +0.15 for lazy over-flag
+         - Benign calibration 0.3 → 0.5: reward scores DECISIVELY below 0.2
+         - Asymmetric: scam calibration stays at 0.3 (already easy to win)
     """
+    assert reward_profile in ("v1", "v2"), f"unknown reward_profile={reward_profile!r}"
     score, signals, explanation = parse_analyzer_response(completion)
 
     # Format reward: +0.15 for a parseable JSON object with a 'score' key.
     # This is the KEY fix for grad_norm=0 — it gives the model a non-flat
     # gradient even when content is wrong, so GRPO has variance to learn from.
-    format_r = 0.15 if _emits_valid_json(completion) else 0.0
+    # v2: format reward is STILL paid on scam (we want JSON output) but
+    # DENIED on benign-when-predicted-scam — removes the "lazy over-flag" shortcut.
+    emits_json = _emits_valid_json(completion)
+    predicted_scam = score >= 0.5
+    if reward_profile == "v2" and emits_json and predicted_scam and not ground_truth.is_scam:
+        format_r = 0.0   # no free format reward for flagging benign
+    else:
+        format_r = 0.15 if emits_json else 0.0
 
     # Detection: +1 if correctly classified, -0.5 if wrong
-    predicted_scam = score >= 0.5
     if predicted_scam == ground_truth.is_scam:
         detection_r = 1.0
     else:
         detection_r = -0.5
 
-    # False positive: extra penalty for flagging benign
+    # False positive: extra penalty for flagging benign.
+    # v1: -0.3 (too light — net +1.5 on scam vs +0.2 avg on benign → GRPO finds "always flag")
+    # v2: -0.8 (makes over-flag net-negative, forces model to respect benign class)
     fp_penalty = 0.0
+    fp_weight = -0.8 if reward_profile == "v2" else -0.3
     if not ground_truth.is_scam and predicted_scam:
-        fp_penalty = -0.3
+        fp_penalty = fp_weight
 
-    # Calibration: reward scores close to target (1.0 for scam, 0.0 for benign)
+    # Calibration: reward scores close to target (1.0 for scam, 0.0 for benign).
+    # v2 bumps benign calibration weight to 0.5 — giving a stronger gradient
+    # toward scores ≤0.2 on benign. Scam side stays 0.3 (already converges).
     target = 1.0 if ground_truth.is_scam else 0.0
-    calibration_r = 0.3 * (1.0 - abs(score - target))
+    calib_weight = 0.5 if (reward_profile == "v2" and not ground_truth.is_scam) else 0.3
+    calibration_r = calib_weight * (1.0 - abs(score - target))
 
     # Signal bonus: reward naming the expected signals
     signal_bonus = 0.0
@@ -545,6 +569,7 @@ def train(
     top_p: float | None = None,
     top_k: int | None = None,
     repetition_penalty: float | None = None,
+    reward_profile: str = "v1",          # v2 reduces reward hacking (higher FP penalty, no free format on benign)
     wandb_project: str | None = "chakravyuh-run-1",
     seed: int = 42,
     dry_run: bool = False,
@@ -563,6 +588,11 @@ def train(
         sum(1 for e in examples if e.is_scam),
         sum(1 for e in examples if not e.is_scam),
     )
+    logger.info(
+        "Reward profile: %s (%s)",
+        reward_profile,
+        "v1=baseline; v2=anti-collapse (FP=-0.8, benign calib=0.5, no free format on benign)",
+    )
 
     if dry_run:
         logger.info("Dry-run: skipping model loading and training")
@@ -572,7 +602,7 @@ def train(
                 '{"score": 0.9, "signals": ["urgency", "info_request"], '
                 '"explanation": "OTP + urgency combo."}'
             )
-            parts = compute_reward(mock_completion, ex)
+            parts = compute_reward(mock_completion, ex, reward_profile=reward_profile)
             logger.info(
                 "  [%s] total=%.3f (%s)",
                 ex.category, parts.total, asdict(parts)
@@ -643,7 +673,9 @@ def train(
                 category=category_col[i] if i < len(category_col) else "unknown",
                 signals=tuple(signals_col[i]) if i < len(signals_col) else (),
             )
-            parts = compute_reward(completion, ex, explanation_judge=judge)
+            parts = compute_reward(
+                completion, ex, explanation_judge=judge, reward_profile=reward_profile,
+            )
             rewards.append(parts.total)
         return rewards
 
@@ -970,6 +1002,10 @@ def main(argv: list[str] | None = None) -> int:
         "--repetition-penalty", type=float, default=None,
         help="Repetition penalty (None = auto: 1.1 for bf16, 1.15 for 4-bit)",
     )
+    parser.add_argument(
+        "--reward-profile", choices=("v1", "v2"), default="v1",
+        help="Reward weights. v1=baseline; v2=anti-collapse (fixes over-flagging)",
+    )
     parser.add_argument("--wandb-project", default="chakravyuh-run-1")
     parser.add_argument("--no-wandb", action="store_true")
     parser.add_argument("--seed", type=int, default=42)
@@ -994,6 +1030,7 @@ def main(argv: list[str] | None = None) -> int:
         top_p=args.top_p,
         top_k=args.top_k,
         repetition_penalty=args.repetition_penalty,
+        reward_profile=args.reward_profile,
         wandb_project=None if args.no_wandb else args.wandb_project,
         seed=args.seed,
         dry_run=args.dry_run,
