@@ -392,6 +392,7 @@ class RewardParts:
     false_positive_penalty: float
     signal_bonus: float
     format: float
+    length: float
     total: float
 
 
@@ -444,8 +445,24 @@ def compute_reward(
         except Exception as e:  # noqa: BLE001
             logger.debug("Explanation judge error (non-fatal): %s", e)
 
+    # Length reward: continuous component (±0.15 max). Rewards concise JSON
+    # (our target is ~40-60 tokens) and penalizes max-length runaway prose.
+    # This injects per-completion variance even when other reward components
+    # bucket identically — critical for keeping reward_std > 0 in GRPO groups.
+    n_tokens = len(completion.split())
+    if n_tokens <= 0:
+        length_r = 0.0
+    elif 20 <= n_tokens <= 70:
+        length_r = 0.15 * (1.0 - abs(n_tokens - 45) / 30.0)  # peak at ~45 tokens
+    elif n_tokens > 70:
+        # Penalize verbose outputs; max penalty at completion_length cap
+        length_r = -0.15 * min(1.0, (n_tokens - 70) / 60.0)
+    else:
+        length_r = 0.05 * (n_tokens / 20.0)  # small reward for non-empty short
+
     total = (
-        detection_r + fp_penalty + calibration_r + signal_bonus + explanation_r + format_r
+        detection_r + fp_penalty + calibration_r + signal_bonus + explanation_r
+        + format_r + length_r
     )
 
     return RewardParts(
@@ -455,6 +472,7 @@ def compute_reward(
         false_positive_penalty=round(fp_penalty, 4),
         signal_bonus=round(signal_bonus, 4),
         format=round(format_r, 4),
+        length=round(length_r, 4),
         total=round(total, 4),
     )
 
@@ -526,13 +544,26 @@ def train(
     judge = build_judge(mock=False)
 
     # TRL's reward_funcs signature: (prompts, completions, **kwargs) -> list[float]
+    # One-time diagnostic: log the first batch so we can confirm whether
+    # generations are actually diverse (or all identical, which breaks GRPO).
+    _diag_state = {"logged": False}
+
     def reward_fn(prompts: list[str], completions: list[str], **kwargs: Any) -> list[float]:
         rewards: list[float] = []
         is_scam_col: list[bool] = kwargs.get("is_scam", [])
         category_col: list[str] = kwargs.get("category", [])
         signals_col: list[list[str]] = kwargs.get("signals", [])
+
+        if not _diag_state["logged"]:
+            logger.info("=== DIAGNOSTIC: first reward_fn batch (generation diversity check) ===")
+            logger.info("Batch size: %d completions across %d prompts",
+                        len(completions), len(set(prompts[:len(completions)])))
+            # Print first 4 completions — if they're identical, sampling is broken
+            for i, c in enumerate(completions[:4]):
+                logger.info("  [gen %d] len=%d: %s", i, len(c.split()), c[:140].replace("\n", " | "))
+            _diag_state["logged"] = True
+
         for i, completion in enumerate(completions):
-            # Build a TrainingExample from the row batch columns
             ex = TrainingExample(
                 prompt_text=prompts[i][:400] if i < len(prompts) else "",
                 is_scam=bool(is_scam_col[i]) if i < len(is_scam_col) else True,
@@ -687,6 +718,27 @@ def _load_training_model(
         task_type="CAUSAL_LM",
     )
     model = get_peft_model(model, lora_config)
+
+    # CRITICAL FIX: override the model's built-in generation_config to force
+    # high-variance sampling. Qwen2.5 ships with temperature=0.7/top_p=0.8/top_k=20
+    # in its generation_config.json, which can override TRL's GRPOConfig
+    # temperature setting. This explicitly sets do_sample=True + aggressive
+    # sampling so GRPO's 4 generations per group actually differ → reward_std > 0.
+    from transformers import GenerationConfig  # type: ignore[import-not-found]
+
+    model.generation_config = GenerationConfig(
+        do_sample=True,
+        temperature=1.5,
+        top_p=0.95,
+        top_k=50,
+        repetition_penalty=1.15,         # actively discourage copy-paste tokens
+        max_new_tokens=128,
+        pad_token_id=tokenizer.pad_token_id or tokenizer.eos_token_id,
+        eos_token_id=tokenizer.eos_token_id,
+    )
+    logger.info(
+        "Forced generation_config: do_sample=True, temp=1.5, top_p=0.95, top_k=50, rep_penalty=1.15"
+    )
     return model, tokenizer
 
 
