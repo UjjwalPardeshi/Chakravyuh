@@ -558,10 +558,9 @@ def train(
         # CRITICAL: force sampling variance within groups so reward_std > 0.
         # Qwen2.5 at default temperature 0.9 produces near-identical outputs
         # across num_generations=4, collapsing GRPO's advantage signal to zero.
-        # Bumping temp + adding top_p/top_k injects the variance GRPO needs.
-        temperature=1.2,
-        top_p=0.95,
-        top_k=50,
+        # TRL 0.14 GRPOConfig only exposes `temperature` directly (top_p/top_k
+        # are not accepted kwargs here); bumping temp to 1.3 is the lever we have.
+        temperature=1.3,
         beta=beta,
         seed=seed,
         report_to="wandb" if wandb_project else "none",
