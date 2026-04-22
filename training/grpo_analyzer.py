@@ -214,7 +214,7 @@ def build_training_examples(
     augmented_path: Path = DEFAULT_AUGMENTED_PATH,
     scam_novel_path: Path = DEFAULT_SCAM_NOVEL_PATH,
     benign_aug_path: Path = DEFAULT_BENIGN_AUG_PATH,
-    benign_ratio: float = 0.3,
+    benign_ratio: float = 0.35,
     seed: int = 42,
 ) -> list[TrainingExample]:
     """Build the training corpus from 5 synthetic template sources.
