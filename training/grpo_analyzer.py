@@ -496,6 +496,10 @@ def train(
     beta: float = 0.04,                  # KL penalty
     max_prompt_length: int = 512,
     max_completion_length: int = 128,    # was 256 — JSON target is ~50 tokens, forces concise
+    temperature: float | None = None,    # None = auto-detect: 1.1 for bf16, 1.5 for 4-bit
+    top_p: float | None = None,
+    top_k: int | None = None,
+    repetition_penalty: float | None = None,
     wandb_project: str | None = "chakravyuh-run-1",
     seed: int = 42,
     dry_run: bool = False,
@@ -532,7 +536,11 @@ def train(
         return
 
     # Heavy imports only when actually training
-    model, tokenizer = _load_training_model(model_name, use_unsloth, lora_rank, lora_alpha)
+    model, tokenizer, effective_temperature = _load_training_model(
+        model_name, use_unsloth, lora_rank, lora_alpha,
+        temperature=temperature, top_p=top_p, top_k=top_k,
+        repetition_penalty=repetition_penalty,
+    )
 
     from trl import GRPOConfig, GRPOTrainer  # type: ignore[import-not-found]
 
@@ -589,9 +597,10 @@ def train(
         # CRITICAL: force sampling variance within groups so reward_std > 0.
         # Qwen2.5 at default temperature 0.9 produces near-identical outputs
         # across num_generations=4, collapsing GRPO's advantage signal to zero.
-        # TRL 0.14 GRPOConfig only exposes `temperature` directly (top_p/top_k
-        # are not accepted kwargs here); bumping temp to 1.3 is the lever we have.
-        temperature=1.3,
+        # Effective temperature is auto-selected by _load_training_model based
+        # on quantization: ~1.1 for bf16 7B (natural diversity, stays coherent),
+        # ~1.5 for 4-bit quantized (needs aggressive sampling to escape argmax).
+        temperature=effective_temperature,
         beta=beta,
         seed=seed,
         report_to="wandb" if wandb_project else "none",
@@ -619,9 +628,24 @@ def train(
 
 
 def _load_training_model(
-    model_name: str, use_unsloth: bool, lora_rank: int, lora_alpha: int
-) -> tuple[Any, Any]:
-    """Load the base model + attach a trainable LoRA adapter."""
+    model_name: str,
+    use_unsloth: bool,
+    lora_rank: int,
+    lora_alpha: int,
+    temperature: float | None = None,
+    top_p: float | None = None,
+    top_k: int | None = None,
+    repetition_penalty: float | None = None,
+) -> tuple[Any, Any, float]:
+    """Load the base model + attach a trainable LoRA adapter.
+
+    Returns (model, tokenizer, effective_temperature). The temperature is
+    auto-selected based on whether the loaded model is quantized:
+      - bf16 (A100/H100, VRAM≥30): temperature=1.1 — 7B bf16 is naturally
+        diverse enough; higher temps just degrade coherence
+      - 4-bit (L4/T4/V100, VRAM<30): temperature=1.5 — quantization collapses
+        logit distributions toward argmax, needs aggressive sampling to escape
+    """
     if use_unsloth:
         try:
             from unsloth import FastLanguageModel  # type: ignore[import-not-found]
@@ -643,7 +667,13 @@ def _load_training_model(
                 use_gradient_checkpointing="unsloth",
                 random_state=42,
             )
-            return model, tokenizer
+            # Unsloth = always 4-bit; use aggressive sampling defaults.
+            eff_temp = _apply_generation_config(
+                model, tokenizer, quantized=True,
+                temperature=temperature, top_p=top_p, top_k=top_k,
+                repetition_penalty=repetition_penalty,
+            )
+            return model, tokenizer, eff_temp
         except ImportError:
             logger.warning("Unsloth not installed; falling back to plain PEFT.")
 
@@ -671,7 +701,8 @@ def _load_training_model(
     )
     bf16_supported = torch.cuda.is_available() and torch.cuda.is_bf16_supported()
 
-    if vram_gb >= 30 and bf16_supported:
+    use_bf16_path = vram_gb >= 30 and bf16_supported
+    if use_bf16_path:
         logger.info(
             "VRAM=%.1f GB with bf16 support → loading %s in native bf16 (no quantization)",
             vram_gb, model_name,
@@ -719,27 +750,71 @@ def _load_training_model(
     )
     model = get_peft_model(model, lora_config)
 
-    # CRITICAL FIX: override the model's built-in generation_config to force
-    # high-variance sampling. Qwen2.5 ships with temperature=0.7/top_p=0.8/top_k=20
-    # in its generation_config.json, which can override TRL's GRPOConfig
-    # temperature setting. This explicitly sets do_sample=True + aggressive
-    # sampling so GRPO's 4 generations per group actually differ → reward_std > 0.
-    from transformers import GenerationConfig  # type: ignore[import-not-found]
+    eff_temp = _apply_generation_config(
+        model, tokenizer, quantized=not use_bf16_path,
+        temperature=temperature, top_p=top_p, top_k=top_k,
+        repetition_penalty=repetition_penalty,
+    )
+    return model, tokenizer, eff_temp
 
-    model.generation_config = GenerationConfig(
-        do_sample=True,
-        temperature=1.5,
-        top_p=0.95,
-        top_k=50,
-        repetition_penalty=1.15,         # actively discourage copy-paste tokens
-        max_new_tokens=128,
-        pad_token_id=tokenizer.pad_token_id or tokenizer.eos_token_id,
-        eos_token_id=tokenizer.eos_token_id,
-    )
+
+def _apply_generation_config(
+    model: Any,
+    tokenizer: Any,
+    quantized: bool,
+    temperature: float | None,
+    top_p: float | None,
+    top_k: int | None,
+    repetition_penalty: float | None,
+) -> float:
+    """Override the model's generation_config so GRPO samples diverse rollouts.
+
+    Qwen2.5 ships with temperature=0.7/top_p=0.8/top_k=20 which produces
+    near-identical completions across num_generations=4 — collapsing GRPO's
+    advantage signal to zero (grad_norm=0). We force aggressive sampling.
+
+    Quantization changes what "aggressive" means:
+      - 4-bit nf4 collapses logits toward argmax (quantization rounds small
+        differences away). Needs temp=1.5 + top_p=0.95 + rep_penalty=1.15 to
+        escape; even then, smaller models produce partial gibberish.
+      - bf16 preserves the full distribution. temp=1.1 gives plenty of
+        diversity without sacrificing coherence — best-quality knob for 7B.
+
+    Explicit user values via CLI override the auto-detected defaults.
+    Returns the final temperature (used to sync GRPOConfig.temperature).
+    """
+    if quantized:
+        eff_temp = temperature if temperature is not None else 1.5
+        eff_top_p = top_p if top_p is not None else 0.95
+        eff_top_k = top_k if top_k is not None else 50
+        eff_rep = repetition_penalty if repetition_penalty is not None else 1.15
+    else:
+        eff_temp = temperature if temperature is not None else 1.1
+        eff_top_p = top_p if top_p is not None else 0.9
+        eff_top_k = top_k if top_k is not None else 50
+        eff_rep = repetition_penalty if repetition_penalty is not None else 1.1
+
+    # Mutate in place — preserves model-specific defaults (bos/eos tokens,
+    # chat-template markers) that a full GenerationConfig replacement would drop.
+    gc = model.generation_config
+    gc.do_sample = True
+    gc.temperature = eff_temp
+    gc.top_p = eff_top_p
+    gc.top_k = eff_top_k
+    gc.repetition_penalty = eff_rep
+    gc.max_new_tokens = 128
+    if getattr(gc, "pad_token_id", None) is None:
+        gc.pad_token_id = tokenizer.pad_token_id or tokenizer.eos_token_id
+    if getattr(gc, "eos_token_id", None) is None:
+        gc.eos_token_id = tokenizer.eos_token_id
+
     logger.info(
-        "Forced generation_config: do_sample=True, temp=1.5, top_p=0.95, top_k=50, rep_penalty=1.15"
+        "generation_config set (%s): do_sample=True, temp=%.2f, top_p=%.2f, "
+        "top_k=%d, rep_penalty=%.2f",
+        "4-bit" if quantized else "bf16",
+        eff_temp, eff_top_p, eff_top_k, eff_rep,
     )
-    return model, tokenizer
+    return eff_temp
 
 
 # ---------------------------------------------------------------------------
@@ -761,6 +836,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--grad-accum", type=int, default=2)
     parser.add_argument("--num-generations", type=int, default=4)
     parser.add_argument("--beta", type=float, default=0.04, help="KL penalty")
+    parser.add_argument(
+        "--temperature", type=float, default=None,
+        help="Sampling temp (None = auto: 1.1 for bf16, 1.5 for 4-bit)",
+    )
+    parser.add_argument("--top-p", type=float, default=None, help="Sampling top_p (None = auto)")
+    parser.add_argument("--top-k", type=int, default=None, help="Sampling top_k (None = auto)")
+    parser.add_argument(
+        "--repetition-penalty", type=float, default=None,
+        help="Repetition penalty (None = auto: 1.1 for bf16, 1.15 for 4-bit)",
+    )
     parser.add_argument("--wandb-project", default="chakravyuh-run-1")
     parser.add_argument("--no-wandb", action="store_true")
     parser.add_argument("--seed", type=int, default=42)
@@ -781,6 +866,10 @@ def main(argv: list[str] | None = None) -> int:
         num_generations=args.num_generations,
         beta=args.beta,
         max_completion_length=args.max_completion_length,
+        temperature=args.temperature,
+        top_p=args.top_p,
+        top_k=args.top_k,
+        repetition_penalty=args.repetition_penalty,
         wandb_project=None if args.no_wandb else args.wandb_project,
         seed=args.seed,
         dry_run=args.dry_run,
