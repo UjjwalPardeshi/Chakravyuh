@@ -332,13 +332,22 @@ def build_training_examples(
     return examples
 
 
-def examples_to_hf_dataset(examples: list[TrainingExample]) -> Any:
-    """Convert to a Hugging Face Datasets object for TRL."""
+def examples_to_hf_dataset(
+    examples: list[TrainingExample], tokenizer: Any | None = None
+) -> Any:
+    """Convert to a Hugging Face Datasets object for TRL.
+
+    If `tokenizer` is provided, prompts are built via `apply_chat_template`
+    (the ONLY way to get Qwen2.5's `<|im_start|>` / `<|im_end|>` encoded as
+    the intended single special tokens rather than split into ~3 literal-text
+    tokens). Manually-constructed strings look correct but tokenize differently
+    and cause the model to produce code-token gibberish.
+    """
     from datasets import Dataset  # type: ignore[import-not-found]
 
     rows = [
         {
-            "prompt": _build_instruction_prompt(ex.prompt_text),
+            "prompt": _build_instruction_prompt(ex.prompt_text, tokenizer=tokenizer),
             "is_scam": ex.is_scam,
             "category": ex.category,
             "signals": list(ex.signals),
@@ -358,15 +367,34 @@ def examples_to_hf_dataset(examples: list[TrainingExample]) -> Any:
 # ---------------------------------------------------------------------------
 
 
-def _build_instruction_prompt(scammer_text: str) -> str:
+def _build_instruction_prompt(scammer_text: str, tokenizer: Any | None = None) -> str:
     """The string we hand to GRPOTrainer as each row's 'prompt'.
 
-    Produces the same Qwen2.5 ChatML string that `LLMAnalyzer.build_prompt()`
-    yields at inference time, modulo the formatted {chat} body (inference
-    passes dash-bulleted lines; training passes the raw template text).
+    Must match `LLMAnalyzer.build_prompt()` exactly — that's the prompt the
+    LoRA sees at inference. Any drift means we train on one distribution and
+    eval on another.
+
+    IMPORTANT: when `tokenizer` is available, use `apply_chat_template` — the
+    manually-constructed <|im_start|>/<|im_end|> string tokenizes DIFFERENTLY
+    than the chat-template output, because those boundary markers are only
+    registered as single special tokens when the tokenizer's chat-template
+    path runs. Without it, they fragment into 3+ literal-text tokens and the
+    model's learned attention pattern over them breaks → code-token gibberish.
     """
     chat_body = "\n".join(f"- {line}" for line in scammer_text.split("\n") if line.strip())
     user_msg = DEFAULT_USER_PROMPT_TEMPLATE.format(chat=chat_body or "- (no messages)")
+
+    if tokenizer is not None:
+        messages = [
+            {"role": "system", "content": DEFAULT_SYSTEM_PROMPT},
+            {"role": "user", "content": user_msg},
+        ]
+        return tokenizer.apply_chat_template(
+            messages, tokenize=False, add_generation_prompt=True
+        )
+
+    # Fallback for dry-run / tests (no tokenizer loaded). Do NOT rely on this
+    # path for real training — the special-token tokenization diverges.
     return (
         f"<|im_start|>system\n{DEFAULT_SYSTEM_PROMPT}<|im_end|>\n"
         f"<|im_start|>user\n{user_msg}<|im_end|>\n"
@@ -561,10 +589,24 @@ def train(
 
     from trl import GRPOConfig, GRPOTrainer  # type: ignore[import-not-found]
 
-    # Truncate episode count to dataset size if smaller
-    dataset_all = examples_to_hf_dataset(examples)
+    # Build dataset AFTER tokenizer is loaded so prompts use apply_chat_template.
+    # Manually-constructed <|im_start|>/<|im_end|> strings tokenize into literal
+    # text tokens rather than Qwen2.5's designated special-token IDs (151644/151645).
+    dataset_all = examples_to_hf_dataset(examples, tokenizer=tokenizer)
     n_steps = min(episodes, len(examples))
     train_ds = dataset_all.select(range(n_steps))
+
+    # Sanity log: show the exact first prompt + its tokenization so we can
+    # verify chat-template markers became proper special-token IDs, not text.
+    first_prompt = train_ds[0]["prompt"]
+    first_ids = tokenizer(first_prompt, add_special_tokens=False).input_ids
+    special_ids = {151644, 151645}  # Qwen2.5's <|im_start|> and <|im_end|>
+    n_special = sum(1 for i in first_ids if i in special_ids)
+    logger.info(
+        "First prompt: %d chars, %d tokens, %d Qwen special-token markers (expect ≥5)",
+        len(first_prompt), len(first_ids), n_special,
+    )
+    logger.info("Prompt preview: %r", first_prompt[:200].replace("\n", "\\n"))
 
     judge = build_judge(mock=False)
 
