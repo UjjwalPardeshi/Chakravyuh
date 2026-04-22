@@ -800,13 +800,20 @@ def _apply_generation_config(
     Explicit user values via CLI override the auto-detected defaults.
     Returns the final temperature (used to sync GRPOConfig.temperature).
     """
+    # CRITICAL: TRL 0.14's GRPOConfig only exposes `temperature` — it does NOT
+    # propagate model.generation_config.top_p/top_k/repetition_penalty into its
+    # own generation loop. So effective sampling is temp + top_p=1.0 + top_k=0
+    # (no truncation). At temp=1.1 on 7B this samples gibberish from full vocab.
+    # We compensate by setting temperature LOWER than we'd otherwise want — the
+    # raw distribution self-concentrates enough at temp=0.8 to stay coherent
+    # while still producing diverse rollouts for GRPO.
     if quantized:
-        eff_temp = temperature if temperature is not None else 1.5
+        eff_temp = temperature if temperature is not None else 1.0
         eff_top_p = top_p if top_p is not None else 0.95
         eff_top_k = top_k if top_k is not None else 50
         eff_rep = repetition_penalty if repetition_penalty is not None else 1.15
     else:
-        eff_temp = temperature if temperature is not None else 1.1
+        eff_temp = temperature if temperature is not None else 0.8
         eff_top_p = top_p if top_p is not None else 0.9
         eff_top_k = top_k if top_k is not None else 50
         eff_rep = repetition_penalty if repetition_penalty is not None else 1.1
