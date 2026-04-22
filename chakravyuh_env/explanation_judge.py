@@ -30,7 +30,10 @@ logger = logging.getLogger("chakravyuh.judge")
 
 
 GROQ_BASE_URL = "https://api.groq.com/openai/v1"
-DEFAULT_JUDGE_MODEL = "llama-3.3-70b-versatile"
+# Using 8B instead of 70B: separate TPD bucket on Groq free tier
+# (70B: 100k TPD, 8B: 500k TPD) and much faster responses.
+# Scoring quality drops slightly but remains useful for GRPO reward signal.
+DEFAULT_JUDGE_MODEL = "llama-3.1-8b-instant"
 
 
 _JUDGE_SYSTEM_PROMPT = """You grade fraud-detection explanations on 3 axes. Output strict JSON only.
