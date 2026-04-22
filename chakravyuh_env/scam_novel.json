@@ -1,0 +1,544 @@
+{
+  "description": "Novel scam patterns for LoRA training — 90 templates covering 6 attack vectors absent or underrepresented in the original 200 canonical scammer_templates. Categories: QR code scams, voice-clone/deepfake job offers, AePS biometric fraud, WhatsApp investment groups, matrimonial fraud, parcel delivery scams. Derived from RBI 2024 fraud bulletins, I4C quarterly reports, Mumbai/Bengaluru cyber cell advisories.",
+  "version": "1.0.0",
+  "source": "hand-written based on public fraud advisories, disjoint from all other template files and from chakravyuh-bench-v0 test set",
+  "templates": [
+    {
+      "id": "novel_qr_01",
+      "category": "qr_fraud",
+      "opener": "Hi! I have sent the payment of Rs 5,000 to your UPI. Please scan this QR code to receive it in your bank account — it's a payment request from my end.",
+      "escalation": "Why are you taking so long to scan? I need confirmation urgently, I have other buyers waiting for this item.",
+      "signals": ["urgency", "greed", "info_request", "unknown_sender"]
+    },
+    {
+      "id": "novel_qr_02",
+      "category": "qr_fraud",
+      "opener": "Sir, for OLX Cashback Rs 2,500 please scan this QR and enter your UPI PIN to collect the refund. Limited time offer today only.",
+      "escalation": "Cashback will expire in 5 mins. Scan fast sir, your money will be lost otherwise.",
+      "signals": ["urgency", "financial_lure", "greed", "info_request"]
+    },
+    {
+      "id": "novel_qr_03",
+      "category": "qr_fraud",
+      "opener": "I saw your ad for selling the scooter. I will pay Rs 85,000 but first scan this QR to verify your GPay is active so I don't lose money.",
+      "escalation": "Other buyer is offering Rs 90,000 cash. If you scan QR now I will pay you immediately, otherwise sold elsewhere.",
+      "signals": ["urgency", "greed", "financial_lure", "info_request"]
+    },
+    {
+      "id": "novel_qr_04",
+      "category": "qr_fraud",
+      "opener": "Amazon Pay: Your refund of INR 8,450 for cancelled order ready. Scan QR below to accept refund to UPI. QR expires in 10 min.",
+      "escalation": "Refund window closing. Scan now or amount will return to Amazon wallet permanently.",
+      "signals": ["urgency", "impersonation", "financial_lure", "info_request"]
+    },
+    {
+      "id": "novel_qr_05",
+      "category": "qr_fraud",
+      "opener": "Defence personnel here, posted in Pathankot. I am transferring to your city and need to rent your flat. Scan this QR to verify landlord UPI before I pay 6-month deposit.",
+      "escalation": "I need to confirm tonight, my wife is reaching Delhi tomorrow morning. Please scan urgently.",
+      "signals": ["urgency", "impersonation", "info_request", "authority"]
+    },
+    {
+      "id": "novel_qr_06",
+      "category": "qr_fraud",
+      "opener": "KYC team from your bank: For mandatory UPI re-verification, please scan the attached QR code on WhatsApp and enter PIN to authenticate.",
+      "escalation": "Non-compliance will result in UPI services blocked within 2 hrs. Scan immediately to avoid.",
+      "signals": ["urgency", "impersonation", "authority", "info_request", "fear"]
+    },
+    {
+      "id": "novel_qr_07",
+      "category": "qr_fraud",
+      "opener": "Congratulations! You won Rs 10,000 in IRCTC Loyalty Draw. Scan QR to redeem gift card instantly.",
+      "escalation": "Gift expires at midnight. Scan now or forfeit.",
+      "signals": ["financial_lure", "greed", "urgency", "impersonation"]
+    },
+    {
+      "id": "novel_qr_08",
+      "category": "qr_fraud",
+      "opener": "OLX buyer: I am CRPF officer transferring from J&K. Will pay full amount for your sofa. Scan this merchant QR to confirm your UPI is not blocked.",
+      "escalation": "My transfer order is confirmed, need item packed by tomorrow. Scan before 6 PM please.",
+      "signals": ["authority", "impersonation", "urgency", "info_request"]
+    },
+    {
+      "id": "novel_qr_09",
+      "category": "qr_fraud",
+      "opener": "Nearby Petrol Pump: Your FASTag refill of Rs 500 pending. Scan below QR and enter MPIN to complete. Failed scans block toll passage.",
+      "escalation": "Your vehicle MH12BC4478 will be stopped at next toll if FASTag not recharged in 10 min. Scan urgently.",
+      "signals": ["urgency", "impersonation", "authority", "info_request", "fear"]
+    },
+    {
+      "id": "novel_qr_10",
+      "category": "qr_fraud",
+      "opener": "Flipkart delivery boy: I need to return your parcel as nobody is at home. To cancel return and keep package safe, scan QR and enter UPI PIN.",
+      "escalation": "I will leave in 2 mins. Scan fast sir, otherwise I mark undeliverable and you won't get item.",
+      "signals": ["urgency", "impersonation", "info_request"]
+    },
+    {
+      "id": "novel_qr_11",
+      "category": "qr_fraud",
+      "opener": "Local grocery shop loyalty: Rs 300 cashback credited! Scan QR at billing counter OR at home — enter UPI PIN to unlock reward.",
+      "escalation": "Cashback has to be claimed in next 15 min or lost. Scan at home now using this link: bit.ly/cashbk.",
+      "signals": ["financial_lure", "urgency", "greed", "suspicious_link", "info_request"]
+    },
+    {
+      "id": "novel_qr_12",
+      "category": "qr_fraud",
+      "opener": "Hello, I am recruiter from Infosys HR. Job offer INR 12 LPA confirmed for you. Scan this QR to pay Rs 2,500 background verification fee to get offer letter.",
+      "escalation": "Your seat will be given to next candidate if payment not done today. 45 other applicants waiting.",
+      "signals": ["financial_lure", "impersonation", "urgency", "greed"]
+    },
+    {
+      "id": "novel_qr_13",
+      "category": "qr_fraud",
+      "opener": "This is Mumbai Traffic Police. Your car MH12BC4478 has a pending challan of Rs 500 for no helmet. Scan QR in 2 min to pay, or vehicle seized.",
+      "escalation": "Tow truck dispatched. Pay via QR immediately to cancel seizure.",
+      "signals": ["authority", "impersonation", "urgency", "fear"]
+    },
+    {
+      "id": "novel_qr_14",
+      "category": "qr_fraud",
+      "opener": "Aadhaar Kendra: Your biometric verification failed — scan our QR code with UIDAI app and enter OTP to re-authenticate. Valid 5 mins only.",
+      "escalation": "Aadhaar will be frozen for all services including ration, bank. Scan now.",
+      "signals": ["authority", "impersonation", "urgency", "fear", "info_request"]
+    },
+    {
+      "id": "novel_qr_15",
+      "category": "qr_fraud",
+      "opener": "Zomato Refund: Your complaint ZO-447125 approved. Scan QR to receive Rs 420 refund instantly to your UPI.",
+      "escalation": "Refund window closes in 3 mins. Don't lose your money — scan now.",
+      "signals": ["financial_lure", "impersonation", "urgency"]
+    },
+
+    {
+      "id": "novel_voice_01",
+      "category": "voice_clone_job",
+      "opener": "Hi! I am calling from Tata Consultancy HR. Your resume was shortlisted for Senior Consultant at 18 LPA. To proceed to onboarding, please share your Aadhaar number and bank details for offer letter generation.",
+      "escalation": "Joining date next Monday. Others accepted already — you are last in queue. Share details in next 30 min or offer rescinded.",
+      "signals": ["impersonation", "financial_lure", "info_request", "urgency"]
+    },
+    {
+      "id": "novel_voice_02",
+      "category": "voice_clone_job",
+      "opener": "Hello sir, this is Naukri.com priority placements team. We have confirmed Senior Manager role at Reliance for you. Please pay Rs 4,500 registration fee on this UPI to release job offer.",
+      "escalation": "Only 3 seats left. Pay today to secure the 25 LPA package. Other candidates are queuing up.",
+      "signals": ["impersonation", "urgency", "financial_lure", "greed"]
+    },
+    {
+      "id": "novel_voice_03",
+      "category": "voice_clone_job",
+      "opener": "Good afternoon. This is the HR manager from Google India. Can you please share your PAN and a copy of your passport to verify identity before we can issue your LOI for Data Analyst, 35 LPA?",
+      "escalation": "Our VP needs to clear this today. If you don't share in next hour, the role goes to another shortlisted candidate.",
+      "signals": ["impersonation", "info_request", "urgency", "authority"]
+    },
+    {
+      "id": "novel_voice_04",
+      "category": "voice_clone_job",
+      "opener": "Ma'am, Amazon Work From Home programme — you qualified for data entry role, Rs 35,000/month, 4 hrs work. Pay Rs 1,999 kit fee on this UPI to start.",
+      "escalation": "Batch starting tomorrow. Pay today or you will miss the start.",
+      "signals": ["impersonation", "financial_lure", "urgency", "greed"]
+    },
+    {
+      "id": "novel_voice_05",
+      "category": "voice_clone_job",
+      "opener": "This is AI voice from your boss Ramesh — I need an emergency transfer. Please send Rs 50,000 to this UPI for client advance. I will reimburse tomorrow.",
+      "escalation": "I am in a meeting and can't talk — just do it urgently, everything is fine. I trust you.",
+      "signals": ["impersonation", "urgency", "authority", "empathy"]
+    },
+    {
+      "id": "novel_voice_06",
+      "category": "voice_clone_job",
+      "opener": "Sir, Wipro HR here. We reviewed your resume via LinkedIn. CTC 22 LPA confirmed. Kindly pay Rs 5,500 on provided UPI for document verification + ID card.",
+      "escalation": "Background check team is waiting for fee to proceed. Delay means we close your application.",
+      "signals": ["impersonation", "financial_lure", "urgency"]
+    },
+    {
+      "id": "novel_voice_07",
+      "category": "voice_clone_job",
+      "opener": "Recruiter from Flipkart: Confirmed Product Manager role for 28 LPA. Pay Rs 8,000 corporate training registration to this account to receive joining letter.",
+      "escalation": "Training batch starts Monday. 5 seats remaining.",
+      "signals": ["impersonation", "financial_lure", "greed", "urgency"]
+    },
+    {
+      "id": "novel_voice_08",
+      "category": "voice_clone_job",
+      "opener": "Son, this is your father's voice — I am in hospital after accident, please transfer Rs 75,000 urgently to this UPI so treatment can begin. Call me back later when free.",
+      "escalation": "Doctor won't start operation without deposit. Please don't delay, every minute matters.",
+      "signals": ["impersonation", "urgency", "empathy", "fear"]
+    },
+    {
+      "id": "novel_voice_09",
+      "category": "voice_clone_job",
+      "opener": "Hello, Infosys HR priority recruitment here. You cleared virtual interview (our AI analyzed your LinkedIn). Pay Rs 3,800 to confirm onboarding slot. 22 LPA.",
+      "escalation": "Slot closes at 6 PM today. Next intake is in 6 months.",
+      "signals": ["impersonation", "urgency", "financial_lure", "authority"]
+    },
+    {
+      "id": "novel_voice_10",
+      "category": "voice_clone_job",
+      "opener": "Ma'am, ICICI HR reaching out. Your profile perfect for Relationship Manager role, 16 LPA + incentives. Share Aadhaar + cancelled cheque on WhatsApp for quick onboarding.",
+      "escalation": "Selection committee meets tomorrow. Share today itself please.",
+      "signals": ["impersonation", "info_request", "urgency", "financial_lure"]
+    },
+    {
+      "id": "novel_voice_11",
+      "category": "voice_clone_job",
+      "opener": "I am HR from Deloitte Mumbai. Your resume forwarded by our consultant. Immediate hiring for Sr Consultant 32 LPA. Payment Rs 7,500 for profile activation on our portal.",
+      "escalation": "Batch starts next Monday. Fee refundable after joining, but must pay upfront today.",
+      "signals": ["impersonation", "financial_lure", "urgency"]
+    },
+    {
+      "id": "novel_voice_12",
+      "category": "voice_clone_job",
+      "opener": "Namaste, Accenture India recruitment — you're shortlisted for Manager level, 28 LPA. Please share your 10th/12th marksheets and cancelled cheque for verification on this number.",
+      "escalation": "Joining letter to be issued in 24 hrs if all docs shared today.",
+      "signals": ["impersonation", "info_request", "urgency"]
+    },
+    {
+      "id": "novel_voice_13",
+      "category": "voice_clone_job",
+      "opener": "Hi beta, this is your mama (maternal uncle). Emergency at home, need Rs 40,000 on UPI now — I'll explain when we meet. Your mother is fine, don't worry.",
+      "escalation": "Please just trust me and send. I'll return within 2 days. Don't call back, I'm in hospital corridor.",
+      "signals": ["impersonation", "urgency", "empathy"]
+    },
+    {
+      "id": "novel_voice_14",
+      "category": "voice_clone_job",
+      "opener": "Hello, this is HDFC HR team, Krishna speaking. You are selected as Assistant VP, CTC 45 LPA. Transfer Rs 15,000 stamp duty fee on this UPI for offer letter processing.",
+      "escalation": "Legal team waiting for confirmation. Pay today to secure joining date 1-May-25.",
+      "signals": ["impersonation", "financial_lure", "urgency", "greed"]
+    },
+    {
+      "id": "novel_voice_15",
+      "category": "voice_clone_job",
+      "opener": "Hi, calling from IndiGo cabin crew recruitment. Your profile matched the role. Share photo, ID, and Rs 2,400 air medical test fee on this UPI to confirm.",
+      "escalation": "Interview scheduled tomorrow 10 AM. Pay tonight to confirm seat.",
+      "signals": ["impersonation", "info_request", "urgency", "financial_lure"]
+    },
+
+    {
+      "id": "novel_aeps_01",
+      "category": "aeps_fraud",
+      "opener": "Aadhaar Kendra CSC: We are updating ration card link. Please share your Aadhaar number and touch your thumb on the biometric device we will send video link for.",
+      "escalation": "Without re-verification, your ration entitlement for Apr-25 will not be released. Call back urgently.",
+      "signals": ["impersonation", "authority", "urgency", "info_request", "fear"]
+    },
+    {
+      "id": "novel_aeps_02",
+      "category": "aeps_fraud",
+      "opener": "Post office AEPS kiosk: For your MGNREGA wage transfer Rs 4,500, we need your fingerprint scan. Please come to CSC or do biometric via Aadhaar mAadhaar app we are sending.",
+      "escalation": "If biometric not completed today, wages for this month will not credit. Urgent please.",
+      "signals": ["authority", "impersonation", "urgency", "info_request", "financial_lure"]
+    },
+    {
+      "id": "novel_aeps_03",
+      "category": "aeps_fraud",
+      "opener": "Namaste sir, Aadhaar link update pending for your bank A/c. Please share Aadhaar number on WhatsApp and do thumb impression on link sent after. 15 mins only valid.",
+      "escalation": "Banking services will be blocked till linkage complete. Send Aadhaar urgently.",
+      "signals": ["impersonation", "authority", "urgency", "info_request", "fear"]
+    },
+    {
+      "id": "novel_aeps_04",
+      "category": "aeps_fraud",
+      "opener": "UIDAI Compliance: You have violated Aadhaar rules by not updating biometric in 10 years. Pay Rs 500 fine + do biometric at nearest centre or on our online portal.",
+      "escalation": "Aadhaar will be deactivated within 7 days. Pay fine today on this UPI to avoid cancellation.",
+      "signals": ["authority", "impersonation", "urgency", "fear", "financial_lure"]
+    },
+    {
+      "id": "novel_aeps_05",
+      "category": "aeps_fraud",
+      "opener": "Your LPG subsidy of Rs 335 is on hold. Please share Aadhaar number and do biometric on the link we send (mAadhaar.gov.in.verify-biometric.xyz).",
+      "escalation": "Subsidy will go back to govt if not claimed today. Urgent please share Aadhaar.",
+      "signals": ["authority", "impersonation", "urgency", "suspicious_link", "info_request"]
+    },
+    {
+      "id": "novel_aeps_06",
+      "category": "aeps_fraud",
+      "opener": "SBI AEPS: We detected Aadhaar biometric linked to multiple accounts. For security, please do fresh thumb scan on the link to identify you as genuine holder.",
+      "escalation": "If not done in 30 min, all linked accounts will be frozen.",
+      "signals": ["impersonation", "authority", "urgency", "fear", "info_request"]
+    },
+    {
+      "id": "novel_aeps_07",
+      "category": "aeps_fraud",
+      "opener": "Rural Development Dept: Aadhaar biometric needed for Awas Yojana subsidy Rs 1.5L transfer to your A/c. Visit local CSC or do biometric on this govt link.",
+      "escalation": "Transfer window closes tomorrow. Without biometric, amount will be returned to govt.",
+      "signals": ["authority", "impersonation", "financial_lure", "urgency", "info_request"]
+    },
+    {
+      "id": "novel_aeps_08",
+      "category": "aeps_fraud",
+      "opener": "Govt of India cyber-cell AEPS: Your Aadhaar used in fraud case, we are verifying. Share Aadhaar number and thumb scan on our officer's WhatsApp (+91-7711xxxxxx).",
+      "escalation": "Delay means investigation will be filed against you. Share details within 20 min.",
+      "signals": ["authority", "impersonation", "urgency", "fear", "info_request"]
+    },
+    {
+      "id": "novel_aeps_09",
+      "category": "aeps_fraud",
+      "opener": "Ayushman Bharat: Your health insurance card Rs 5L cover is ready. Share Aadhaar and thumb biometric on our portal to collect card from CSC.",
+      "escalation": "Insurance allocation valid till today EOD. Share biometric now.",
+      "signals": ["authority", "impersonation", "financial_lure", "urgency", "info_request"]
+    },
+    {
+      "id": "novel_aeps_10",
+      "category": "aeps_fraud",
+      "opener": "Election Commission: Your voter ID – Aadhaar linking is mandatory per new rules. Fail to link and your vote for 2029 elections will be cancelled.",
+      "escalation": "Linkage window closes tonight. Do biometric+Aadhaar link via forwarded app in 30 min.",
+      "signals": ["authority", "impersonation", "urgency", "fear", "info_request"]
+    },
+    {
+      "id": "novel_aeps_11",
+      "category": "aeps_fraud",
+      "opener": "PMJDY (Jan Dhan) officer: Your Rs 10,000 overdraft facility activated. To claim, come to our agent with Aadhaar card or do thumb scan on shared link.",
+      "escalation": "Offer valid only today. Share Aadhaar OTP + thumb now to unlock Rs 10k.",
+      "signals": ["authority", "impersonation", "financial_lure", "greed", "urgency", "info_request"]
+    },
+    {
+      "id": "novel_aeps_12",
+      "category": "aeps_fraud",
+      "opener": "EPFO biometric: Your PF A/c KYC pending. Share Aadhaar and do thumb scan on agent's phone (will visit tomorrow). Rs 1.2 L in your account.",
+      "escalation": "KYC deadline expiring, PF may freeze. Schedule agent visit today.",
+      "signals": ["authority", "impersonation", "financial_lure", "urgency", "info_request"]
+    },
+
+    {
+      "id": "novel_wi_01",
+      "category": "whatsapp_investment",
+      "opener": "Welcome to PremierTrade Capital Investment Group VIP-447. Our SEBI-approved analysts give 95% accurate stock tips. Invest Rs 10,000 today, withdraw Rs 1,20,000 in 30 days.",
+      "escalation": "Only 2 VIP slots left tonight. Pay now to reserve or join general group (no guaranteed returns).",
+      "signals": ["financial_lure", "greed", "urgency", "impersonation"]
+    },
+    {
+      "id": "novel_wi_02",
+      "category": "whatsapp_investment",
+      "opener": "Sir, I am personal assistant of billionaire investor Rakesh Jhunjhunwala. He shared his secret portfolio with 50 VIP members. Pay Rs 25,000 membership to join and receive daily tips.",
+      "escalation": "Our analyst Rajesh already made Rs 11 lakh last week. Join today or lose this bull run.",
+      "signals": ["financial_lure", "greed", "impersonation", "authority"]
+    },
+    {
+      "id": "novel_wi_03",
+      "category": "whatsapp_investment",
+      "opener": "NIFTY-WEALTH Pro Group: Our AI trading bot gave 38% monthly ROI last quarter. Join now with Rs 5,000 joining fee to start doubling your money.",
+      "escalation": "12 slots left. Pay on this UPI before midnight or miss the next bull cycle.",
+      "signals": ["financial_lure", "greed", "urgency"]
+    },
+    {
+      "id": "novel_wi_04",
+      "category": "whatsapp_investment",
+      "opener": "Binance India: Exclusive crypto trading signals group. Deposit Rs 50,000 in our platform, we guarantee 20% weekly returns. Join via this Telegram link.",
+      "escalation": "Bitcoin rally starting tomorrow. Deposit tonight to ride the wave — others already earning Rs 2L/week.",
+      "signals": ["financial_lure", "greed", "urgency", "impersonation", "suspicious_link"]
+    },
+    {
+      "id": "novel_wi_05",
+      "category": "whatsapp_investment",
+      "opener": "Namaste sir, I am Anjali from Mumbai IIFL Securities. Due to your KYC completeness, you are invited to our Private Wealth Forum. Rs 1L initial investment, 30% returns in 2 months.",
+      "escalation": "Forum closes registration tomorrow. Pay to lock in HDFC Bank-approved investment.",
+      "signals": ["financial_lure", "greed", "impersonation", "urgency", "authority"]
+    },
+    {
+      "id": "novel_wi_06",
+      "category": "whatsapp_investment",
+      "opener": "Sir hello, I am Mukesh Ambani's nephew. Our family office is offering pre-IPO shares of Reliance Retail at 50% discount. Minimum Rs 2L, profit in 3 months 100% guaranteed.",
+      "escalation": "IPO listing announced next week. Transfer via this private UPI to secure allocation now.",
+      "signals": ["financial_lure", "greed", "impersonation", "urgency", "authority"]
+    },
+    {
+      "id": "novel_wi_07",
+      "category": "whatsapp_investment",
+      "opener": "Jupiter Wealth Trading App: You are selected to beta test our new AI stock picker. Deposit Rs 3,000 in demo account, we refund Rs 6,000 within 48 hrs. Link: jupiterwealthdemo.xyz.",
+      "escalation": "Beta slots filling fast. 200 users already made 200% profit. Deposit now.",
+      "signals": ["financial_lure", "greed", "urgency", "suspicious_link", "impersonation"]
+    },
+    {
+      "id": "novel_wi_08",
+      "category": "whatsapp_investment",
+      "opener": "Zerodha Kite Private Pool: Exclusive invite. Our Rs 50cr AUM fund manager is running a weekly doubling challenge. Deposit Rs 10,000, get Rs 20,000 in 7 days. 100% track record.",
+      "escalation": "Only 5 participants accepted per week. Deposit on this UPI in next 1 hr to qualify.",
+      "signals": ["financial_lure", "greed", "urgency", "impersonation"]
+    },
+    {
+      "id": "novel_wi_09",
+      "category": "whatsapp_investment",
+      "opener": "Bharti Forex Trade: Learn trading + deposit Rs 20,000 trading capital = returns up to 8 lakhs in 45 days. Our chief trader has 15 yrs experience in NYSE, Tokyo, NSE.",
+      "escalation": "Course fee + trading capital must be deposited by tonight. Next batch starts in June.",
+      "signals": ["financial_lure", "greed", "urgency", "authority"]
+    },
+    {
+      "id": "novel_wi_10",
+      "category": "whatsapp_investment",
+      "opener": "Stanford Educated Investor Forum: Pay Rs 7,500 one-time to join our private WhatsApp group. Weekly tips have averaged 41% monthly returns for 3 years. Send screenshot after UPI.",
+      "escalation": "Group full — need to kick someone. Pay today or be put on waitlist till Dec.",
+      "signals": ["financial_lure", "greed", "urgency", "authority"]
+    },
+    {
+      "id": "novel_wi_11",
+      "category": "whatsapp_investment",
+      "opener": "Hello, I am Ms Kavita Dhand from CNBC TV18 research team. We give private tips to our top viewers only. Rs 4,999 yearly membership for daily tips, 80% accuracy.",
+      "escalation": "Offer available only for first 100 viewers who pay today.",
+      "signals": ["impersonation", "financial_lure", "greed", "urgency"]
+    },
+    {
+      "id": "novel_wi_12",
+      "category": "whatsapp_investment",
+      "opener": "Angel One VIP Club: Complimentary access for verified users. Deposit Rs 15,000 in our managed account, returns credited every Friday. Withdraw anytime.",
+      "escalation": "Deposit today to start this week's trading cycle. Minimum withdrawal Rs 50,000 after 1 month.",
+      "signals": ["financial_lure", "greed", "impersonation", "urgency"]
+    },
+    {
+      "id": "novel_wi_13",
+      "category": "whatsapp_investment",
+      "opener": "Bitget Futures India — high leverage trading group. 10x returns in 24 hrs guaranteed with our signals. Pay Rs 8,500 signal fee, join Telegram.",
+      "escalation": "Bitcoin shorting window closing tonight. Pay now or miss this week's profit cycle.",
+      "signals": ["financial_lure", "greed", "urgency", "impersonation"]
+    },
+    {
+      "id": "novel_wi_14",
+      "category": "whatsapp_investment",
+      "opener": "Mrs Sharma (me) earned Rs 14 lakh in 2 months from Trading Signals Academy. Only Rs 12,000 entry fee. Results shown live. Join Telegram: trading_academy_in.",
+      "escalation": "She is posting her bank screenshots tonight. Join and transfer before 8 PM please to not miss profit session.",
+      "signals": ["financial_lure", "greed", "urgency", "suspicious_link"]
+    },
+    {
+      "id": "novel_wi_15",
+      "category": "whatsapp_investment",
+      "opener": "Tata Stock Research team here: You are shortlisted for our limited-edition newsletter. Pay Rs 5,000 one-time. 98% hit rate last year. Don't miss Tata Technologies pre-IPO tip.",
+      "escalation": "Only 50 members allowed. 48 already paid. Last 2 slots.",
+      "signals": ["impersonation", "financial_lure", "greed", "urgency"]
+    },
+
+    {
+      "id": "novel_matri_01",
+      "category": "matrimonial_fraud",
+      "opener": "Hi, I saw your profile on Shaadi.com. I am Dr Arjun, based in London, coming to India to meet family. Can you share your bank A/c and Aadhaar so my father's lawyer can transfer gift Rs 2L?",
+      "escalation": "My flight is next week, want to confirm everything before. Please share urgently so formalities are done.",
+      "signals": ["financial_lure", "greed", "impersonation", "urgency", "info_request"]
+    },
+    {
+      "id": "novel_matri_02",
+      "category": "matrimonial_fraud",
+      "opener": "Namaste ji, matrimony contact here. I am widow, based in Dubai, own 3 flats and Rs 1.5 crore FD. Looking for genuine partner. Will transfer Rs 50L to your A/c as marriage gift.",
+      "escalation": "Share bank details so I send. My late husband's will is being executed, time is short.",
+      "signals": ["financial_lure", "greed", "empathy", "info_request", "urgency"]
+    },
+    {
+      "id": "novel_matri_03",
+      "category": "matrimonial_fraud",
+      "opener": "Hi dear, I am Capt Kavita Sharma, Indian Army, posted in Leh. Saw your Jeevansathi profile. To send you engagement ring worth Rs 4 L via military courier, pay Rs 18,500 customs clearance.",
+      "escalation": "Courier reached Delhi customs. Pay today or parcel returns to Army HQ.",
+      "signals": ["impersonation", "authority", "urgency", "financial_lure"]
+    },
+    {
+      "id": "novel_matri_04",
+      "category": "matrimonial_fraud",
+      "opener": "Hello sister, I got your number from marriage bureau. Engineer settled in Canada, 75k CAD salary. Want to meet your parents. Book flight ticket via my travel agent (Rs 45,000 advance to this UPI).",
+      "escalation": "Tickets getting expensive — book today. I'll refund via wire transfer next week.",
+      "signals": ["impersonation", "financial_lure", "urgency"]
+    },
+    {
+      "id": "novel_matri_05",
+      "category": "matrimonial_fraud",
+      "opener": "My dear, I am Doctor from UK. Saw your profile. Ready to marry but first send Rs 75,000 visa processing to UK High Commission account. I will refund once visa approved.",
+      "escalation": "Visa interview next week. Pay today so paperwork can start.",
+      "signals": ["financial_lure", "impersonation", "urgency"]
+    },
+    {
+      "id": "novel_matri_06",
+      "category": "matrimonial_fraud",
+      "opener": "Dear sir, I am a NRI woman, Germany. I genuinely liked your profile. Pls share Aadhaar + PAN for German embassy background verification, I will do for you here.",
+      "escalation": "Without verification, the process delays by 6 months. Share today — I have big surprise for you.",
+      "signals": ["info_request", "impersonation", "urgency", "greed"]
+    },
+    {
+      "id": "novel_matri_07",
+      "category": "matrimonial_fraud",
+      "opener": "Hi! Sr Software Engineer at Google California, 35 yo divorced, looking for serious partner. My mother sending Rs 3L as engagement sagun. Share UPI, bank details.",
+      "escalation": "She is boarding flight to India tomorrow. Confirm UPI today please.",
+      "signals": ["financial_lure", "greed", "impersonation", "info_request", "urgency"]
+    },
+    {
+      "id": "novel_matri_08",
+      "category": "matrimonial_fraud",
+      "opener": "Hello bhai, my sister Priya wants to marry you. Our family is from Jaipur, traditional. Father gift Rs 10L. Share bank and Aadhaar for property papers registry.",
+      "escalation": "Daddyji is old, wants registry this month. Send details today.",
+      "signals": ["financial_lure", "greed", "empathy", "info_request", "urgency"]
+    },
+    {
+      "id": "novel_matri_09",
+      "category": "matrimonial_fraud",
+      "opener": "Darling, I am CA Meghna from Bangkok. Ready for marriage. Send me Rs 25,000 on this UPI so I can book engagement hall in Mumbai for ceremony next month.",
+      "escalation": "Hall booking gets cancelled by tomorrow. Don't let down our future.",
+      "signals": ["financial_lure", "empathy", "urgency", "greed"]
+    },
+    {
+      "id": "novel_matri_10",
+      "category": "matrimonial_fraud",
+      "opener": "Hi, I am widow Ekta Mehta, businesswoman in Bangalore. Have 2 apartments, Rs 2cr FD. Found your Jeevansathi profile. Would love to meet. I'll transfer Rs 1L token money today — share bank A/c.",
+      "escalation": "This is serious proposal. Please don't delay, I have many proposals.",
+      "signals": ["financial_lure", "greed", "empathy", "info_request", "urgency"]
+    },
+    {
+      "id": "novel_matri_11",
+      "category": "matrimonial_fraud",
+      "opener": "I found you via shaadi. I'm British citizen of Indian origin, oil industry executive. Relocating to Mumbai. Need Rs 85,000 for cargo shipment of household goods (pay to shipping co).",
+      "escalation": "Shipment is in Chennai port, demurrage charges Rs 5k daily. Pay by today please.",
+      "signals": ["impersonation", "financial_lure", "urgency"]
+    },
+
+    {
+      "id": "novel_parcel_01",
+      "category": "parcel_scam",
+      "opener": "DHL Customs: Your parcel from USA (SKU: 4471258) containing luxury item has customs duty of Rs 8,950 pending. Pay via link in next 24 hrs or parcel returns.",
+      "escalation": "Late fee Rs 500/day thereafter. Pay immediately to avoid loss.",
+      "signals": ["impersonation", "urgency", "financial_lure", "suspicious_link"]
+    },
+    {
+      "id": "novel_parcel_02",
+      "category": "parcel_scam",
+      "opener": "FedEx India: Package with value USD 12,000 from your UK relative stuck at Mumbai port. Clearance fee Rs 21,000. Share Aadhaar + pay to this UPI to release.",
+      "escalation": "Today is last day for free release. Tomorrow confiscated under Customs Act.",
+      "signals": ["impersonation", "authority", "financial_lure", "urgency", "info_request"]
+    },
+    {
+      "id": "novel_parcel_03",
+      "category": "parcel_scam",
+      "opener": "Indian Customs: Your international parcel DL225587412 contains 20 iPhones + cash. We need to verify sender. Pay Rs 3,500 verification fee to prevent seizure.",
+      "escalation": "Under Customs Act 2012 section 124, parcel will be auctioned if not claimed in 48 hrs.",
+      "signals": ["authority", "impersonation", "urgency", "fear", "financial_lure"]
+    },
+    {
+      "id": "novel_parcel_04",
+      "category": "parcel_scam",
+      "opener": "Blue Dart: Your parcel from Dubai has prohibited items (sim cards). NCB Mumbai has flagged. Pay Rs 15,000 legal fee to avoid police case + contact DCP's WhatsApp.",
+      "escalation": "NCB officers visiting tomorrow. Pay now to close case at our level.",
+      "signals": ["authority", "impersonation", "fear", "urgency", "financial_lure"]
+    },
+    {
+      "id": "novel_parcel_05",
+      "category": "parcel_scam",
+      "opener": "TNT Global: Your consignment from London (value £2,500) blocked at IGI airport customs. Pay Rs 18,500 GST + release fee via UPI to clear immediately.",
+      "escalation": "Clearance window expires at 6 PM today. After that, additional Rs 2L demurrage.",
+      "signals": ["impersonation", "authority", "urgency", "fear", "financial_lure"]
+    },
+    {
+      "id": "novel_parcel_06",
+      "category": "parcel_scam",
+      "opener": "DTDC: Your package from Singapore contains iPhone 16 Pro (Rs 1.8L). Customs requesting photo ID + Rs 6,500 duty. WhatsApp Aadhaar to +91-9887xxxxxx.",
+      "escalation": "Parcel holding charges Rs 1,000/day from tomorrow. Share Aadhaar + UPI transfer now.",
+      "signals": ["impersonation", "authority", "financial_lure", "urgency", "info_request"]
+    },
+    {
+      "id": "novel_parcel_07",
+      "category": "parcel_scam",
+      "opener": "Amazon Logistics Int'l: Your package from Germany has cleared customs but needs Rs 4,500 delivery fee to local courier. Pay via UPI — item cannot be COD as insured.",
+      "escalation": "Courier visiting tomorrow at 11 AM, pay in advance to avoid redelivery charges.",
+      "signals": ["impersonation", "financial_lure", "urgency"]
+    },
+    {
+      "id": "novel_parcel_08",
+      "category": "parcel_scam",
+      "opener": "Aramex: Parcel from cousin in Dubai (value AED 8,000 = Rs 1.8L) held by customs for verification. Send Aadhaar card pic + Rs 12,000 clearance on UPI to release.",
+      "escalation": "Customs officer will visit office tomorrow. Pay today to avoid officer visit and police case.",
+      "signals": ["impersonation", "authority", "financial_lure", "fear", "urgency", "info_request"]
+    }
+  ]
+}

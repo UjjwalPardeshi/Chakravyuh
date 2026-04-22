@@ -65,6 +65,14 @@ DEFAULT_REGIONAL_PATH = _ENV_DIR / "regional_templates.json"
 DEFAULT_MULTITURN_PATH = _ENV_DIR / "multiturn_templates.json"
 DEFAULT_AUGMENTED_PATH = _ENV_DIR / "augmented_templates.json"
 
+# v1.0.0 dataset expansion (April 22, 2026):
+#   scam_novel.json     — 76 novel patterns (QR fraud, voice-clone, AePS, WhatsApp investment, matrimonial, parcel)
+#   benign_augmented.json — 134 new benign incl 30 hard negatives (urgent-looking but legit bank alerts, govt notices, etc.)
+# Combined, these shift the training distribution from 5.4:1 scam:benign to ~2.2:1,
+# and expose the model to 6 attack vectors absent from the original 200 canonical templates.
+DEFAULT_SCAM_NOVEL_PATH = _ENV_DIR / "scam_novel.json"
+DEFAULT_BENIGN_AUG_PATH = _ENV_DIR / "benign_augmented.json"
+
 # Test-set path — used ONLY to verify no overlap with training data, never for training.
 TEST_SET_PATH = Path("data/chakravyuh-bench-v0/scenarios.jsonl")
 
@@ -204,7 +212,9 @@ def build_training_examples(
     regional_path: Path = DEFAULT_REGIONAL_PATH,
     multiturn_path: Path = DEFAULT_MULTITURN_PATH,
     augmented_path: Path = DEFAULT_AUGMENTED_PATH,
-    benign_ratio: float = 0.2,
+    scam_novel_path: Path = DEFAULT_SCAM_NOVEL_PATH,
+    benign_aug_path: Path = DEFAULT_BENIGN_AUG_PATH,
+    benign_ratio: float = 0.3,
     seed: int = 42,
 ) -> list[TrainingExample]:
     """Build the training corpus from 5 synthetic template sources.
@@ -231,11 +241,15 @@ def build_training_examples(
     test_texts = _load_test_set_scammer_texts(TEST_SET_PATH)
 
     # --- Scam examples from all scam sources ---
+    # scam_novel covers attack vectors (QR, voice-clone, AePS, WhatsApp investment,
+    # matrimonial, parcel) that the 200 canonical templates don't touch. These were
+    # authored fresh (post-benchmark) so they skip the soft-leakage filter.
     for source_path, kind in (
         (templates_path, "canonical"),
         (paraphrase_path, "paraphrase"),
         (augmented_path, "augmented"),
         (regional_path, "regional"),
+        (scam_novel_path, "novel"),
     ):
         raw_templates = _load_json_templates(source_path)
         if kind == "canonical" and test_texts:
@@ -280,7 +294,10 @@ def build_training_examples(
         )
 
     # --- Benign examples (target benign_ratio of total) ---
-    benign_templates = _load_json_templates(benign_path)
+    # Pool combines canonical + augmented benign (incl. hard negatives that look
+    # suspicious at first glance — urgent bank alerts, police traffic challans,
+    # govt income-tax notices). Hard negatives directly attack the FPR problem.
+    benign_templates = _load_json_templates(benign_path) + _load_json_templates(benign_aug_path)
     if not benign_templates:
         logger.warning(
             "No benign templates at %s — training will be scam-only, "
