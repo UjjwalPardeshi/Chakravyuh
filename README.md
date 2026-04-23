@@ -1,11 +1,36 @@
 # Chakravyuh
 
-A self-improving multi-agent RL environment for Indian UPI fraud detection — built for the **Meta PyTorch OpenEnv Hackathon 2026 (Bangalore, Round 2)**.
+A multi-agent RL environment for Indian UPI fraud detection — built for the **Meta PyTorch OpenEnv Hackathon 2026 (Bangalore)**.
 
 In the Mahabharata, the Chakravyuh was an impenetrable multi-layered battle formation. We've built a modern one — five AI agents forming a multi-layered trap around India's digital payment system.
 
-**Primary theme**: Self-Improving agent systems
-**Secondary theme**: Multi-Agent Interactions
+**Themes covered**
+
+- **Theme 1 — Multi-Agent Interactions**: 5 agents, asymmetric information, partial observability, emergent theory-of-mind behaviour (the Analyzer must infer the Scammer's intent from the Victim's responses).
+- **Theme 4 — Self-Improvement**: a Regulator meta-agent adapts rule weights from aggregated outcomes, and a sentence-embedding novelty scorer (MiniLM-L6) rewards attack trajectories that are semantically distant from the last 500 episodes — driving recursive curriculum growth.
+
+## Why This Environment — Scalable Oversight as a Research Contribution
+
+Chakravyuh is, at its core, a **scalable-oversight** benchmark for LLM training. The research frame: *can we train an LLM to monitor, analyze, and explain the behaviour of another AI agent operating adversarially in a complex, partially observable multi-agent setting?*
+
+The **Analyzer** is the oversight LLM under training. It watches a scripted Scammer attempt to manipulate a scripted Victim, must decide whether the interaction is fraudulent in real time (partial observability — it sees only the chat, never the transaction), and must produce a human-readable *explanation* of its decision. A second oversight agent — the **Bank Monitor** — provides independent cross-modal confirmation (transaction metadata only, no chat), making Chakravyuh a **two-tier oversight system** where the Analyzer's claims can be corroborated or contradicted.
+
+The composable rubric system ([chakravyuh_env/rubrics.py](chakravyuh_env/rubrics.py)) grades three pillars of oversight: **detection**, **calibration**, and **explanation** — see [Composable Rubric System](#composable-rubric-system) below.
+
+---
+
+## Submission Materials
+
+| Asset | Link |
+|---|---|
+| Hugging Face Space (live env) | _TBD — see [Deployment](#deployment) to run locally in the meantime_ |
+| Training Colab (TRL + GRPO) | [`training/train_colab.ipynb`](training/train_colab.ipynb) |
+| 2-min overview video | _TBD_ |
+| HF Blog post | _TBD_ |
+| Slide deck (PDF) | _TBD_ |
+| W&B training run | _TBD_ |
+| Public benchmark dataset | [`data/chakravyuh-bench-v0/`](data/chakravyuh-bench-v0/) (135 scenarios) |
+| Official hackathon guidelines | [`guidelines/`](guidelines/) |
 
 ---
 
@@ -21,14 +46,14 @@ Five agents with asymmetric information:
 
 ```
          CLOUD ┌─────────────────┐
-               │   REGULATOR     │  adapts rules every 10 eps
-               │ (rule updater)  │  (aggregate signals only)
+               │   REGULATOR     │  adapts rules from aggregated outcomes
+               │ (meta-agent)    │  (aggregate signals only — no chat, no tx)
                └────────┬────────┘
                         │
       ON-DEVICE ┌───────▼─────────┐
        ┌───────▶│ BEHAVIORAL      │   runs locally on victim's phone
        │ chat   │ ANALYZER        │   messages NEVER leave device
-       │(local) │ (oversight)     │
+       │(local) │ (oversight LLM) │   ← agent under training
    ┌───┴─────┐  └─────────────────┘
    │ SCAMMER │◀───chat─▶┌──────────┐
    └─────────┘          │  VICTIM   │
@@ -41,81 +66,187 @@ Five agents with asymmetric information:
                    └─────────────────┘
 ```
 
-Messages stay on the victim's device (like Gmail's on-device spam filter). Only anonymized risk scores reach the bank. End-to-end encryption is fully preserved.
+Messages stay on the victim's device. Only anonymized risk scores reach the bank. End-to-end encryption is fully preserved — the architecture mirrors real on-device spam filtering (e.g. Gmail).
 
-## Architecture
+### Architecture
 
 | Agent | Role | Sees | Trained? |
 |---|---|---|---|
-| Scammer | Adversary | Own messages + victim text | No (50 curated NPCI-grounded templates) |
-| Victim | Target | Chat + own profile | No (scripted by demographic) |
-| Analyzer | Oversight | Full chat transcript | **Yes — LoRA on Qwen2.5-7B (Day 2+)** |
+| Scammer | Adversary | Own plan + victim responses | No (376 curated templates, NPCI/RBI-grounded) |
+| Victim | Target | Chat + own demographic profile | No (scripted; SENIOR / SEMI_URBAN / YOUNG_URBAN profiles) |
+| Analyzer | Oversight | Full chat transcript | **Yes — LoRA on Qwen2.5-7B-Instruct via TRL GRPO** |
 | Bank Monitor | Oversight | Tx metadata only | No (scripted) |
-| Regulator | Meta-agent | Aggregate outcomes | No (rule-weight updater) |
+| Regulator | Meta-agent | Aggregate outcomes across episodes | No (rule-weight updater) |
+
+### Attack corpus
+
+- **376 scam templates** — 200 base + 100 augmented + 76 novel (post-2024) across 5 categories (OTP theft, KYC fraud, impersonation, loan-app fraud, investment fraud) + 6 novel categories (QR fraud, voice-clone job, WhatsApp investment, AePS fraud, matrimonial crypto, parcel scam)
+- **204 benign templates** — 70 base + 134 augmented (including 30 hard-negatives: HDFC fraud alerts, Mumbai Police traffic challans, RBI advisories — urgent-looking but legitimate)
+- Multi-lingual: English + Hindi + Tamil + Telugu + Kannada + Bengali + Marathi
+- 5 intents: urgency, authority, empathy, greed, fear
+- 5 impersonation roles: bank, govt, family, delivery, employer
+- 2025–2026 attack vectors: digital arrest, crypto-exchange spoofing, deepfake CEO, UPI collect request, matrimonial scams, FASTag KYC, ABHA Health ID, Aadhaar–DL linkage
+
+---
 
 ## Quickstart
 
+### Option A — Install and run via OpenEnv (recommended for judges)
+
 ```bash
-# Clone and install
+# Clone
+git clone https://github.com/chakravyuh/chakravyuh && cd chakravyuh
+
+# Option A.1 — bare Python
 pip install -e .
+uvicorn server.app:app --host 0.0.0.0 --port 8000
 
-# Run 100-episode scripted baseline
-python -m training.run_scripted_baseline --episodes 100 --no-wandb
+# Option A.2 — uv
+uv sync && uv run server
 
-# Run the Gradio demo (requires: pip install -e '.[demo]')
-python -m server.demo_ui
+# Option A.3 — Docker
+docker build -t chakravyuh-env . && docker run -p 8000:8000 chakravyuh-env
 
-# Run eval against Mode C benchmark with bootstrap CI
-python -m eval.mode_c_real_cases --analyzer scripted --bootstrap 1000
-
-# Run tests
-pytest tests/ -v
+# Option A.4 — Hugging Face Space
+#   See "Submission Materials" above for the live HF Space URL
 ```
 
-### Demo
+All four paths are verified by `openenv validate .`:
 
-The Gradio UI at `server/demo_ui.py` provides two tabs:
+```
+[OK] Ready for multi-mode deployment
+Supported modes: [YES] docker  [YES] openenv_serve  [YES] uv_run  [YES] python_module
+```
 
-1. **🎬 Replay** — 5 curated deterministic episodes (seed-reproducible, zero inference risk for pitch day)
-2. **🔬 Live** — paste any suspicious message, analyzer scores it instantly (for Q&A)
-
-The 5 curated episodes tell the full narrative:
-
-| # | Story | Demonstrates |
-|---|---|---|
-| 1 | Multi-Agent Defense Wins | Analyzer + Bank Monitor cooperate, tx frozen |
-| 2 | Skeptical Victim Refuses | Tech-savvy young user recognizes pattern, refuses |
-| 3 | Verification-First Behavior | Victim calls bank to verify — ideal outcome |
-| 4 | Detection Too Late | Analyzer flags but victim already complied — motivates LoRA |
-| 5 | Scripted Rules Blind Spot | Rule-based misses subtle KYC scam — gap the LoRA closes |
-
-### Minimal usage
+### OpenEnv client usage (what training loops consume)
 
 ```python
-from chakravyuh_env import ChakravyuhEnv, VictimProfile
+from chakravyuh_env.openenv_client import ChakravyuhEnvClient
+from chakravyuh_env import ChakravyuhAction
 
-env = ChakravyuhEnv(victim_profile=VictimProfile.SENIOR, gullibility=1.5)
-obs = env.reset(seed=42)
-done = False
-while not done:
-    obs, reward, done, info = env.step()
-print(f"Analyzer flagged: {info['outcome'].analyzer_flagged}")
-print(f"Scammer reward: {reward.scammer}")
+with ChakravyuhEnvClient(base_url="http://localhost:8000").sync() as env:
+    result = env.reset(seed=42)
+    # `result.observation.chat_history` contains the scammer opener
+    # and victim's initial response (internal turns 1-2).
+
+    # Analyzer's turn-3 decision:
+    result = env.step(ChakravyuhAction(
+        score=0.92,                              # suspicion in [0, 1]
+        signals=["urgency", "info_request"],     # from the 11-signal taxonomy
+        explanation="Asks for OTP with urgency pressure from a self-claimed bank agent.",
+    ))
+
+    if not result.done:
+        # Analyzer's turn-6 decision after scammer escalation + victim reply:
+        result = env.step(ChakravyuhAction(score=0.95, signals=["impersonation"]))
+
+    print("reward:", result.reward)
+    print("outcome:", result.observation.outcome)
+    print("rubric breakdown:", result.observation.reward_breakdown)
 ```
 
-## Mode C Benchmark Results (`chakravyuh-bench-v0`, n=135)
+### Direct-import usage (no HTTP, for unit tests and trainers colocated with the env)
 
-Scripted rule-based baseline against 135 real-grounded scenarios (115 scams + 20 benign/borderline):
+```python
+from chakravyuh_env import ChakravyuhOpenEnv, ChakravyuhAction
+
+env = ChakravyuhOpenEnv()
+obs = env.reset(seed=42)
+
+obs = env.step(ChakravyuhAction(score=0.92, signals=["urgency"]))
+if not obs.done:
+    obs = env.step(ChakravyuhAction(score=0.95, signals=["impersonation"]))
+
+print(obs.reward, obs.reward_breakdown)
+```
+
+### Run the tests
+
+```bash
+pytest tests/ -v
+# 131 passing: test_openenv.py (27) + test_rubrics.py (38) + test_smoke.py (6) + ...
+```
+
+---
+
+## OpenEnv Compliance
+
+| Requirement | Status |
+|---|---|
+| Uses `openenv.core.env_server.Environment` base class | ✅ [`chakravyuh_env/openenv_environment.py`](chakravyuh_env/openenv_environment.py) |
+| Pydantic `Action` / `Observation` / `State` subclasses | ✅ [`chakravyuh_env/openenv_models.py`](chakravyuh_env/openenv_models.py) |
+| Client / server separation (client never imports server internals) | ✅ [`chakravyuh_env/openenv_client.py`](chakravyuh_env/openenv_client.py) |
+| Gym-style API: `reset` / `step` / `state` | ✅ |
+| Valid `openenv.yaml` manifest | ✅ |
+| `openenv validate .` (static) | ✅ 4/4 deployment modes |
+| `openenv validate --url …` (runtime) | ✅ 6/6 endpoint criteria: `/health`, `/schema`, `/metadata`, `/openapi.json`, `/mcp`, mode consistency |
+| OpenEnv **Rubric** system, composable | ✅ [`chakravyuh_env/rubrics.py`](chakravyuh_env/rubrics.py) — see next section |
+| Uses OpenEnv latest release | ✅ `openenv-core >= 0.2.3` |
+
+---
+
+## Composable Rubric System
+
+The Analyzer's reward decomposes into **five orthogonal, introspectable child rubrics** rather than monolithic scoring. Each child is a proper `openenv.core.rubrics.Rubric` subclass with its own `last_score` and can be swapped, reweighted, or replaced (e.g. with `LLMJudge`) without touching the top-level.
+
+| Rubric | Weight | Signal |
+|---|---|---|
+| `DetectionRubric` | **+1.0** | Fires on *early* flag (by turn ≤ 5) of a real scam |
+| `MissedScamRubric` | **−0.5** | Fires when analyzer missed AND money was extracted |
+| `FalsePositiveRubric` | **−0.3** | Fires when a benign episode was incorrectly flagged |
+| `CalibrationRubric` | **+0.2** | Rewards suspicion-score calibration against ground truth (high on scam, low on benign) |
+| `ExplanationRubric` | **+0.4** | Heuristic quality of natural-language explanation (length + signal references) |
+
+### Inspection
+
+Every child rubric exposes its score on every call. Training loops can read them directly:
+
+```python
+env = ChakravyuhOpenEnv()
+# …run an episode…
+for name, child in env.rubric.named_rubrics():
+    print(f"{name:18s} last_score={child.last_score}")
+
+# detection           last_score=1.0
+# missed_scam         last_score=0.0
+# false_positive      last_score=0.0
+# calibration         last_score=1.0
+# explanation         last_score=0.7
+```
+
+The full breakdown travels back to clients on every terminal observation (`observation.reward_breakdown`), so wandb/W&B logs can plot every sub-signal independently.
+
+---
+
+## Anti-Reward-Hacking Design
+
+Reward hacking is called out as the biggest practical failure mode in the hackathon guide. Our design follows the guide's prescriptions directly:
+
+1. **Multiple independent reward functions.** Five orthogonal child rubrics — each of `detection`, `missed_scam`, `false_positive`, `calibration`, `explanation` is computed from a different slice of the outcome or action, so no single signal can be gamed in isolation.
+2. **Non-compounding signals.** Each child clips to `[0, 1]` (or `{0, 1}` for boolean indicators). The top-level sum can be bounded analytically — there's no multiplicative reward-stacking route.
+3. **Explicit false-positive penalty.** `FalsePositiveRubric` (−0.3 weight) makes "flag everything" a dominated strategy. A degenerate `score=1.0` agent gets *worse* reward on benign episodes than on scams — the opposite of what reward hacking needs.
+4. **Calibration term rewards low scores on benign.** `CalibrationRubric.benign_target=0.1` — an agent that always outputs `1.0` tanks its calibration on benign cases. Confidence must match ground truth, in both directions.
+5. **Explanation signal cross-references action.signals.** `ExplanationRubric` only awards its signal-match bonus if the *declared signals array* appears in the *natural-language explanation*. An agent cannot output empty-signals + boilerplate and collect the bonus.
+6. **Trajectory-aware detection.** `DetectionRubric` reads `outcome.detected_by_turn ≤ 5` — just flipping `score > threshold` on the final turn doesn't count as "detection." The agent must flag *early*, which means it must actually engage with the intermediate observation.
+7. **Bank Monitor is independent.** The scripted Bank Monitor uses transaction metadata the Analyzer never sees. The final "money extracted" outcome depends on *both* oversight channels — the Analyzer cannot hack its way to suppressing money extraction single-handedly.
+8. **Held-out novel split.** 30 post-2024 novel attacks (no equivalent in the training corpus) sit in the eval benchmark. Training-set overfitting shows up as a detection gap on this split — we report it explicitly in the eval table below.
+
+A v2 reward profile with stiffer false-positive weighting and zero format-bonus-on-benign is already implemented (`training/grpo_analyzer.py --reward-profile v2`) for use when reward-hacking behaviour is detected during training.
+
+---
+
+## Results
+
+### Mode C benchmark — 135 real-grounded scenarios (scripted baseline)
 
 | Metric | Value | 95% CI |
 |---|---|---|
-| **Detection rate (recall)** | **72.2%** | [63.5%, 80.0%] |
+| Detection rate (recall) | **72.2%** | [63.5%, 80.0%] |
 | Precision | 93.3% | — |
-| F1 score | 0.814 | — |
+| F1 | 0.814 | — |
 | False positive rate | 30.0% | — |
-| Accuracy | 71.9% | — |
 
-### Per-category detection
+#### Per-category detection
 
 | Category | n | Detection |
 |---|---|---|
@@ -125,119 +256,164 @@ Scripted rule-based baseline against 135 real-grounded scenarios (115 scams + 20
 | Loan-app fraud | 18 | 67% |
 | Investment fraud | 26 | 35% |
 
-### Per-difficulty detection
-
-| Difficulty | n | Detection |
-|---|---|---|
-| Easy | 29 | 88% |
-| Medium | 59 | 81% |
-| Hard | 17 | 43% |
-| **Novel (post-2024)** | **30** | **50%** |
-
-### The headline finding — temporal generalization gap
+#### Temporal-generalization gap (the headline finding)
 
 | Subset | Detection | 95% CI | n |
 |---|---|---|---|
 | **Known (pre-2024) scams** | **80.0%** | [70.6%, 88.2%] | 85 |
 | **Novel (post-2024) scams** | **50.0%** | [30.0%, 66.7%] | 30 |
-| **Gap** | **30pp** | — | |
+| **Gap** | **30 pp** | — | — |
 
-- **Permutation test p-value**: 0.0028 (highly significant)
-- **Cohen's d**: 0.694 (medium-to-large effect)
+- Permutation test p-value: **0.0028** (highly significant)
+- Cohen's d: **0.694** (medium-to-large effect)
 - 95% CIs **do not overlap** — this is a real distribution-shift gap, not noise
 
-Rule-based detectors catch 80% of pre-2024 scam patterns but only 50% of novel post-2024 attacks (matrimonial crypto grooming, deepfake CEO, digital arrest, metaverse real estate, AI chatbot trading). **This is the gap the LoRA-trained Analyzer is designed to close** (Day 2–3 target: ≥75% detection on novel subset).
+Rule-based detectors catch 80% of pre-2024 scam patterns but only 50% of novel post-2024 attacks (matrimonial crypto grooming, deepfake CEO, digital arrest, metaverse real estate, AI chatbot trading). **This is the gap the LoRA-trained Analyzer is designed to close** — target: ≥75% detection on the novel subset.
 
-## Day-1 Env Baseline Results
-
-300 episodes across mixed victim profiles, **200 attack templates**, scripted agents only:
+### Env rollout baseline — scripted agents, 300 episodes
 
 | Metric | Value |
 |---|---|
-| Analyzer detection rate | **47%** |
+| Analyzer detection rate | 47% |
 | Scam extraction rate | 18% |
 | Victim refusal rate | 20% |
 | Victim sought verification | 13% |
 | Bank freeze rate | 6% |
 | Avg detection turn | ~3 |
 
-**Per-category detection** (shows where LoRA training will help most):
+The scripted Analyzer is intentionally a *competent-but-beatable* baseline — strong on explicit info-request patterns, weak on subtler financial-lure language, multi-lingual attacks, and modern 2025–2026 attack vectors. These hard cases are the gap the LoRA-trained Qwen2.5-7B Analyzer closes during GRPO post-training.
 
-| Category | Rate |
-|---|---|
-| KYC fraud | 70% |
-| OTP theft | 58% |
-| Loan-app fraud | 52% |
-| Impersonation | 34% |
-| Investment fraud | 26% |
+### Training curves
 
-The scripted Analyzer is intentionally a *competent-but-beatable* baseline — strong on explicit info-request patterns (OTP, KYC links), weak on subtler financial-lure language, multi-lingual attacks (Hindi/Tamil/Telugu/Bengali/Kannada), deepfake voice, digital-arrest, matrimonial, and modern 2025–2026 attack vectors. These hard cases are the gap a LoRA-trained Qwen2.5-7B Analyzer closes on Day 2 (target: 75%+).
+_Training plots will be embedded here once the final run completes — see [Submission Materials](#submission-materials) for the live W&B link._
 
-### Attack Distribution (200 templates)
-
-- 5 categories × 40 templates each (balanced)
-- 5 intents (urgency, authority, empathy, greed, fear)
-- 5 impersonation roles (bank, govt, family, delivery, employer)
-- Mixed regional language (English, Hindi, Tamil, Telugu, Kannada, Bengali)
-- 2025–2026 attack patterns: digital arrest, crypto exchange spoofing, deepfake CEO, UPI collect request, matrimonial scams, FASTag KYC, ABHA Health ID, Aadhaar-DL linkage
+---
 
 ## Repo Layout
 
 ```
 chakravyuh/
 ├── chakravyuh_env/
-│   ├── agents/               # All 5 agent implementations
-│   ├── environment.py        # Main env (OpenEnv-compliant)
-│   ├── novelty.py            # MiniLM-based novelty metric
-│   ├── reward.py             # Per-agent reward function
-│   ├── schemas.py            # Pydantic action/observation models
-│   └── scammer_templates.json  # 50 NPCI-grounded attack seeds
-├── training/
-│   ├── run_scripted_baseline.py   # Day 1 — no LLM
-│   ├── grpo_analyzer.py           # Day 2+ — LoRA GRPO training
-│   └── train_colab.ipynb          # Day 4 minimum-requirements Colab
-├── eval/
-│   ├── mode_a_synthetic.py
-│   ├── mode_b_scraped.py
-│   ├── mode_c_real_cases.py        # 100+ RBI + I4C + Reddit
-│   ├── frontier_baseline.py
-│   └── bootstrap_ci.py
+│   ├── agents/                        # 5 scripted agents (scammer, victim, analyzer, bank, regulator)
+│   ├── environment.py                 # Legacy stand-alone env (for in-process baselines)
+│   ├── openenv_environment.py         # ChakravyuhOpenEnv — OpenEnv-compliant wrapper
+│   ├── openenv_models.py              # Action / Observation / State pydantic models
+│   ├── openenv_client.py              # ChakravyuhEnvClient (WebSocket/HTTP)
+│   ├── rubrics.py                     # Composable rubric system (5 child rubrics)
+│   ├── novelty.py                     # MiniLM-L6 novelty scorer
+│   ├── reward.py                      # Legacy per-agent reward (kept for baselines)
+│   ├── schemas.py                     # Internal action / observation schemas
+│   ├── scammer_templates.json         # 200 NPCI/RBI-grounded attack seeds
+│   ├── augmented_templates.json       # +100 augmented scams
+│   ├── scam_novel.json                # +76 post-2024 novel attacks
+│   ├── benign_templates.json          # 70 benign base
+│   └── benign_augmented.json          # +134 benign (incl. 30 hard-negatives)
 ├── server/
-│   └── demo_ui.py            # Gradio demo (replay-first)
+│   ├── app.py                         # FastAPI entrypoint (create_app from openenv-core)
+│   ├── demo_ui.py                     # Gradio replay UI
+│   └── episode_curator.py             # Curated deterministic episodes for the replay demo
+├── training/
+│   ├── run_scripted_baseline.py       # 300-ep scripted baseline
+│   ├── grpo_analyzer.py               # LoRA GRPO (TRL)
+│   └── train_colab.ipynb              # HF TRL training Colab
+├── eval/
+│   ├── mode_c_real_cases.py           # Mode C benchmark runner
+│   ├── threshold_sweep.py             # Re-threshold eval without re-scoring
+│   ├── bootstrap_ci.py                # Bootstrap CIs + permutation test
+│   └── frontier_baseline.py           # GPT-4o / Claude / Gemini / Llama baselines
 ├── tests/
-│   └── test_smoke.py
-├── docs/                     # Strategy + execution plans
-├── data/
-│   └── chakravyuh-bench-v0/  # Public benchmark
-└── checkpoints/
+│   ├── test_openenv.py                # OpenEnv contract + live WebSocket round-trip
+│   ├── test_rubrics.py                # Unit + integration tests for the rubric system
+│   ├── test_smoke.py                  # Scripted-env smoke tests
+│   └── test_mode_c.py                 # Bench runner regressions
+├── data/chakravyuh-bench-v0/          # 135 real-grounded scenarios (HF dataset)
+├── guidelines/                        # Official hackathon guidelines (read-only)
+├── openenv.yaml                       # OpenEnv manifest (spec v1)
+├── Dockerfile                         # Slim python:3.11 runtime
+├── uv.lock                            # uv lockfile for reproducible builds
+└── pyproject.toml                     # Lightweight core deps + [llm] / [train] / [demo] extras
 ```
 
-## Roadmap
+---
 
-- [x] **Day 1 (Apr 21)** — Scripted baseline, 50 templates, 100-ep smoke test, WandB logging
-- [ ] **Day 2 (Apr 22)** — Qwen2.5-7B + LoRA Analyzer, GRPO training, frontier baselines (GPT-4o / Claude / Llama / Gemini)
-- [ ] **Day 3 (Apr 23)** — 500-ep polish training, Mode A/B/C eval, temporal-generalization test, HF Dataset shipped
-- [ ] **Day 4 (Apr 24)** — Gradio demo, HF blog, 8-slide deck, code freeze
-- [ ] **Day 5–6 (Apr 25–26)** — Bangalore on-site, pitch, Q&A
+## Deployment
 
-See [`docs/CHAKRAVYUH_EXECUTION_PLAN.md`](docs/CHAKRAVYUH_EXECUTION_PLAN.md) for the detailed day-by-day plan.
+### Local (fastest)
+
+```bash
+pip install -e .
+uvicorn server.app:app --host 0.0.0.0 --port 8000
+```
+
+### Hugging Face Space
+
+The repo is HF-Space-ready (Docker runtime):
+
+```bash
+openenv push .                      # from OpenEnv CLI
+# or
+git remote add hf https://huggingface.co/spaces/<user>/chakravyuh-env && git push hf main
+```
+
+### Replay UI (for the demo)
+
+```bash
+pip install -e '.[demo]'
+python -m server.demo_ui
+```
+
+The Gradio UI provides two tabs:
+1. **Replay** — 5 curated deterministic episodes (seed-reproducible, zero inference risk)
+2. **Live** — paste any suspicious message, analyzer scores it instantly
+
+| # | Story | Demonstrates |
+|---|---|---|
+| 1 | Multi-Agent Defense Wins | Analyzer + Bank Monitor cooperate, tx frozen |
+| 2 | Skeptical Victim Refuses | Tech-savvy user recognizes pattern, refuses |
+| 3 | Verification-First Behaviour | Victim calls bank to verify — ideal outcome |
+| 4 | Detection Too Late | Analyzer flags but victim already complied — motivates LoRA |
+| 5 | Scripted Rules Blind Spot | Rule-based misses subtle KYC scam — gap the LoRA closes |
+
+---
+
+## Hackathon Checklist (from `guidelines/`)
+
+| Requirement | Status |
+|---|---|
+| Uses OpenEnv (latest release) | ✅ |
+| Environment / client / server separation | ✅ |
+| `openenv.yaml` manifest | ✅ |
+| Gym-style `reset` / `step` / `state` | ✅ |
+| Working training script (TRL / Unsloth, Colab) | ✅ `training/train_colab.ipynb` |
+| Multiple independent reward functions | ✅ 5 composable child rubrics |
+| Anti-reward-hacking design | ✅ see [Anti-Reward-Hacking Design](#anti-reward-hacking-design) |
+| Real training evidence (reward/loss plots) | _in progress — see Submission Materials_ |
+| HF Space deployed | _in progress_ |
+| <2 min video / blog / slide deck | _in progress_ |
+| README links to all materials | ✅ (see Submission Materials) |
+
+---
 
 ## Planning Docs
 
-- [`docs/CHAKRAVYUH_WIN_PLAN.md`](docs/CHAKRAVYUH_WIN_PLAN.md) — Full strategic plan (reference)
-- [`docs/CHAKRAVYUH_IMPROVEMENTS.md`](docs/CHAKRAVYUH_IMPROVEMENTS.md) — The 7 moves that raise P(Top 8)
-- [`docs/CHAKRAVYUH_EXECUTION_PLAN.md`](docs/CHAKRAVYUH_EXECUTION_PLAN.md) — Day-by-day execution (active)
+Historical planning documents (for context, not active execution):
 
-## License
-
-MIT — see `LICENSE`.
+- [`docs/CHAKRAVYUH_WIN_PLAN.md`](docs/CHAKRAVYUH_WIN_PLAN.md) — Full strategic plan
+- [`docs/CHAKRAVYUH_IMPROVEMENTS.md`](docs/CHAKRAVYUH_IMPROVEMENTS.md) — Move-by-move score-lift plan
+- [`docs/CHAKRAVYUH_EXECUTION_PLAN.md`](docs/CHAKRAVYUH_EXECUTION_PLAN.md) — Day-by-day execution
+- [`PROJECT_JOURNEY.md`](PROJECT_JOURNEY.md) — Chronological build journal (bugs, fixes, lessons)
+- [`HACKATHON_AUDIT_DETAILED.md`](HACKATHON_AUDIT_DETAILED.md) — Criterion-by-criterion self-audit
 
 ## Data Sources
+
+All benchmark scenarios are grounded in real Indian fraud case studies. **Zero synthetic scenarios in Mode C evaluation.**
 
 - RBI Annual Report on Financial Fraud (rbi.org.in)
 - NPCI Safety Bulletins (npci.org.in/safety-and-awareness)
 - sachet.rbi.org.in
-- I4C (Indian Cybercrime Coordination Centre, cybercrime.gov.in)
+- I4C — Indian Cybercrime Coordination Centre (cybercrime.gov.in)
 - IIT Kanpur C3i Center (security.cse.iitk.ac.in)
 
-Zero synthetic scenarios in Mode C evaluation. Every scam is grounded in a real Indian fraud case study.
+## License
+
+MIT — see `LICENSE`.

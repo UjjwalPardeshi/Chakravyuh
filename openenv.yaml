@@ -1,0 +1,26 @@
+# OpenEnv manifest for the Chakravyuh fraud-detection environment.
+#
+# Referenced by the OpenEnv CLI and (indirectly) by Hugging Face Space
+# deployment. Spec: https://meta-pytorch.org/OpenEnv/ (v1).
+
+spec_version: 1
+name: chakravyuh_env
+type: space
+runtime: fastapi
+app: server.app:app
+port: 8000
+description: >
+  Multi-agent Indian UPI fraud-detection environment.
+  A scripted Scammer + Victim + Bank Monitor drive a 2-decision
+  episode; the Analyzer LLM is the agent being trained.
+author: Chakravyuh Team
+version: 0.1.0
+license: MIT
+tags:
+  - multi-agent
+  - fraud-detection
+  - india
+  - upi
+  - llm
+  - grpo
+  - oversight

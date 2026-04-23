@@ -14,30 +14,34 @@ authors = [
 ]
 keywords = ["reinforcement-learning", "multi-agent", "fraud-detection", "openenv", "llm"]
 
+# Core dependencies are deliberately lightweight so the OpenEnv server
+# (HF Space) can build a small image. Torch / transformers /
+# sentence-transformers move into the [llm] / [train] extras below.
 dependencies = [
     "pydantic>=2.6",
     "numpy>=1.26",
-    "sentence-transformers>=2.7",
-    "torch>=2.5,<2.6",
-    "transformers>=4.45",
-    "wandb>=0.17",
     "python-dotenv>=1.0",
     "tqdm>=4.66",
     "jsonlines>=4.0",
+    "openenv-core>=0.2.3",
+    "fastapi>=0.115",
+    "uvicorn>=0.30",
 ]
 
 [project.optional-dependencies]
 llm = [
+    "torch>=2.5,<2.6",
+    "transformers>=4.45",
+    "sentence-transformers>=2.7",
     "peft>=0.13",
     "trl>=0.12",
     "accelerate>=0.33",
     "bitsandbytes>=0.44",
     "datasets>=2.19",
+    "wandb>=0.17",
 ]
 demo = [
     "gradio>=5.0",
-    "fastapi>=0.115",
-    "uvicorn>=0.30",
 ]
 train = [
     "unsloth",
@@ -67,6 +71,12 @@ dev = [
 Homepage = "https://huggingface.co/spaces/chakravyuh"
 Repository = "https://github.com/chakravyuh/chakravyuh"
 
+[project.scripts]
+# The OpenEnv validator (`openenv validate .`) requires the key to be
+# exactly ``server`` and the target to end in ``:main``. This makes
+# `uv run --project . server` and `openenv serve .` both work.
+server = "server.app:main"
+
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["chakravyuh_env*", "server*", "training*", "eval*"]
@@ -88,5 +98,5 @@ markers = [
     "integration: slower, multi-component",
 ]
 
-# NOTE: OpenEnv version must be pinned Day 1 morning once network is available.
-# Target: openenv >= 0.1.0 (latest). Add with: pip install openenv==<version>
+# OpenEnv integration: ``openenv-core>=0.2.3`` pinned in dependencies above.
+# Entry: ``chakravyuh_env.ChakravyuhOpenEnv`` / ``server.app:app``.

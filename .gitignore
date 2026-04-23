@@ -34,6 +34,9 @@ ENV/
 *.swo
 *~
 
+# Claude Code
+.claude/
+
 # Testing
 .pytest_cache/
 .coverage
@@ -68,3 +71,10 @@ wandb/
 # OS
 .DS_Store
 Thumbs.db
+
+# Private hackathon strategy docs — kept out of the public repo until
+# after the event (rival teams should not read the pitch script, judge-
+# Q&A prep, or weakness analysis). Can be flipped back on post-Apr-26.
+HACKATHON_AUDIT.md
+HACKATHON_AUDIT_DETAILED.md
+PROJECT_JOURNEY.md
