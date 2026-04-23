@@ -23,7 +23,7 @@ The composable rubric system ([chakravyuh_env/rubrics.py](chakravyuh_env/rubrics
 
 | Asset | Link |
 |---|---|
-| Hugging Face Space (live env) | _TBD — see [Deployment](#deployment) to run locally in the meantime_ |
+| Hugging Face Space (live env) | [ujjwalpardeshi/chakravyuh-env](https://huggingface.co/spaces/ujjwalpardeshi/chakravyuh-env) _(deploying)_ |
 | Training Colab (TRL + GRPO) | [`training/train_colab.ipynb`](training/train_colab.ipynb) |
 | 2-min overview video | _TBD_ |
 | HF Blog post | _TBD_ |
