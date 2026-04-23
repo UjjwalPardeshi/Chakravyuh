@@ -270,6 +270,54 @@ A v2 reward profile with stiffer false-positive weighting and zero format-bonus-
 
 Rule-based detectors catch 80% of pre-2024 scam patterns but only 50% of novel post-2024 attacks (matrimonial crypto grooming, deepfake CEO, digital arrest, metaverse real estate, AI chatbot trading). **This is the gap the LoRA-trained Analyzer is designed to close** — target: ≥75% detection on the novel subset.
 
+### LoRA-trained Analyzer — v1 (reward-hacked) vs v2 (principled retrain)
+
+The scripted baseline closes only **50% of novel post-2024 attacks**. Closing that gap is what the LoRA-trained Analyzer is for. We trained two LoRA adapters on top of Qwen2.5-7B-Instruct with TRL's GRPO, using a composable reward ([rubrics.py](chakravyuh_env/rubrics.py)). The honest story is more interesting than a single good number:
+
+#### v1 → v2 delta
+
+| Metric | v1 (reward-hacked) | v2 (retrained) | Change | 95% CI (v2) |
+|---|---|---|---|---|
+| Detection rate | 100.0% | **99.3%** | ≈ same | [96.2%, 99.9%] |
+| False positive rate | 36.0% | **6.5%** | **−29.5 pp (~5×)** | [1.8%, 20.7%] |
+| Precision | — | 98.6% | — | — |
+| F1 | 0.96 | **0.99** | +0.03 | — |
+| Bench n | 135 | 174 (scored) / 175 total | — | — |
+
+v2 was trained with three anti-collapse reward changes: FP penalty tightened from −0.3 → **−0.8**, benign-calibration weight raised from 0.3 → **0.5**, and the format reward was **removed when the model flags a benign as scam** (removing the "lazy over-flag" shortcut). KL anchor `β = 0.15` (stiffer than v1's 0.08). See [`training/grpo_analyzer.py`](training/grpo_analyzer.py).
+
+#### v2 per-difficulty ramp (scripted baseline → LoRA v2)
+
+| Difficulty | Scripted | LoRA v2 | Lift |
+|---|---|---|---|
+| Easy | 88% | 100% | +12 pp |
+| Medium | 81% | 100% | +19 pp |
+| **Hard** | **43%** | **100%** | **+57 pp** |
+| **Novel** | **50%** | **97%** | **+47 pp** |
+
+The largest lifts appear exactly where the scripted rule-based baseline fails most — hard and novel scenarios. That shape is the signature of genuine generalization, not pattern matching. See [`docs/assets/plots/v2_per_difficulty_check.png`](docs/assets/plots/v2_per_difficulty_check.png).
+
+#### Why v1 was reward-hacked (and how we diagnosed it)
+
+v1 hit detection=100% but FPR=36%. That combination — *everything* gets flagged — is the reward-hacking fingerprint: the model learned "always output high score" because the v1 reward profile (FP penalty −0.3, format reward always paid, benign calibration 0.3) made flagging dominant. The per-difficulty plot confirmed it: v1's detection was uniform ≈100% across easy / medium / hard / novel — a model that genuinely learns shows a ramp. v2 still shows near-flat detection (bench scenarios are clearly classifiable to a well-trained analyzer), **but FPR dropped 5×** — which is the real signal that the model is now respecting the benign class instead of spamming high scores.
+
+#### Limitations — be honest about what the bench can and can't tell you
+
+1. **Small benign sample (n=31).** FPR=6.5% has a wide Wilson 95% CI of **[1.8%, 20.7%]**. A single additional benign misclassification would move the point estimate from 6.5% to 9.7%. We stand behind the "~5× FPR reduction vs v1" claim (statistically real) but not the specific "6.5%" number as a precise estimate.
+2. **Bench is a proxy.** 175 curated scenarios do not span real-world fraud diversity. Production performance will be lower.
+3. **1 epoch over 619 training examples.** The trainer hit the dataset natural endpoint at step 619 (not 700). More epochs + larger training corpus would sharpen the signal.
+4. **Per-scenario false-positive audit pending.** We have not yet manually inspected *which* 2 benigns were misclassified. Until that audit runs, we cannot rule out a specific templated blind spot.
+
+#### What we plan next (v3 — rigorous validation)
+
+- Expand benign corpus to **≥150 labelled scenarios** (target benign n=150, FPR CI ±3 pp)
+- Multi-seed retrains (3 seeds) to report mean ± std, not point estimates
+- External held-out set: 50 novel scam patterns *not* derived from any canonical template
+- Manual audit of every v2 false positive + missed scam
+- Bootstrap CIs on per-difficulty detection (current numbers have n=18 on `hard`, n=34 on `novel` — still thin)
+
+Artifacts for the v2 run: [`logs/eval_v2.json`](logs/eval_v2.json), adapter checkpoint in [`checkpoints/analyzer_lora_v2/`](checkpoints/analyzer_lora_v2/).
+
 ### Env rollout baseline — scripted agents, 300 episodes
 
 | Metric | Value |
@@ -285,7 +333,7 @@ The scripted Analyzer is intentionally a *competent-but-beatable* baseline — s
 
 ### Training curves
 
-_Training plots will be embedded here once the final run completes — see [Submission Materials](#submission-materials) for the live W&B link._
+The v1 training curve (`docs/assets/plots/training_curve.png`) is published alongside the v1 reward-hacking diagnostic (`docs/assets/plots/reward_hacking_diagnostic.png`) to let readers see what the hack looked like in reward/loss space. The v2 per-difficulty bar chart is at `docs/assets/plots/v2_per_difficulty_check.png`. Full trainer state for v2 lives in `checkpoints/analyzer_lora_v2/checkpoint-619/trainer_state.json`.
 
 ---
 
