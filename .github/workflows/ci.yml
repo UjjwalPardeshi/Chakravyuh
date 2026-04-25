@@ -32,7 +32,7 @@ jobs:
       - name: Install package + extras
         run: |
           python -m pip install --upgrade pip
-          pip install -e '.[llm,eval]'
+          pip install -e '.[llm,eval,demo,frontier,dev]'
 
       - name: Run pytest
         run: pytest tests/ -v --tb=short
