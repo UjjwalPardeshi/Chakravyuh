@@ -117,3 +117,82 @@ def test_explanation_judge_requires_api_key_at_use(monkeypatch):
     judge = ExplanationJudge()
     with pytest.raises(RuntimeError, match="GROQ_API_KEY"):
         judge.score("message", "explanation")
+
+
+# ---------------------------------------------------------------------------
+# C.7 — Adversarial cases (per WIN_PLAN.md P1.7)
+#
+# These pin the four explicit thresholds from the plan: an empty explanation
+# scores < 0.2, a 3-word boilerplate < 0.4, a 2000-char garbage explanation
+# < 0.5, and a signal-grounded explanation > 0.7. They run against the mock
+# (deterministic, CI-friendly). When GROQ_API_KEY is set, the live judge is
+# also exercised in `test_live_judge_*` (skipped otherwise).
+# ---------------------------------------------------------------------------
+
+
+_ADVERSARIAL_MSG = (
+    "URGENT: Share OTP for SBI bank verification — pressure + impersonation"
+)
+
+
+@pytest.mark.unit
+def test_judge_rejects_empty():
+    """Adversarial 1: empty explanation must score < 0.2."""
+    judge = MockExplanationJudge()
+    score = judge.score(_ADVERSARIAL_MSG, "")
+    assert score.total < 0.2, f"empty explanation got total={score.total:.3f}"
+
+
+@pytest.mark.unit
+def test_judge_rejects_boilerplate():
+    """Adversarial 2: 3-word boilerplate must score < 0.4."""
+    judge = MockExplanationJudge()
+    score = judge.score(_ADVERSARIAL_MSG, "This is suspicious.")
+    assert score.total < 0.4, f"boilerplate got total={score.total:.3f}"
+
+
+@pytest.mark.unit
+def test_judge_rejects_over_long():
+    """Adversarial 3: 2000-char garbage explanation must score < 0.5."""
+    judge = MockExplanationJudge()
+    score = judge.score(_ADVERSARIAL_MSG, "x" * 2000)
+    assert score.total < 0.5, f"over-long got total={score.total:.3f}"
+
+
+@pytest.mark.unit
+def test_judge_accepts_signal_grounded():
+    """Adversarial 4: a signal-grounded explanation must score > 0.7."""
+    judge = MockExplanationJudge()
+    grounded = (
+        "Do not share OTP. SBI bank impersonation with urgency pressure — "
+        "classic OTP-theft scam."
+    )
+    score = judge.score(_ADVERSARIAL_MSG, grounded)
+    assert score.total > 0.7, f"signal-grounded got total={score.total:.3f}"
+
+
+# ---- live judge variants (only when GROQ_API_KEY is configured) -------------
+
+
+@pytest.mark.skipif(
+    not __import__("os").getenv("GROQ_API_KEY"),
+    reason="live judge requires GROQ_API_KEY",
+)
+@pytest.mark.integration
+def test_live_judge_rejects_empty():
+    judge = ExplanationJudge()
+    assert judge.score(_ADVERSARIAL_MSG, "").total < 0.2
+
+
+@pytest.mark.skipif(
+    not __import__("os").getenv("GROQ_API_KEY"),
+    reason="live judge requires GROQ_API_KEY",
+)
+@pytest.mark.integration
+def test_live_judge_accepts_signal_grounded():
+    judge = ExplanationJudge()
+    grounded = (
+        "Do not share OTP. SBI bank impersonation with urgency pressure — "
+        "classic OTP-theft scam."
+    )
+    assert judge.score(_ADVERSARIAL_MSG, grounded).total > 0.7

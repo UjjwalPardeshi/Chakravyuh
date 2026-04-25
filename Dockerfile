@@ -1,8 +1,10 @@
 # Dockerfile for the Chakravyuh OpenEnv server.
 #
-# Designed for Hugging Face Spaces (type: docker). The runtime image
-# only needs the lightweight core deps — torch / transformers etc. live
-# in the [llm] extra and are not required to serve the environment.
+# Designed for Hugging Face Spaces (type: docker). Includes the [demo]
+# extra so the Gradio demo UI is mounted at /demo. Heavy LLM deps (torch,
+# transformers, peft) live in [llm] and are still excluded from the
+# runtime image — the demo uses the rule-based scripted analyzer which
+# needs no GPU.
 
 FROM python:3.11-slim AS builder
 
@@ -13,12 +15,13 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Install the environment package from source — installs only the
-# minimal runtime deps (openenv-core, fastapi, uvicorn, pydantic, numpy).
+# Install the environment package from source with [demo] extra so Gradio
+# is available for the /demo route. Base deps: openenv-core, fastapi,
+# uvicorn, pydantic, numpy. [demo] adds gradio.
 COPY pyproject.toml README.md /app/
 COPY chakravyuh_env /app/chakravyuh_env
 COPY server /app/server
-RUN pip install --upgrade pip && pip install .
+RUN pip install --upgrade pip && pip install '.[demo]'
 
 # ---- runtime stage ----
 

@@ -1,0 +1,526 @@
+{
+  "description": "Phase B.4 — second-wave benign templates focused on hard negatives that mimic scam tonality (urgency, OTP mentions, fraud advisories, regulator names) so the FPR CI can be tightened. Adds ~75 templates across RBI advisories, real bank fraud alerts, Mumbai/Delhi Police challans, UIDAI / Aadhaar updates, IT department e-filing, IRCTC + IndiGo travel, Tata Power / BSES utilities, India Post / Bluedart / Delhivery, and high-pressure-but-legitimate banking flows. Designed to *fail* a naive 'urgent + bank + OTP' rule (which is exactly what the v1 reward-hacked analyzer learned).",
+  "version": "2.0.0",
+  "source": "Hand-authored from public Indian SMS corpora — sample messages on the npci.org.in safety bulletins, RBI sachet alerts, sample Mumbai Police e-challan CSV (publicly archived), UIDAI reverification reminder texts, and individual user-submitted screenshots indexed on getsby.in. No real personal data. Designed for: (a) ratio rebalancing toward benign and (b) FPR CI tightening per docs/POSTMORTEM_FUTURE.md v3 milestone #2.",
+  "split_intent": "training (do NOT add to test bench — bench is frozen at v0.2)",
+  "templates": [
+    {
+      "id": "bav2_rbi_01",
+      "category": "rbi_advisory",
+      "text": "RBI Sachet Advisory: Beware of fake KYC update messages. RBI / your bank will NEVER ask for OTP, CVV, PIN. Report fraud to 1930. Forward suspicious SMS to 7726. www.rbi.org.in",
+      "hard_negative": true,
+      "why_hard": "mentions 'OTP', 'fraud', 'KYC' — scam-like vocabulary but is the real warning"
+    },
+    {
+      "id": "bav2_rbi_02",
+      "category": "rbi_advisory",
+      "text": "Sachet RBI: Scams reported in your district. NEVER share OTP. Verify any 'bank official' caller by hanging up and calling the number on your card. Report at cybercrime.gov.in.",
+      "hard_negative": true,
+      "why_hard": "explicit 'OTP' + 'scam' + 'bank official' — only the framing is protective"
+    },
+    {
+      "id": "bav2_rbi_03",
+      "category": "rbi_advisory",
+      "text": "RBI Caution: Investment offers promising 'guaranteed returns' from unregistered schemes are illegal. Verify any scheme on rbi.org.in/sachet. Do not share Aadhaar or PAN with strangers.",
+      "hard_negative": true,
+      "why_hard": "mentions 'investment', 'returns', 'Aadhaar' — scam-like content in a legitimate advisory"
+    },
+    {
+      "id": "bav2_bank_01",
+      "category": "banking",
+      "text": "HDFC: Rs 7,540.00 debited from A/c XX2231 to BIGBASKET via UPI on 18-Apr-26 09:12. Ref 612478291301. Avl Bal: Rs 18,432.10. SMS BLOCK to 7308080808 if not done by you.",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_bank_02",
+      "category": "banking",
+      "text": "SBI: A/c XX9087 dr by 1200 (UPI/612001/PAYTM/612001@paytm) on 19APR. Bal 78,401.50. Call 1800111109 if not done. -SBI",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_bank_03",
+      "category": "banking",
+      "text": "ICICI Bank: Rs 250,000 transfer to MILLINIUM-FORGE-LLP @ ybl was approved on 14-04-26. Ref I3401-984321. Available bal Rs 1,12,432. To dispute call 1860 120 6699.",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_bank_04",
+      "category": "banking",
+      "text": "AXIS BANK: Your credit card statement is generated. Total due Rs 18,432.50, min due Rs 1,200. Pay by 28-Apr-26 to avoid interest. www.axisbank.com/statement",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_bank_05",
+      "category": "banking",
+      "text": "KOTAK: Standing instruction of Rs 12,500 (HOMELOAN-EMI) executed on 01-Apr-26 from A/c XX5612. Bal Rs 28,431.20. -Kotak Mahindra",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_bank_06",
+      "category": "banking",
+      "text": "PNB: Cheque no 419201 of Rs 50,000 in favour of TATA-AIG INSURANCE has been cleared from your A/c on 17-Apr-26. -PNB",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_bank_07",
+      "category": "banking",
+      "text": "YES BANK: Rs 80,000 deposited via NEFT from your CA-XX1102 to your SB-XX9087 on 22-Apr-26. Ref N4-9012. Bal: Rs 1,40,231. -YES",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_bank_08",
+      "category": "banking",
+      "text": "BOI: Loan EMI for HOUSING-LOAN account ending XX7720 will be auto-debited Rs 27,431 on 05-May-26. Ensure sufficient balance. -Bank of India",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_bank_fraud_alert_01",
+      "category": "bank_fraud_alert",
+      "text": "HDFC Alert: Suspicious login attempt to Net Banking from MUMBAI device on 19-Apr-26 14:32. If this was you ignore. If NOT, call 1800 202 6161 IMMEDIATELY and reset password. DO NOT share OTP.",
+      "hard_negative": true,
+      "why_hard": "urgency + 'IMMEDIATELY' + bank name + OTP mention — but is the actual fraud-alert from the bank"
+    },
+    {
+      "id": "bav2_bank_fraud_alert_02",
+      "category": "bank_fraud_alert",
+      "text": "SBI Alert: Card XX8821 was used for Rs 25,000 at AMAZON-INDIA on 22-Apr-26. If unauthorised, BLOCK CARD now via SBI YONO or call 1800 425 3800. -SBI",
+      "hard_negative": true,
+      "why_hard": "urgency + large amount + 'block now' instruction — looks like a phishing setup but is real bank alert"
+    },
+    {
+      "id": "bav2_bank_fraud_alert_03",
+      "category": "bank_fraud_alert",
+      "text": "ICICI: Did you initiate UPI transfer of Rs 49,500 to RAVISHANKAR@ybl from MOBILE BANKING on 16-Apr-26? Reply Y/N to 5676766 within 10 minutes or call 18601206699.",
+      "hard_negative": true,
+      "why_hard": "deadline pressure + reply-or-call urgency — exactly mimics common scam pattern but is real ICICI flow"
+    },
+    {
+      "id": "bav2_bank_fraud_alert_04",
+      "category": "bank_fraud_alert",
+      "text": "AXIS BANK FRAUD ALERT: Rs 1,80,000 was attempted on your card XX2401 at PARIS, FR on 23-Apr-26. Transaction was DECLINED. If you didn't attempt, call 1860 419 5555. -Axis",
+      "hard_negative": true,
+      "why_hard": "international, large amount, 'DECLINED' — high-tension wording but legitimate notice"
+    },
+    {
+      "id": "bav2_bank_fraud_alert_05",
+      "category": "bank_fraud_alert",
+      "text": "KOTAK: Two failed login attempts on Net Banking detected on 11-Apr-26 from a NEW DEVICE in BENGALURU. If this was not you, call 1860 266 2666 immediately to secure your account.",
+      "hard_negative": true,
+      "why_hard": "new device + immediate-action callout — matches scammer template"
+    },
+    {
+      "id": "bav2_otp_legit_01",
+      "category": "otp_legit",
+      "text": "Your OTP for HDFC NetBanking is 491203. Valid for 5 minutes. DO NOT share with anyone, including bank staff. -HDFC",
+      "hard_negative": true,
+      "why_hard": "legit OTP delivery — the model must NOT flag based on 'OTP' alone"
+    },
+    {
+      "id": "bav2_otp_legit_02",
+      "category": "otp_legit",
+      "text": "OTP 730155 for AMAZON-IN order #408-2391301. Do not share. Code expires in 8 minutes.",
+      "hard_negative": true,
+      "why_hard": "OTP delivery for e-commerce — naive rules flag any 'OTP'"
+    },
+    {
+      "id": "bav2_otp_legit_03",
+      "category": "otp_legit",
+      "text": "PhonePe: 4-digit code 8217 for adding bank A/c. Do not share with anyone. PhonePe will never ask for this. -PhonePe",
+      "hard_negative": true,
+      "why_hard": "OTP from UPI app + 'never ask' framing"
+    },
+    {
+      "id": "bav2_otp_legit_04",
+      "category": "otp_legit",
+      "text": "GPAY: 6-digit code 401-203 to confirm your phone number. Do not share. Valid 10 min.",
+      "hard_negative": true,
+      "why_hard": "Google Pay OTP delivery"
+    },
+    {
+      "id": "bav2_otp_legit_05",
+      "category": "otp_legit",
+      "text": "Your IRCTC verification code is 998012. NEVER share OTP with anyone. Code valid for 10 min. -IRCTC",
+      "hard_negative": true,
+      "why_hard": "rail booking OTP — legit but uses 'NEVER share' framing"
+    },
+    {
+      "id": "bav2_police_challan_01",
+      "category": "police_challan",
+      "text": "Mumbai Traffic Police E-Challan: Vehicle MH-04-AT-2391 cited for OVER SPEEDING on 14-Apr-26 at WESTERN EXPRESSWAY 28kmph over limit. Pay Rs 1,000 at https://mumbaitrafficpolice.com/echallan",
+      "hard_negative": true,
+      "why_hard": "official government communication with payment-due element — scam-adjacent"
+    },
+    {
+      "id": "bav2_police_challan_02",
+      "category": "police_challan",
+      "text": "Delhi Traffic Police: Challan no 191028301 for Vehicle DL-9C-4710 (RED LIGHT JUMP, FATEHPURI) Rs 5,000. Due 30 days. Pay at echallan.parivahan.gov.in. -DTP",
+      "hard_negative": true,
+      "why_hard": "specific challan number + parivahan.gov.in = real, but format mimics scams"
+    },
+    {
+      "id": "bav2_police_challan_03",
+      "category": "police_challan",
+      "text": "Bangalore Traffic Police: e-challan #BTP/2026/12431 for vehicle KA-03-AB-9012 (NO HELMET, MG ROAD, 18-Apr-26). Pay Rs 1,000 within 30 days. www.bangaloretrafficpolice.gov.in",
+      "hard_negative": true,
+      "why_hard": "police + payment + URL — looks scammy but legit"
+    },
+    {
+      "id": "bav2_police_challan_04",
+      "category": "police_challan",
+      "text": "Hyderabad TP: Challan No HTP-9012-26 - Vehicle TS-09-EM-1820 - DRUNK DRIVE on 12-Apr-26. Court appearance required. Date: 03-May-26. -HTP",
+      "hard_negative": true,
+      "why_hard": "court appearance + serious offense — high-pressure but real"
+    },
+    {
+      "id": "bav2_uidai_01",
+      "category": "uidai_aadhaar",
+      "text": "UIDAI: Your Aadhaar 8901-XXXX-2418 will EXPIRE for biometric reverification on 30-May-26. Visit nearest CSC or aadhaar.uidai.gov.in to update. NEVER share Aadhaar OTP.",
+      "hard_negative": true,
+      "why_hard": "Aadhaar + 'expire' + 'OTP' — exact pattern that scammers mimic"
+    },
+    {
+      "id": "bav2_uidai_02",
+      "category": "uidai_aadhaar",
+      "text": "UIDAI: Aadhaar update request received for 8901-XXXX-2418. Mobile no change pending. URN: 0000/00012/15431. Status at uidai.gov.in/check-status. -UIDAI",
+      "hard_negative": true,
+      "why_hard": "URN + 'pending' + url — but real UIDAI flow"
+    },
+    {
+      "id": "bav2_uidai_03",
+      "category": "uidai_aadhaar",
+      "text": "UIDAI Caution: We are seeing increased scam calls claiming Aadhaar will be DEACTIVATED. UIDAI does NOT call you. NEVER share OTP, biometric, or Aadhaar number. Report to 1947.",
+      "hard_negative": true,
+      "why_hard": "describes a scam in detail — naive rules flag this very advisory"
+    },
+    {
+      "id": "bav2_income_tax_01",
+      "category": "income_tax",
+      "text": "Income Tax India: e-Filing reminder. ITR for AY 2026-27 due by 31-Jul-2026. File at www.incometax.gov.in. PAN ABCDE1234F.",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_income_tax_02",
+      "category": "income_tax",
+      "text": "Income Tax India: Refund of Rs 18,422 for AY 2025-26 has been processed and credited to your A/c XX2231 on 21-Apr-26. -ITD",
+      "hard_negative": true,
+      "why_hard": "refund + amount + bank account — typical scam pattern but is the legit ITD flow"
+    },
+    {
+      "id": "bav2_income_tax_03",
+      "category": "income_tax",
+      "text": "Income Tax: Notice u/s 143(1) sent for AY 2025-26 to your registered email. Login to e-Filing portal to view. -CPC",
+      "hard_negative": true,
+      "why_hard": "official 'notice' + section reference — looks intimidating but standard"
+    },
+    {
+      "id": "bav2_gst_01",
+      "category": "gst",
+      "text": "GST: GSTR-3B for Mar-26 (GSTIN 27AAACC0000B1Z5) was filed successfully on 20-Apr-26. ARN AA21042646000341. -GSTN",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_gst_02",
+      "category": "gst",
+      "text": "GSTN: Reminder - GSTR-1 for Apr-26 due by 11-May-26. Late filing attracts Rs 50/day per Act. www.gst.gov.in -GSTN",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_irctc_01",
+      "category": "travel",
+      "text": "IRCTC: Booking confirmed - PNR 6452109840, MUM-DEL, 12-May-26 22:30, Train 12952 Rajdhani, Class 2A. Web check-in opens 4 hr before departure.",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_irctc_02",
+      "category": "travel",
+      "text": "IRCTC: PNR 8412904 - 12952/RAJDHANI EXP - SCHEDULE CHANGE. New departure 23:15 (was 22:30) on 12-May-26. Apologies for inconvenience.",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_indigo_01",
+      "category": "travel",
+      "text": "IndiGo: 6E-2104 BLR-DEL on 23-Apr-26 confirmed. PNR Q1A2B3. Departure 06:50, Arrival 09:35. Web check-in opens 48hr before.",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_indigo_02",
+      "category": "travel",
+      "text": "IndiGo: Flight 6E-198 from MUM scheduled for 21:00 on 21-Apr-26 has been DELAYED to 22:30 due to ATC. We apologise. -IndiGo",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_airindia_01",
+      "category": "travel",
+      "text": "Air India: AI-101 BOM-LHR 24-Apr-26 14:00 confirmed. PNR XYZ123. Boarding from Gate 41, Terminal 2 BOM. -AIE",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_amazon_01",
+      "category": "delivery",
+      "text": "Amazon.in: Order #408-2391301 (Boat Stone 1200 speaker) shipped via DELHIVERY (AWB 22931840). Delivery 24-Apr-26.",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_amazon_02",
+      "category": "delivery",
+      "text": "Amazon: Order #408-9123710 - OUT FOR DELIVERY today. Track at amazon.in/orders. -Amazon India",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_flipkart_01",
+      "category": "delivery",
+      "text": "Flipkart: Order OD41001239840 has been DELIVERED at 13:20. If not received, contact us within 24h. flipkart.com/track",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_bluedart_01",
+      "category": "delivery",
+      "text": "BlueDart: Shipment 41201938 from APPLE INDIA arriving today between 11:00-14:00. Ensure recipient available. -BlueDart",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_indiapost_01",
+      "category": "delivery",
+      "text": "India Post: Speed Post EI239103940IN dispatched from MUMBAI-PO on 18-Apr-26. Expected delivery 22-Apr-26. Track at indiapost.gov.in. -DOP",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_delhivery_01",
+      "category": "delivery",
+      "text": "Delhivery: AWB 941283019403 was attempted but RECIPIENT NOT AVAILABLE. We will reattempt tomorrow. Update at delhivery.com.",
+      "hard_negative": true,
+      "why_hard": "'attempted but not delivered' is a common scam framing"
+    },
+    {
+      "id": "bav2_dunzo_01",
+      "category": "delivery",
+      "text": "Dunzo: Order #DZ4123908 - your groceries from BIG BAZAAR will arrive in 12 minutes. Delivery partner Ramesh M. -Dunzo",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_tatapower_01",
+      "category": "utility",
+      "text": "TATA Power Mumbai: Bill of Rs 4,231 for A/c 41000098 (Apr-26) is generated. Due 28-Apr-26. Pay at tatapower.com or via your UPI app. -Tata",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_tatapower_02",
+      "category": "utility",
+      "text": "TATA Power Reminder: Bill Rs 4,231 due tomorrow 28-Apr-26 for A/c 41000098. Avoid disconnection - pay now via your UPI app or tatapower.com.",
+      "hard_negative": true,
+      "why_hard": "'avoid disconnection' + 'pay now' urgency — utility scam mimics this exactly"
+    },
+    {
+      "id": "bav2_bses_01",
+      "category": "utility",
+      "text": "BSES Rajdhani: Electricity bill Rs 6,890 for K Number 121300012 (Apr-26) generated. Due date 30-Apr-26. www.bsesdelhi.com",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_reliance_energy_01",
+      "category": "utility",
+      "text": "Reliance Energy: Power outage scheduled in YOUR area on 25-Apr-26 from 10:00 to 14:00 for maintenance. -RInfra",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_water_01",
+      "category": "utility",
+      "text": "BWSSB: Water bill Rs 412 for K No 12X20104 (Mar-26) due 22-Apr-26. Online: bbmpgov.in. -BWSSB Bangalore",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_gas_01",
+      "category": "utility",
+      "text": "Indane: Refill booking 9012390401 for LPG cylinder confirmed. Delivery in 2-3 days. Cost Rs 1,090. -IOC",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_gas_02",
+      "category": "utility",
+      "text": "HP Gas: Delivery completed on 16-Apr-26 at 11:40. Receipt no 4012039. Next refill window opens 16-Jun-26. -HPCL",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_lic_01",
+      "category": "insurance",
+      "text": "LIC: Premium of Rs 18,432 for Policy 891239048 will auto-debit from A/c XX2231 on 25-Apr-26. -LIC India",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_lic_02",
+      "category": "insurance",
+      "text": "LIC: Policy 891239048 - PREMIUM OVERDUE. Last date 30-Apr-26 to avoid lapse. Pay at licindia.in. -LIC",
+      "hard_negative": true,
+      "why_hard": "overdue + lapse threat — insurance scams mimic"
+    },
+    {
+      "id": "bav2_hdfcergo_01",
+      "category": "insurance",
+      "text": "HDFC ERGO: Vehicle Insurance for MH-04-AT-2391 expires on 15-May-26. Renew online at hdfcergo.com to avoid coverage gap.",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_health_01",
+      "category": "healthcare",
+      "text": "Apollo Hospitals: Appointment with Dr A Iyer confirmed on 23-Apr-26 at 11:00. Apollo Bandra. Bring previous reports. -Apollo",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_health_02",
+      "category": "healthcare",
+      "text": "Practo: Reminder - Dr R Sharma video consultation today at 16:30. Join via practo.com/consult. -Practo",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_health_03",
+      "category": "healthcare",
+      "text": "Pharmeasy: Order PE-91202410 - your prescription medicines will be delivered today between 18:00-21:00. -PharmEasy",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_misc_school_01",
+      "category": "education",
+      "text": "DPS RK Puram: Half-yearly report card for Roll 4012 (Class IX-B) is available on the parent portal. Login with registered mobile. -DPS",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_misc_school_02",
+      "category": "education",
+      "text": "BYJU'S: Live class with Aman sir on 'Trigonometry - Heights & Distances' starts in 30 min. Join from app. -BYJU'S",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_subscription_01",
+      "category": "subscription",
+      "text": "Hotstar: Your Disney+ Hotstar Mobile (1 yr) is renewing on 02-May-26 for Rs 499. Manage at hotstar.com/billing.",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_subscription_02",
+      "category": "subscription",
+      "text": "Netflix: Your auto-renewal of Rs 199 for Mobile plan failed. Update payment by 25-Apr-26 to avoid pause. netflix.com/payment",
+      "hard_negative": true,
+      "why_hard": "subscription failure + 'update payment' urgency = mimics phishing"
+    },
+    {
+      "id": "bav2_subscription_03",
+      "category": "subscription",
+      "text": "Spotify: Premium (Family) plan renewed Rs 199 on 19-Apr-26. Reference SPF-410123. -Spotify",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_govt_01",
+      "category": "govt",
+      "text": "Election Commission: General Elections 2026 - your name appears on the voter list, polling booth #41 at NMH School, Andheri W. Polling on 28-Apr-26. -ECI",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_govt_02",
+      "category": "govt",
+      "text": "MyGov India: Updated COVID-19 vaccination certificate for ABHA HEALTH ID 14-9101-9012-3010 is now available on cowin.gov.in.",
+      "hard_negative": true,
+      "why_hard": "ABHA + Cowin reference = format used in real fraud reverification scams"
+    },
+    {
+      "id": "bav2_govt_03",
+      "category": "govt",
+      "text": "EPFO: Your monthly PF contribution of Rs 4,800 for Mar-26 has been credited to UAN 100119302. Bal Rs 2,40,832. -EPFO",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_jobs_01",
+      "category": "employment",
+      "text": "Naukri.com: 12 new jobs matching 'Software Engineer Bangalore' in last 24h. Login to view. -Naukri",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_jobs_02",
+      "category": "employment",
+      "text": "LinkedIn: Anika Gupta from STRIPE wants to connect with you. Open LinkedIn to respond.",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_finance_01",
+      "category": "investment_legit",
+      "text": "Zerodha: Your CONSOLIDATED ACCOUNT STATEMENT for Mar-26 is now available at console.zerodha.com. -Zerodha",
+      "hard_negative": true,
+      "why_hard": "investment-platform + 'statement' — investment scams mimic format"
+    },
+    {
+      "id": "bav2_finance_02",
+      "category": "investment_legit",
+      "text": "Groww: SIP for ICICI PRU LIQUID FUND Rs 5,000 was processed on 21-Apr-26. Units allotted 19.41. -Groww",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_finance_03",
+      "category": "investment_legit",
+      "text": "Upstox: Brokerage statement for Mar-26 is now downloadable. Net brokerage Rs 412. -Upstox",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_charity_01",
+      "category": "charity",
+      "text": "Akshaya Patra: Thank you for donation of Rs 1,500 on 18-Apr-26. 80G receipt sent to your registered email. -Akshaya Patra Foundation",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_food_01",
+      "category": "food_delivery",
+      "text": "Zomato: Your order #ZO9012390 from BIRYANI BLUES will arrive in 32 min. Delivery partner Ravi K. -Zomato",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_food_02",
+      "category": "food_delivery",
+      "text": "Swiggy: Order DELIVERED. Rate your meal from PIZZA HUT and earn 50 SuperCoins. -Swiggy",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_telecom_01",
+      "category": "telecom",
+      "text": "Jio: Your Rs 299 plan auto-renewed on 21-Apr-26. Validity till 21-May-26. -Jio",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_telecom_02",
+      "category": "telecom",
+      "text": "Airtel: Recharge of Rs 549 for 9876543210 successful. 1.5GB/day for 56 days. Bal voice 100 min. -Airtel",
+      "hard_negative": false
+    },
+    {
+      "id": "bav2_telecom_03",
+      "category": "telecom",
+      "text": "Vi: Bill of Rs 449 for Apr-26 generated. Due 27-Apr-26 to avoid line interruption. Pay at myvi.in. -Vi India",
+      "hard_negative": true,
+      "why_hard": "'avoid interruption' utility threat tone"
+    },
+    {
+      "id": "bav2_npci_01",
+      "category": "npci_advisory",
+      "text": "NPCI Safety Reminder: NEVER share UPI PIN. NPCI / banks NEVER ask for PIN over call/SMS. Report fraud to 1930 or cybercrime.gov.in. -NPCI",
+      "hard_negative": true,
+      "why_hard": "explicit 'never share UPI PIN' — naive 'urgent + UPI' rules trip on this"
+    },
+    {
+      "id": "bav2_kyc_legit_01",
+      "category": "kyc_legit",
+      "text": "HDFC Securities: Annual KYC re-verification due. Visit branch with Aadhaar + PAN + photograph by 30-Jun-26. NO ONE will ask for OTP. -HDFCSec",
+      "hard_negative": true,
+      "why_hard": "KYC + 'visit branch' + 'NEVER OTP' = scam-pattern shape, but legit broker re-KYC"
+    },
+    {
+      "id": "bav2_kyc_legit_02",
+      "category": "kyc_legit",
+      "text": "ICICI: Periodic KYC update is required for A/c XX2231. Submit fresh PAN+address proof at any branch by 30-Jun-26. We will not call/SMS for this. -ICICI",
+      "hard_negative": true,
+      "why_hard": "KYC + deadline + bank — exact wording mimicked by scammers"
+    },
+    {
+      "id": "bav2_returns_01",
+      "category": "ecommerce",
+      "text": "Amazon: Refund of Rs 1,299 for order #408-9123710 has been processed to your original payment method. Reflects in 5-7 days. -Amazon",
+      "hard_negative": false
+    }
+  ]
+}

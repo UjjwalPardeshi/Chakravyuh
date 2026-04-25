@@ -165,17 +165,49 @@ class ExplanationJudge:
 
 
 class MockExplanationJudge:
-    """Deterministic heuristic judge. Does not call any API."""
+    """Deterministic heuristic judge. Does not call any API.
+
+    Adversarial-case handling (matches the WIN_PLAN P1.7 thresholds and is
+    pinned in tests/test_explanation_judge.py):
+
+      - empty / whitespace-only explanation → 0.0 (rejected outright)
+      - over-long explanation (> 1500 chars) → 0.0 (likely junk)
+      - too-short / boilerplate explanation (< 4 words) → tiny score < 0.2
+      - signal-grounded explanation that overlaps the message vocabulary
+        and includes an action verb → > 0.7 (accepted)
+    """
+
+    _OVER_LONG_CHARS = 1500
+    _MIN_WORDS = 4
 
     def score(self, message: str, explanation: str) -> ExplanationScore:
+        # --- adversarial guards -----------------------------------------
+        expl = explanation.strip()
+        if not expl:
+            return ExplanationScore.from_parts(
+                0.0, 0.0, 0.0, reason="empty explanation rejected"
+            )
+        if len(expl) > self._OVER_LONG_CHARS:
+            return ExplanationScore.from_parts(
+                0.0, 0.0, 0.0, reason=f"over-long ({len(expl)} chars) rejected"
+            )
+
+        # --- regular scoring --------------------------------------------
         # Factual: reward if explanation overlaps with message vocab
         msg_words = set(re.findall(r"\w+", message.lower()))
-        exp_words = set(re.findall(r"\w+", explanation.lower()))
+        exp_words = set(re.findall(r"\w+", expl.lower()))
         overlap = len(msg_words & exp_words) / max(1, len(exp_words))
         factual = min(0.4, 0.1 + 0.5 * overlap)
 
+        # Boilerplate guard: penalize factual when the explanation is BOTH
+        # short AND ungrounded ("This is suspicious." against an unrelated
+        # message). Short-but-grounded ("OTP scam, obvious.") keeps full
+        # interpretability so legitimate concise reasoning is not punished.
+        word_count = len(expl.split())
+        if word_count < self._MIN_WORDS and overlap < 0.3:
+            factual = 0.05
+
         # Interpretability: short + no jargon = good
-        word_count = len(explanation.split())
         if 4 <= word_count <= 30:
             interp = 0.3
         elif word_count < 50:
@@ -188,7 +220,7 @@ class MockExplanationJudge:
             "do not", "don't", "block", "refuse", "call bank", "verify",
             "avoid", "report", "ignore", "hang up",
         ]
-        action_present = any(v in explanation.lower() for v in action_verbs)
+        action_present = any(v in expl.lower() for v in action_verbs)
         actionability = 0.25 if action_present else 0.10
 
         return ExplanationScore.from_parts(

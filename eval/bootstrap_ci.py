@@ -109,3 +109,154 @@ def _variance(values: Sequence[float]) -> float:
         return 0.0
     m = _mean(values)
     return sum((v - m) ** 2 for v in values) / (len(values) - 1)
+
+
+# --- CLI ---------------------------------------------------------------------
+#
+# `make bootstrap` calls `python eval/bootstrap_ci.py --eval-file <json>
+# --iterations 10000 --output <json>` and expects 95% CI bands on the
+# headline metrics from logs/eval_v2.json.
+#
+# `eval_v2.json` only stores aggregated proportions and counts, not per-
+# scenario predictions. For a Bernoulli proportion (detection rate, FPR,
+# per-difficulty detection), the percentile bootstrap is well-defined on
+# the *reconstructed* binary outcome array of length n. F1 is bootstrapped
+# jointly over the scam outcomes (TP/FN) and benign outcomes (FP/TN).
+
+
+def _binary_outcomes(rate: float, n: int) -> list[int]:
+    """Reconstruct a binary outcome array from rate × n.
+
+    Assumes the rate was computed as count / n with `count` an integer.
+    """
+    count = int(round(rate * n))
+    count = max(0, min(n, count))
+    return [1] * count + [0] * (n - count)
+
+
+def _f1_from_outcomes(scam_correct: Sequence[int], benign_correct: Sequence[int]) -> float:
+    """Compute F1 given per-scenario correctness on scams and benigns."""
+    tp = sum(scam_correct)
+    fn = len(scam_correct) - tp
+    fp = len(benign_correct) - sum(benign_correct)
+    if tp + fp == 0 or tp + fn == 0:
+        return 0.0
+    precision = tp / (tp + fp)
+    recall = tp / (tp + fn)
+    if precision + recall == 0:
+        return 0.0
+    return 2 * precision * recall / (precision + recall)
+
+
+def _bootstrap_proportion(
+    outcomes: Sequence[int],
+    n_resamples: int,
+    seed: int,
+) -> tuple[float, float, float]:
+    """Percentile bootstrap CI for a binary proportion."""
+    return bootstrap_ci(
+        outcomes,
+        statistic=lambda v: sum(v) / len(v),
+        n_resamples=n_resamples,
+        seed=seed,
+    )
+
+
+def _bootstrap_f1(
+    scam_outcomes: Sequence[int],
+    benign_outcomes: Sequence[int],
+    n_resamples: int,
+    seed: int,
+) -> tuple[float, float, float]:
+    """Joint percentile bootstrap CI for F1 over scam + benign outcomes."""
+    rng = random.Random(seed)
+    n_s, n_b = len(scam_outcomes), len(benign_outcomes)
+    if n_s == 0 or n_b == 0:
+        return 0.0, 0.0, 0.0
+    samples = []
+    for _ in range(n_resamples):
+        s_resample = [scam_outcomes[rng.randrange(n_s)] for _ in range(n_s)]
+        b_resample = [benign_outcomes[rng.randrange(n_b)] for _ in range(n_b)]
+        samples.append(_f1_from_outcomes(s_resample, b_resample))
+    samples.sort()
+    lo = samples[int(0.025 * n_resamples)]
+    hi = samples[int(0.975 * n_resamples)]
+    point = _f1_from_outcomes(scam_outcomes, benign_outcomes)
+    return float(point), float(lo), float(hi)
+
+
+def _ci_dict(point: float, lo: float, hi: float) -> dict:
+    return {"point": point, "ci_low": lo, "ci_high": hi}
+
+
+def _run_cli() -> None:
+    import argparse
+    import json
+    from pathlib import Path
+
+    parser = argparse.ArgumentParser(description="Bootstrap 95% CIs for Chakravyuh eval metrics")
+    parser.add_argument("--eval-file", required=True, help="Path to logs/eval_v2.json")
+    parser.add_argument("--iterations", type=int, default=10000, help="Bootstrap resamples")
+    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--output", required=True, help="Path to write bootstrap CI JSON")
+    args = parser.parse_args()
+
+    eval_data = json.loads(Path(args.eval_file).read_text())
+    if "lora_v2" not in eval_data:
+        raise SystemExit(f"{args.eval_file} missing 'lora_v2' section")
+    block = eval_data["lora_v2"]
+
+    n_total = int(block["n"])
+    detection = float(block["detection"])
+    fpr = float(block["fpr"])
+    per_diff = block.get("per_difficulty", {})
+    n_scams = sum(int(v["n"]) for v in per_diff.values())
+    n_benign = n_total - n_scams
+    if n_scams <= 0 or n_benign <= 0:
+        raise SystemExit(
+            f"Cannot derive scam/benign split from per_difficulty (n_scams={n_scams}, n_benign={n_benign})"
+        )
+
+    scam_outcomes = _binary_outcomes(detection, n_scams)
+    benign_correct_outcomes = _binary_outcomes(1.0 - fpr, n_benign)
+
+    out: dict = {
+        "_meta": {
+            "eval_file": args.eval_file,
+            "iterations": args.iterations,
+            "seed": args.seed,
+            "method": "percentile bootstrap on Bernoulli outcome arrays reconstructed from logs/eval_v2.json aggregates",
+            "n_scams": n_scams,
+            "n_benign": n_benign,
+            "n_total": n_total,
+        },
+        "detection": _ci_dict(*_bootstrap_proportion(scam_outcomes, args.iterations, args.seed)),
+        "fpr": _ci_dict(*_bootstrap_proportion([1 - o for o in benign_correct_outcomes], args.iterations, args.seed + 1)),
+        "f1": _ci_dict(*_bootstrap_f1(scam_outcomes, benign_correct_outcomes, args.iterations, args.seed + 2)),
+        "per_difficulty": {},
+    }
+
+    for i, (name, info) in enumerate(per_diff.items()):
+        n_d = int(info["n"])
+        rate_d = float(info["detection_rate"])
+        if n_d <= 0:
+            continue
+        outcomes_d = _binary_outcomes(rate_d, n_d)
+        out["per_difficulty"][name] = {
+            "n": n_d,
+            "detection": _ci_dict(*_bootstrap_proportion(outcomes_d, args.iterations, args.seed + 10 + i)),
+        }
+
+    Path(args.output).parent.mkdir(parents=True, exist_ok=True)
+    Path(args.output).write_text(json.dumps(out, indent=2))
+    det = out["detection"]
+    fp = out["fpr"]
+    f1 = out["f1"]
+    print(f"Wrote {args.output}")
+    print(f"  detection: {det['point']:.4f}  95% CI [{det['ci_low']:.4f}, {det['ci_high']:.4f}]")
+    print(f"  fpr:       {fp['point']:.4f}  95% CI [{fp['ci_low']:.4f}, {fp['ci_high']:.4f}]")
+    print(f"  f1:        {f1['point']:.4f}  95% CI [{f1['ci_low']:.4f}, {f1['ci_high']:.4f}]")
+
+
+if __name__ == "__main__":
+    _run_cli()

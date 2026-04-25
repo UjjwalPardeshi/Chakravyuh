@@ -52,6 +52,7 @@ from chakravyuh_env.openenv_models import (
 from chakravyuh_env.reward import compute_rewards
 from chakravyuh_env.rubrics import AnalyzerRubric
 from chakravyuh_env.schemas import (
+    AnalyzerConsultation,
     AnalyzerSignal,
     BankFlag,
     BankFreeze,
@@ -95,6 +96,7 @@ class ChakravyuhOpenEnv(Environment[ChakravyuhAction, ChakravyuhObservation, Cha
         gullibility: float = 1.0,
         use_embeddings: bool = False,
         rubric: Rubric | None = None,
+        enable_negotiation: bool = False,
     ) -> None:
         # Default to the composable AnalyzerRubric — satisfies the
         # judging-criterion "Uses OpenEnv's Rubric system thoughtfully
@@ -104,6 +106,7 @@ class ChakravyuhOpenEnv(Environment[ChakravyuhAction, ChakravyuhObservation, Cha
         self._victim_profile = victim_profile
         self._gullibility = gullibility
         self._novelty_scorer = build_novelty_scorer(use_embeddings=use_embeddings)
+        self._enable_negotiation = enable_negotiation
 
         # Per-episode state — all set in reset(). The regulator lives here
         # (not in __init__) so each new episode starts with a fresh outcome
@@ -300,11 +303,31 @@ class ChakravyuhOpenEnv(Environment[ChakravyuhAction, ChakravyuhObservation, Cha
         assert self._bank is not None
         self._turn = turn
         obs = self._internal_obs(role="bank")
-        action = self._bank.act(obs)
+        if self._enable_negotiation and self._last_action is not None:
+            consultation = self._build_consultation(self._last_action)
+            action = self._bank.act_with_consultation(obs, consultation)
+        else:
+            action = self._bank.act(obs)
         if isinstance(action, (BankFlag, BankFreeze)):
             self._state_obj.bank_flagged = True
             if isinstance(action, BankFreeze):
                 self._state_obj.bank_froze = True
+
+    def _build_consultation(
+        self, last_action: ChakravyuhAction
+    ) -> AnalyzerConsultation:
+        """Summarise the last analyzer action as an Analyzer↔Bank consultation.
+
+        Sent to the Bank Monitor on the metadata channel — chat content is
+        explicitly NOT included. See ``docs/negotiation_protocol.md``.
+        """
+        threshold = float(last_action.flag_threshold)
+        return AnalyzerConsultation(
+            score=float(last_action.score),
+            signals=tuple(last_action.signals),
+            threshold=threshold,
+            flagged=bool(last_action.score >= threshold),
+        )
 
     def _resolve_outcome(self) -> None:
         # Turn 9: combined decision, Turn 10: regulator log.

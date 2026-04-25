@@ -1,0 +1,63 @@
+{
+  "_meta": {
+    "corpus": "chakravyuh_env/benign_augmented_v2.json",
+    "analyzer": "scripted",
+    "threshold": 0.5
+  },
+  "n_total": 81,
+  "n_flagged_as_scam": 7,
+  "fpr": 0.08641975308641975,
+  "hard_negatives_flagged": [
+    "bav2_rbi_03",
+    "bav2_bank_fraud_alert_01",
+    "bav2_bank_fraud_alert_03",
+    "bav2_otp_legit_04",
+    "bav2_uidai_03",
+    "bav2_tatapower_02",
+    "bav2_kyc_legit_01"
+  ],
+  "examples": [
+    {
+      "id": "bav2_rbi_03",
+      "category": "rbi_advisory",
+      "score": 0.5900000000000001,
+      "hard_negative": true
+    },
+    {
+      "id": "bav2_bank_fraud_alert_01",
+      "category": "bank_fraud_alert",
+      "score": 0.97,
+      "hard_negative": true
+    },
+    {
+      "id": "bav2_bank_fraud_alert_03",
+      "category": "bank_fraud_alert",
+      "score": 0.5900000000000001,
+      "hard_negative": true
+    },
+    {
+      "id": "bav2_otp_legit_04",
+      "category": "otp_legit",
+      "score": 0.65,
+      "hard_negative": true
+    },
+    {
+      "id": "bav2_uidai_03",
+      "category": "uidai_aadhaar",
+      "score": 0.65,
+      "hard_negative": true
+    },
+    {
+      "id": "bav2_tatapower_02",
+      "category": "utility",
+      "score": 0.53,
+      "hard_negative": true
+    },
+    {
+      "id": "bav2_kyc_legit_01",
+      "category": "kyc_legit",
+      "score": 0.65,
+      "hard_negative": true
+    }
+  ]
+}

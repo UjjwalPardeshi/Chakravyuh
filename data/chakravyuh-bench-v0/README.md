@@ -165,7 +165,11 @@ See `baselines.json` for structured results.
 | GPT-4o-mini (OpenAI, zero-shot) | *pending* | — | — | — |
 | Claude 3.5 Haiku (Anthropic, zero-shot) | *pending* | — | — | — |
 | Gemini 2.0 Flash (Google, zero-shot) | *pending* | — | — | — |
-| Chakravyuh-Qwen2.5-LoRA (trained) | *pending* | — | — | — |
+| Chakravyuh-Qwen2.5-LoRA v1 (reward-hacked) | 100.0% | 36.0% | 0.96 | 100% |
+| **Chakravyuh-Qwen2.5-LoRA v2** (this release) | **99.3%** | **6.7%** | **0.99** | **97.1%** |
+
+v2 numbers from [`logs/eval_v2.json`](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/logs/eval_v2.json), bootstrap 95% CIs in [`logs/bootstrap_v2.json`](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/logs/bootstrap_v2.json):
+detection [97.9%, 100%] · FPR [0%, 16.7%] · F1 [0.976, 1.000] · novel-detection [91.2%, 100%].
 
 ## Label Quality — Agreement Statistics
 

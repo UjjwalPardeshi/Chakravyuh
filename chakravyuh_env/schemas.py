@@ -219,6 +219,29 @@ class BankFreeze(BaseModel):
 BankAction = BankApprove | BankFlag | BankFreeze
 
 
+class AnalyzerConsultation(BaseModel):
+    """Cross-tier oversight handshake — the on-device Analyzer's opinion
+    summarised for the Bank Monitor without leaking chat content.
+
+    Used by the optional Analyzer↔Bank negotiation protocol
+    (see ``docs/negotiation_protocol.md``). The Bank Monitor never sees the
+    chat itself — the consultation is the only channel through which the
+    Analyzer's signal influences the bank-side decision.
+
+    Fields are deliberately minimal:
+      - ``score``: scam suspicion in [0, 1]
+      - ``signals``: declared signals from the Analyzer's taxonomy (no chat text)
+      - ``threshold``: the threshold the Analyzer was operating at
+      - ``flagged``: convenience boolean (``score >= threshold``)
+    """
+
+    model_config = ConfigDict(frozen=True)
+    score: float = Field(ge=0.0, le=1.0)
+    signals: tuple[str, ...] = Field(default_factory=tuple)
+    threshold: float = Field(ge=0.0, le=1.0, default=0.55)
+    flagged: bool = False
+
+
 class RegulatorAddRule(BaseModel):
     model_config = ConfigDict(frozen=True)
     type: Literal["add_rule"] = "add_rule"

@@ -162,6 +162,19 @@ class LLMAnalyzer(Agent):
         )
         return score
 
+    # ---- one-liner public API (used by `chakravyuh_env.get_trained_analyzer`) ----
+
+    def __call__(self, text: str) -> dict[str, Any]:
+        """Score a single message, return the structured analyzer output.
+
+        Returns a dict with keys ``score`` (float), ``signals`` (list[str]),
+        and ``explanation`` (str) — the same shape the model produces in JSON.
+        """
+        score, signals, explanation = self._predict_from_chat(
+            [ChatMessage(sender="scammer", turn=1, text=text)]
+        )
+        return {"score": score, "signals": list(signals), "explanation": explanation}
+
     # ---- internals ----
 
     def _predict_from_chat(

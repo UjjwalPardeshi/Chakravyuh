@@ -1,0 +1,35 @@
+{
+  "_meta": {
+    "bench": "data/chakravyuh-bench-v0/scenarios.jsonl",
+    "threshold": 0.5,
+    "method": "scripted-rule baseline; v2 cross-reference from logs/eval_v2.json",
+    "rule": "novel = source.category=='novel_post_2024' OR source.date_range year >= 2024"
+  },
+  "scripted": {
+    "known": {
+      "n": 14,
+      "detection_rate": 0.9285714285714286
+    },
+    "novel": {
+      "n": 130,
+      "detection_rate": 0.823076923076923
+    },
+    "benign": {
+      "n": 31,
+      "fpr": 0.12903225806451613
+    }
+  },
+  "v2_crossref": {
+    "source": "logs/eval_v2.json",
+    "novel": {
+      "n": 34,
+      "detection_rate": 0.9705882352941176
+    },
+    "known": {
+      "n": 110,
+      "detection_rate": 1.0,
+      "note": "easy + medium + hard buckets aggregated as a known-scam proxy"
+    }
+  },
+  "headline_gap_pp": 10.5
+}

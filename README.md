@@ -18,6 +18,68 @@ short_description: Multi-agent RL env for Indian UPI fraud detection
 
 A multi-agent RL environment for Indian UPI fraud detection — built for the **Meta PyTorch OpenEnv Hackathon 2026 (Bangalore)**.
 
+![Per-difficulty detection: scripted vs Chakravyuh v2](plots/chakravyuh_plots/v2_per_difficulty_check.png)
+
+> *Per-difficulty detection on the 174-scenario bench — scripted rules vs the Chakravyuh v2 LoRA. The scripted baseline collapses on `hard` and `novel` post-2024 attacks; v2 closes the gap to **100%** on hard and **97%** on novel. Backing artifact: [`logs/eval_v2.json`](logs/eval_v2.json).*
+
+## The 60-second pitch
+
+**Problem.** Indian digital payments lose ₹13,000+ crore/year to UPI fraud. 60 crore users are exposed. Rule-based detectors catch ~80% of pre-2024 scams but only ~50% of post-2024 novel patterns (matrimonial crypto, deepfake CEO, digital arrest, AePS fraud). No public RL environment exists for multi-agent fraud-detection research — so we built one.
+
+**Approach.** A 5-agent OpenEnv environment (Scammer, Victim, Analyzer, Bank Monitor, Regulator) with a composable 5-rubric reward. The Analyzer is a Qwen2.5-7B LoRA, post-trained with TRL's GRPO. Reward-hacking diagnosed in v1 (FPR = 36 %), then *measurably* fixed in v2 (FPR = 6.7 % — **5× better**).
+
+**Headline result** — 174 scenarios, percentile bootstrap 95 % CIs (10 000 iters) from [`logs/bootstrap_v2.json`](logs/bootstrap_v2.json):
+
+| Metric | v1 (reward-hacked) | **v2 (this submission)** | 95 % CI (v2) |
+|---|---|---|---|
+| Detection rate (recall on scams, n = 144) | 100.0 % | **99.3 %** | [97.9 %, 100 %] |
+| False positive rate (n = 30 benign) | 36.0 % | **6.7 %** | [0.0 %, 16.7 %] |
+| F1 | 0.96 | **0.99** | [0.976, 1.000] |
+| Detection on **novel** (post-2024, n = 34) | 100 % | 97.1 % | [91.2 %, 100 %] |
+
+The asymmetric improvement — detection unchanged, FPR down 5× — is the signature of the model actually learning the task instead of gaming the reward. Full v1→v2 diagnosis below.
+
+---
+
+## Real incidents Chakravyuh is built for
+
+These are cited public 2025 cases. Each one matches a signal Chakravyuh's Analyzer is trained to flag. The bench-v0 corpus contains structurally similar templates (not the same text — soft-leakage filtered).
+
+| Location | Date | Amount | Signal Chakravyuh catches | Source |
+|---|---|---|---|---|
+| Hyderabad | Oct 26 – Nov 12, 2025 | ₹11.17 lakh | `trust_grooming` + `investment_offer` (matrimonial profile → "Singapore crypto trader" → high-return crypto pitch) — suspect arrested at Chennai airport | [Newsmeter](https://newsmeter.in/crime/rs-11-lakh-matrimonial-crypto-scam-busted-by-hyderabad-police-mastermind-from-vizag-held-at-airport-763759) |
+| Mumbai | 2025 | ₹1 crore | `trust_grooming` + `investment_offer` + `urgency` (matrimonial site → fake "NRI" → assured-return crypto app) | [Outlook Money](https://www.outlookmoney.com/news/man-duped-of-rs-1-crore-in-crypto-scam-through-matrimonial-website) |
+| Pan-India | 2025 | ~₹2,400 cr (29,000+ AePS complaints) | `biometric_impersonation` (Aadhaar biometric data scraped from public registry sites → AePS withdrawal at remote operator). The Analyzer flags companion phishing chats; the Bank Monitor's separate metadata channel catches the AePS leg. | [Press Information Bureau](https://www.pib.gov.in/PressReleasePage.aspx?PRID=2039647) · [The Print](https://theprint.in/india/governance/cybercriminals-cloning-aadhaar-biometric-data-to-commit-fraud-mha-nodal-agency-to-states/1415112/) |
+
+The pan-India AePS case is the single sharpest illustration of why **two-tier oversight** matters. A chat-only detector cannot see an AePS withdrawal at a remote operator; a metadata-only detector cannot see the social-engineering chat that set up the biometric leak. Chakravyuh runs both tiers, structurally independent.
+
+---
+
+## Before / after — one novel-2025 scam, scripted vs Chakravyuh v2
+
+A single scenario from the bench (`modec_106`, source: `Novel post-2024 — AI deepfake CEO`, date: 2025-Q4):
+
+> "[Deepfake voice of Infosys CEO]: Exclusive employee IPO allocation. Invest Rs 1 lakh via company portal. HR calling now for UPI transfer. Limited to first 100 employees."
+
+| | Score | Flagged? | Signals | Source |
+|---|---|---|---|---|
+| **Scripted baseline** | **0.05** | ❌ missed | `unknown_sender` only | [`docs/before_after_example.json`](docs/before_after_example.json) |
+| **Chakravyuh v2** | n/a (single-scenario re-run pending GPU) | — | — | aggregate detection on `novel` split: **33/34 = 97.1 %** ([`logs/eval_v2.json`](logs/eval_v2.json)) |
+
+The scripted analyzer's word-list rules find no urgency token, no impersonation phrase ("CEO" isn't in the list), no info-request, no link — score 0.05, threshold 0.50, **scam slips through**. Across the 34 post-2024 novel scenarios in the bench, the v2 LoRA caught **33** of them. We do not yet re-score this exact scenario with v2 because the live HF Space runs the env (not a GPU-hot LoRA); that single-scenario number is on the v3 task list.
+
+Reproducible via:
+
+```bash
+python eval/single_scenario_eval.py \
+    --scenario-id modec_106 \
+    --output docs/before_after_example.json
+```
+
+---
+
+## The Mahabharata framing
+
 In the Mahabharata, the Chakravyuh was an impenetrable multi-layered battle formation. We've built a modern one — five AI agents forming a multi-layered trap around India's digital payment system.
 
 **Themes covered**
@@ -45,7 +107,7 @@ The composable rubric system ([chakravyuh_env/rubrics.py](chakravyuh_env/rubrics
 | HF Blog post | _TBD_ |
 | Slide deck (PDF) | _TBD_ |
 | W&B training run | _TBD_ |
-| Public benchmark dataset | [`data/chakravyuh-bench-v0/`](data/chakravyuh-bench-v0/) (135 scenarios) |
+| Public benchmark dataset | [`ujjwalpardeshi/chakravyuh-bench-v0`](https://huggingface.co/datasets/ujjwalpardeshi/chakravyuh-bench-v0) on HF Hub · local copy: [`data/chakravyuh-bench-v0/`](data/chakravyuh-bench-v0/) (175 scenarios) |
 | Official hackathon guidelines | [`guidelines/`](guidelines/) |
 
 ---
@@ -160,6 +222,19 @@ with ChakravyuhEnvClient(base_url="http://localhost:8000").sync() as env:
     print("outcome:", result.observation.outcome)
     print("rubric breakdown:", result.observation.reward_breakdown)
 ```
+
+### One-liner — score a single message with the trained Analyzer
+
+```python
+from chakravyuh_env import get_trained_analyzer
+
+analyzer = get_trained_analyzer()  # downloads ujjwalpardeshi/chakravyuh-analyzer-lora-v2 on first call
+print(analyzer("Urgent! Your bank account will be frozen. Share OTP to verify identity."))
+# → {'score': 0.95, 'signals': ['urgency', 'info_request', 'impersonation'],
+#    'explanation': 'Asks for OTP with urgency from a self-claimed bank agent...'}
+```
+
+The analyzer is callable for one-shot scoring (`analyzer(text) -> dict`). For full env integration use `analyzer.act(observation)`; for Mode C eval use `analyzer.score_text(text) -> float`. First call downloads weights (~660 MB) and is slow; subsequent calls hit the warm model.
 
 ### Direct-import usage (no HTTP, for unit tests and trainers colocated with the env)
 

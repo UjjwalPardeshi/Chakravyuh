@@ -45,125 +45,694 @@ SUBTITLE = (
 )
 
 # ---------------------------------------------------------------------------
-# Theme-aware CSS (Gradio CSS variables → auto-adapt light/dark)
+# Design system — two-color palette with strict white/black text rule
 # ---------------------------------------------------------------------------
+#
+#   #FFF3E6  warm peach-cream      → page surface, cards, light states
+#   #381932  deep aubergine plum   → accents, fills, selected states, dark states
+#
+# Text contract (no greys):
+#   - On any light surface (#FFF3E6 / white) → BLACK
+#   - On any plum fill (#381932)             → WHITE
+#
+# Severity / state encoding uses *fill density* — there are only two colors,
+# so we vary how much plum is on the surface:
+#   - HIGH / decisive (FROZEN / MONEY EXTRACTED / HIGH suspicion / direct-PII keyword)
+#       → solid plum fill + white text
+#   - MEDIUM (FLAGGED / MEDIUM suspicion / urgency keyword)
+#       → white fill + plum border + plum-tinted accent + black text
+#   - LOW / safe (APPROVED / LOW suspicion / regular text)
+#       → cream / white fill + black text + hairline plum border
+# ---------------------------------------------------------------------------
+
+PALETTE = {
+    "cream": "#FFF3E6",
+    "plum":  "#381932",
+}
+
 CUSTOM_CSS = """
+/* === Force light color-scheme — Gradio's default theme injects a
+ *     prefers-color-scheme: dark block that flips body bg to #0E0A07 and
+ *     swaps component tokens (textbox/example values) to white text on
+ *     dark, which collides with our cream surfaces. We pin light mode. ===
+ */
+:root, html, body, gradio-app, .gradio-container { color-scheme: light !important; }
+
+/* === Design tokens === */
+:root {
+  --ck-cream: #FFF3E6;                       /* page surface */
+  --ck-cream-2: #FFFBF5;                     /* lifted surfaces */
+  --ck-cream-3: #FFE8D2;                     /* subtle dividers / chip surface */
+  --ck-plum: #381932;                        /* accent / dark fills */
+  --ck-plum-hover: #2A0F25;                  /* button hover */
+  --ck-plum-tint-08: rgba(56, 25, 50, 0.08); /* hover wash */
+  --ck-plum-tint-12: rgba(56, 25, 50, 0.12);
+  --ck-plum-tint-18: rgba(56, 25, 50, 0.18); /* hairline border */
+  --ck-plum-tint-30: rgba(56, 25, 50, 0.30); /* stronger border */
+  --ck-black: #000000;
+  --ck-black-72: rgba(0, 0, 0, 0.72);        /* subtitle / secondary copy */
+  --ck-white: #FFFFFF;
+
+  --ck-radius-sm: 8px;
+  --ck-radius-md: 12px;
+  --ck-radius-lg: 16px;
+
+  --ck-shadow-1: 0 1px 2px rgba(56, 25, 50, 0.06), 0 1px 1px rgba(56, 25, 50, 0.04);
+  --ck-shadow-2: 0 6px 18px rgba(56, 25, 50, 0.10), 0 2px 4px rgba(56, 25, 50, 0.05);
+
+  --ck-font-stack: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont,
+                    system-ui, 'Helvetica Neue', sans-serif;
+}
+
+/* === Page surface === */
+html, body, gradio-app, .gradio-container {
+  background: var(--ck-cream) !important;
+  color: var(--ck-black) !important;
+  font-family: var(--ck-font-stack);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Override Gradio's default container chrome */
+.gradio-container .main, .gradio-container .wrap,
+.gr-block, .gr-form, .gr-panel, .gr-padded {
+  background: transparent !important;
+}
+
+/* === Layout === */
 .chakravyuh-container {
   max-width: 1200px;
   margin: 0 auto;
-  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  padding: 24px 20px 48px;
 }
 
-/* Hero title */
+/* === Hero === */
+.chakravyuh-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 24px 0 12px;
+  border-bottom: 1px solid var(--ck-plum-tint-18);
+  margin-bottom: 22px;
+}
+.chakravyuh-eyebrow {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--ck-white);
+  background: var(--ck-plum);
+  border: 1px solid var(--ck-plum);
+  padding: 5px 12px;
+  border-radius: 999px;
+  align-self: flex-start;
+  margin-bottom: 6px;
+}
 .chakravyuh-title {
-  font-size: 32px !important;
+  font-size: clamp(26px, 4.5vw, 38px) !important;
   font-weight: 800 !important;
-  margin-bottom: 4px !important;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.6px;
+  line-height: 1.1;
+  color: var(--ck-black) !important;
+  margin: 0 !important;
 }
 .chakravyuh-subtitle {
+  font-size: clamp(14px, 1.4vw, 16px) !important;
+  line-height: 1.6;
+  color: var(--ck-black-72) !important;
+  max-width: 760px;
+  margin: 0 !important;
+}
+
+/* === Tabs === */
+.tab-nav,
+div[role="tablist"] {
+  border-bottom: 1px solid var(--ck-plum-tint-18) !important;
+  background: transparent !important;
+  margin-bottom: 22px !important;
+  gap: 4px;
+}
+.tab-nav button,
+div[role="tablist"] button,
+button[role="tab"] {
+  font-family: var(--ck-font-stack) !important;
   font-size: 14px !important;
-  color: var(--body-text-color-subdued, #888) !important;
-  margin-bottom: 16px !important;
+  font-weight: 600 !important;
+  color: var(--ck-black) !important;
+  opacity: 0.75 !important;
+  padding: 12px 18px !important;
+  border: 0 !important;
+  background: transparent !important;
+  border-bottom: 2px solid transparent !important;
+  border-radius: 0 !important;
+  transition: opacity .15s ease, border-color .15s ease, background .15s ease;
+}
+.tab-nav button:hover,
+button[role="tab"]:hover {
+  opacity: 1 !important;
+  background: var(--ck-plum-tint-08) !important;
+}
+.tab-nav button.selected,
+.tab-nav button[aria-selected="true"],
+button[role="tab"][aria-selected="true"],
+button[role="tab"].selected {
+  opacity: 1 !important;
+  color: var(--ck-black) !important;
+  border-bottom: 3px solid var(--ck-plum) !important;
+  background: transparent !important;
 }
 
-/* Agent grid — hero multi-agent strip */
-.agent-grid {
-  transition: opacity 0.3s ease;
-}
-.agent-card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-.agent-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+/* === Cards / panels === */
+.gr-form, .gr-panel, .form, .block,
+.gr-group, .gr-box {
+  background: var(--ck-cream-2) !important;
+  border: 1px solid var(--ck-plum-tint-18) !important;
+  border-radius: var(--ck-radius-md) !important;
+  box-shadow: var(--ck-shadow-1);
 }
 
-/* Pulsing indicator for warning/critical states */
-@keyframes pulse-dot {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.65; }
+/* === Form controls — strict white bg + BLACK text === */
+.gr-input, .gr-textarea, .gr-textbox textarea, .gr-textbox input,
+.gr-dropdown, input[type="text"], textarea, input {
+  background: var(--ck-white) !important;
+  color: var(--ck-black) !important;
+  -webkit-text-fill-color: var(--ck-black) !important;  /* Safari override */
+  caret-color: var(--ck-plum) !important;
+  border: 1px solid var(--ck-plum-tint-18) !important;
+  border-radius: var(--ck-radius-sm) !important;
+  font-family: var(--ck-font-stack) !important;
+  font-size: 14px !important;
+  transition: border-color .15s ease, box-shadow .15s ease;
 }
-.pulse { animation: pulse-dot 1.6s ease-in-out infinite; }
-
-/* Animated suspicion bar fill */
-.suspicion-bar-fill {
-  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1),
-              background-color 0.35s ease;
+.gr-input:focus, .gr-textarea:focus, textarea:focus, input:focus {
+  outline: none !important;
+  border-color: var(--ck-plum) !important;
+  box-shadow: 0 0 0 3px var(--ck-plum-tint-12) !important;
+}
+::placeholder, ::-webkit-input-placeholder, ::-moz-placeholder, :-ms-input-placeholder {
+  color: rgba(0,0,0,0.40) !important;
+  -webkit-text-fill-color: rgba(0,0,0,0.40) !important;
 }
 
-/* Suspicion score panel */
+/* === Radios as pills (selected = solid plum + white text) === */
+input[type="radio"], input[type="checkbox"] {
+  accent-color: var(--ck-plum) !important;
+}
+.gr-radio, fieldset[data-testid="radio"], [data-testid="radio"] {
+  gap: 8px !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+}
+.gr-radio label,
+.gr-radio .wrap label,
+[data-testid="radio"] label,
+fieldset[data-testid="radio"] label {
+  background: var(--ck-white) !important;
+  border: 1px solid var(--ck-plum-tint-18) !important;
+  border-radius: 999px !important;
+  padding: 9px 16px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: var(--ck-black) !important;
+  cursor: pointer !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  transition: background .15s ease, border-color .15s ease, color .15s ease,
+              box-shadow .15s ease;
+}
+.gr-radio label:hover,
+[data-testid="radio"] label:hover {
+  background: var(--ck-plum-tint-08) !important;
+  border-color: var(--ck-plum-tint-30) !important;
+}
+/* SELECTED — solid plum bg, white text. Every common Gradio selector covered. */
+.gr-radio label:has(input[type="radio"]:checked),
+.gr-radio label.selected,
+.gr-radio label[aria-checked="true"],
+[data-testid="radio"] label:has(input[type="radio"]:checked),
+[data-testid="radio"] label.selected,
+[data-testid="radio"] label[aria-checked="true"],
+fieldset[data-testid="radio"] label:has(input[type="radio"]:checked) {
+  background: var(--ck-plum) !important;
+  border-color: var(--ck-plum) !important;
+  color: var(--ck-white) !important;
+  box-shadow: var(--ck-shadow-1);
+}
+.gr-radio label:has(input[type="radio"]:checked) *,
+[data-testid="radio"] label:has(input[type="radio"]:checked) *,
+fieldset[data-testid="radio"] label:has(input[type="radio"]:checked) * {
+  color: var(--ck-white) !important;   /* force every nested span/strong to white */
+}
+
+/* === Buttons === */
+.gr-button, button.lg, button.sm, .primary {
+  font-family: var(--ck-font-stack) !important;
+  font-weight: 600 !important;
+  border-radius: var(--ck-radius-sm) !important;
+  padding: 10px 18px !important;
+  font-size: 14px !important;
+  letter-spacing: 0.1px;
+  transition: background .15s ease, transform .08s ease, box-shadow .15s ease,
+              border-color .15s ease;
+}
+.gr-button.primary, button.primary {
+  background: var(--ck-plum) !important;
+  color: var(--ck-white) !important;
+  border: 1px solid var(--ck-plum) !important;
+  box-shadow: var(--ck-shadow-1);
+}
+.gr-button.primary:hover, button.primary:hover {
+  background: var(--ck-plum-hover) !important;
+  transform: translateY(-1px);
+  box-shadow: var(--ck-shadow-2);
+}
+.gr-button.secondary, button.secondary, .gr-button:not(.primary) {
+  background: var(--ck-white) !important;
+  color: var(--ck-black) !important;
+  border: 1px solid var(--ck-plum-tint-30) !important;
+}
+.gr-button.secondary:hover, button.secondary:hover,
+.gr-button:not(.primary):hover {
+  background: var(--ck-plum-tint-08) !important;
+  border-color: var(--ck-plum) !important;
+}
+.gr-button:disabled, button:disabled {
+  opacity: 0.4; cursor: not-allowed; transform: none !important;
+}
+
+/* === Section heading === */
+.panel-heading {
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  text-transform: uppercase;
+  letter-spacing: 1.6px;
+  color: var(--ck-black) !important;
+  margin: 22px 0 12px !important;
+  padding: 0 !important;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.panel-heading::before {
+  content: "";
+  width: 16px; height: 2px;
+  background: var(--ck-plum);
+  border-radius: 999px;
+}
+
+/* === Metadata chip strip === */
+.metadata-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 14px;
+  background: var(--ck-cream-2);
+  border: 1px solid var(--ck-plum-tint-18);
+  border-radius: var(--ck-radius-md);
+  margin: 14px 0 10px;
+  box-shadow: var(--ck-shadow-1);
+}
+.meta-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--ck-white);
+  border: 1px solid var(--ck-plum-tint-18);
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1;
+  color: var(--ck-black);
+}
+.meta-chip-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--ck-black-72);
+}
+.meta-chip-value {
+  font-family: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-weight: 700;
+  color: var(--ck-black);
+  font-variant-numeric: tabular-nums;
+}
+
+/* === Form / block labels === */
+.gr-block-label,
+.block-label,
+span[data-testid="block-label"],
+.gr-form > label,
+.gr-form > div > label,
+fieldset > legend,
+.gr-input-label,
+.gr-radio > label:first-child,
+.gr-radio > .wrap > label:first-child {
+  color: var(--ck-black) !important;
+  opacity: 1 !important;
+  font-weight: 700 !important;
+  font-size: 12px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 1.2px !important;
+  margin-bottom: 8px !important;
+}
+
+/* === Suspicion score panel === */
 #suspicion-panel {
-  border-radius: 12px;
-  padding: 18px;
+  border-radius: var(--ck-radius-md);
+  padding: 22px 20px;
   text-align: center;
-  transition: background 0.35s ease;
+  transition: background .35s ease, border-color .35s ease;
+  box-shadow: var(--ck-shadow-1);
 }
 #suspicion-score {
-  font-size: 48px;
+  font-size: clamp(40px, 6vw, 56px);
   font-weight: 800;
-  margin: 4px 0;
+  margin: 6px 0 4px;
   line-height: 1;
-  transition: color 0.35s ease;
+  font-variant-numeric: tabular-nums;
+  transition: color .35s ease;
 }
 #suspicion-label {
-  font-size: 11px;
+  font-size: 10px;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 2px;
   margin: 0;
-  opacity: 0.85;
 }
 #suspicion-explanation {
   font-size: 13px;
-  margin-top: 6px;
-  color: var(--body-text-color, #333) !important;
-  opacity: 0.85;
+  line-height: 1.5;
+  margin-top: 10px;
 }
 
-/* Outcome badge */
+/* === Suspicion bar === */
+.suspicion-bar-fill {
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+              background-color 0.35s ease;
+  border-radius: 999px;
+}
+
+/* === Outcome badge === */
 .outcome-badge {
-  font-size: 20px;
-  font-weight: 800;
-  padding: 18px;
-  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 16px 20px;
+  border-radius: var(--ck-radius-md);
   text-align: center;
-  margin: 12px 0;
+  margin: 18px 0 6px;
   letter-spacing: 0.3px;
+  transition: background .35s ease, color .35s ease;
+  box-shadow: var(--ck-shadow-1);
 }
 
-/* Attack timeline */
+/* === Attack timeline === */
 .attack-timeline {
-  border: 1px solid var(--border-color-primary, #e5e5e5);
-  border-radius: 10px;
-  background: var(--background-fill-secondary, rgba(127,127,127,0.04));
+  border: 1px solid var(--ck-plum-tint-18);
+  border-radius: var(--ck-radius-md);
+  background: var(--ck-cream-2);
 }
 .timeline-step {
   transition: opacity 0.3s ease, transform 0.2s ease;
 }
 
-/* Panel headers — stronger hierarchy */
-.panel-heading {
-  font-size: 13px !important;
-  font-weight: 700 !important;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  color: var(--body-text-color-subdued, #888) !important;
-  margin: 14px 0 6px !important;
+/* === Agent cards === */
+.agent-grid { transition: opacity 0.3s ease; }
+.agent-card {
+  background: var(--ck-white) !important;
+  border: 1px solid var(--ck-plum-tint-18) !important;
+  border-radius: var(--ck-radius-md) !important;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+.agent-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--ck-shadow-2);
+  border-color: var(--ck-plum) !important;
 }
 
-/* Playback controls */
-#playback-controls {
-  gap: 12px;
-  margin: 12px 0;
+/* === Pulse === */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(0.92); }
 }
-#playback-controls button {
-  min-width: 120px;
+.pulse { animation: pulse-dot 1.6s ease-in-out infinite; }
+
+/* === Playback controls === */
+#playback-controls {
+  gap: 10px !important;
+  margin: 16px 0 8px !important;
+  flex-wrap: wrap;
+}
+#playback-controls button { min-width: 130px; }
+
+/* === Examples === */
+.examples-table, .gr-examples {
+  background: transparent !important;
+}
+.examples-table button, .gr-examples button {
+  background: var(--ck-white) !important;
+  border: 1px solid var(--ck-plum-tint-18) !important;
+  color: var(--ck-black) !important;
+  font-family: var(--ck-font-stack) !important;
+  border-radius: var(--ck-radius-sm) !important;
+  text-align: left !important;
+  padding: 12px 14px !important;
+  transition: background .15s, border-color .15s;
+}
+.examples-table button:hover, .gr-examples button:hover {
+  background: var(--ck-plum-tint-08) !important;
+  border-color: var(--ck-plum) !important;
+}
+
+/* === Footer === */
+.chakravyuh-footer {
+  margin-top: 32px !important;
+  padding-top: 18px !important;
+  border-top: 1px solid var(--ck-plum-tint-18) !important;
+  font-size: 12px !important;
+  color: var(--ck-black-72) !important;
+  line-height: 1.6;
+}
+.chakravyuh-footer a {
+  color: var(--ck-plum) !important;
+  text-decoration: underline;
+  text-decoration-color: var(--ck-plum);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
   font-weight: 600;
 }
 
-/* Larger breathing room */
-.gr-block {
-  padding: 0 !important;
+/* === Markdown copy === */
+.gr-markdown, .markdown,
+.prose, .gradio-container .prose,
+.gradio-container p, .gradio-container li {
+  color: var(--ck-black) !important;
+  font-family: var(--ck-font-stack) !important;
+}
+
+/* Inline `code` — strong override against Gradio's dark default */
+code, kbd, samp,
+.gradio-container code,
+.gr-markdown code,
+.markdown code,
+.prose code,
+p code, span code, li code, td code, th code,
+.gr-html code, .gr-html-content code {
+  background: var(--ck-cream-3) !important;
+  color: var(--ck-black) !important;
+  border: 1px solid var(--ck-plum-tint-18) !important;
+  border-radius: 4px !important;
+  padding: 1px 7px !important;
+  font-size: 0.92em !important;
+  font-family: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace !important;
+  font-weight: 600 !important;
+  white-space: nowrap;
+}
+code::before, code::after { content: none !important; }
+
+/* === Scrollbars === */
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background: var(--ck-plum-tint-18);
+  border-radius: 999px;
+}
+*::-webkit-scrollbar-thumb:hover { background: var(--ck-plum-tint-30); }
+
+/* === Responsive: tablet === */
+@media (max-width: 900px) {
+  .chakravyuh-container { padding: 16px 14px 36px; }
+  .chakravyuh-hero { padding: 18px 0 8px; margin-bottom: 16px; }
+  .agent-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .gr-row { flex-direction: column !important; gap: 0 !important; }
+  .gr-row > .gr-column { width: 100% !important; max-width: 100% !important; }
+}
+
+/* === Responsive: mobile === */
+@media (max-width: 600px) {
+  .chakravyuh-container { padding: 12px 10px 28px; }
+  .agent-grid { grid-template-columns: 1fr !important; }
+  #suspicion-score { font-size: 40px; }
+  .outcome-badge { font-size: 14px; padding: 12px; }
+  .gr-button, button { width: 100% !important; min-width: 0 !important; }
+  #playback-controls { flex-direction: column !important; }
+  .tab-nav button { padding: 9px 12px !important; font-size: 13px !important; }
+}
+
+/* === Reduced motion === */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* === Focus visible (a11y) === */
+:focus-visible {
+  outline: 2px solid var(--ck-plum) !important;
+  outline-offset: 2px;
+}
+
+/* === Dark-mode safety net ===
+ *
+ * If the user's OS is in dark mode, Gradio applies dark-theme tokens to
+ * many components (textbox, examples, dropdown, dataframe, …). We override
+ * those tokens to keep the cream / plum contract consistent and the strict
+ * white-on-plum / black-on-light text rule intact.
+ *
+ * Selectors chosen to win against Gradio's `!important` declarations.
+ */
+@media (prefers-color-scheme: dark) {
+  html, body, gradio-app, .gradio-container,
+  .gradio-container .main, .gradio-container .wrap {
+    background: var(--ck-cream) !important;
+    color: var(--ck-black) !important;
+  }
+
+  /* Cards, blocks, forms */
+  .gradio-container .gr-block, .gradio-container .gr-form,
+  .gradio-container .gr-panel, .gradio-container .gr-padded,
+  .gradio-container .gr-box, .gradio-container .gr-group,
+  .gradio-container .block, .gradio-container .form,
+  .gradio-container fieldset {
+    background: var(--ck-cream-2) !important;
+    color: var(--ck-black) !important;
+    border-color: var(--ck-plum-tint-18) !important;
+  }
+
+  /* Inputs / textareas — must always be white bg with BLACK value text */
+  .gradio-container .gr-input,
+  .gradio-container .gr-textarea,
+  .gradio-container .gr-textbox,
+  .gradio-container .gr-textbox textarea,
+  .gradio-container .gr-textbox input,
+  .gradio-container .gr-dropdown,
+  .gradio-container input[type="text"],
+  .gradio-container textarea,
+  .gradio-container input {
+    background: var(--ck-white) !important;
+    color: var(--ck-black) !important;
+    border-color: var(--ck-plum-tint-18) !important;
+    -webkit-text-fill-color: var(--ck-black) !important;
+  }
+  .gradio-container ::placeholder {
+    color: rgba(0, 0, 0, 0.40) !important;
+    -webkit-text-fill-color: rgba(0, 0, 0, 0.40) !important;
+  }
+
+  /* Buttons — primary stays plum+white; secondary stays white+black */
+  .gradio-container .gr-button.primary,
+  .gradio-container button.primary {
+    background: var(--ck-plum) !important;
+    color: var(--ck-white) !important;
+    border-color: var(--ck-plum) !important;
+  }
+  .gradio-container .gr-button:not(.primary),
+  .gradio-container button:not(.primary):not([role="tab"]) {
+    background: var(--ck-white) !important;
+    color: var(--ck-black) !important;
+    border-color: var(--ck-plum-tint-30) !important;
+  }
+
+  /* Examples table — Gradio defaults to dark text on dark in dark mode */
+  .gradio-container .examples-table,
+  .gradio-container .gr-examples,
+  .gradio-container .examples-table table,
+  .gradio-container .gr-examples table {
+    background: transparent !important;
+    color: var(--ck-black) !important;
+  }
+  .gradio-container .examples-table button,
+  .gradio-container .gr-examples button,
+  .gradio-container .examples-table td,
+  .gradio-container .gr-examples td {
+    background: var(--ck-white) !important;
+    color: var(--ck-black) !important;
+    border-color: var(--ck-plum-tint-18) !important;
+  }
+
+  /* Tabs */
+  .gradio-container .tab-nav button,
+  .gradio-container button[role="tab"] {
+    background: transparent !important;
+    color: var(--ck-black) !important;
+  }
+  .gradio-container button[role="tab"][aria-selected="true"],
+  .gradio-container .tab-nav button.selected {
+    color: var(--ck-black) !important;
+    border-bottom-color: var(--ck-plum) !important;
+  }
+
+  /* Markdown / prose */
+  .gradio-container .gr-markdown,
+  .gradio-container .markdown,
+  .gradio-container .prose,
+  .gradio-container p,
+  .gradio-container li,
+  .gradio-container span:not(.meta-chip-label):not(.meta-chip-value) {
+    color: var(--ck-black) !important;
+  }
+
+  /* Inline `code` again (Gradio's dark-mode variant) */
+  .gradio-container code,
+  .gradio-container .gr-markdown code,
+  .gradio-container .markdown code,
+  .gradio-container .prose code {
+    background: var(--ck-cream-3) !important;
+    color: var(--ck-black) !important;
+    border: 1px solid var(--ck-plum-tint-18) !important;
+  }
+
+  /* Form / block labels */
+  .gradio-container .gr-block-label,
+  .gradio-container .block-label,
+  .gradio-container span[data-testid="block-label"],
+  .gradio-container fieldset > legend {
+    color: var(--ck-black) !important;
+  }
+
+  /* Radio pills — re-assert selected = plum bg + white text */
+  .gradio-container .gr-radio label,
+  .gradio-container [data-testid="radio"] label {
+    background: var(--ck-white) !important;
+    color: var(--ck-black) !important;
+    border-color: var(--ck-plum-tint-18) !important;
+  }
+  .gradio-container .gr-radio label:has(input[type="radio"]:checked),
+  .gradio-container [data-testid="radio"] label:has(input[type="radio"]:checked),
+  .gradio-container .gr-radio label[aria-checked="true"],
+  .gradio-container [data-testid="radio"] label[aria-checked="true"] {
+    background: var(--ck-plum) !important;
+    color: var(--ck-white) !important;
+    border-color: var(--ck-plum) !important;
+  }
+  .gradio-container .gr-radio label:has(input[type="radio"]:checked) *,
+  .gradio-container [data-testid="radio"] label:has(input[type="radio"]:checked) * {
+    color: var(--ck-white) !important;
+    -webkit-text-fill-color: var(--ck-white) !important;
+  }
 }
 """
 
@@ -171,57 +740,83 @@ MODE_AUTO = "Auto-play (full episode)"
 MODE_STEP = "Step-through (turn by turn)"
 
 
-def _suspicion_color(score: float) -> tuple[str, str]:
-    """Return (background, foreground) colors for a suspicion score panel."""
-    if score >= 0.7:
-        return ("rgba(201, 42, 42, 0.10)", "#C92A2A")  # red
-    if score >= 0.4:
-        return ("rgba(230, 126, 34, 0.10)", "#E67E22")  # amber
-    return ("rgba(43, 138, 62, 0.10)", "#2B8A3E")       # green
+def _suspicion_style(score: float) -> tuple[str, str, str, str]:
+    """Return (background, text_color, border, bar_color) for the suspicion panel.
+
+    Two-color palette + strict white/black text rule:
+
+      HIGH  (>= 0.70)  →  solid plum bg + WHITE text + white bar (high-contrast)
+      MED   (>= 0.40)  →  white bg + BLACK text + plum border + plum bar
+      LOW   (<  0.40)  →  cream-2 bg + BLACK text + plum hairline border + plum bar
+    """
+    if score >= 0.70:
+        return ("#381932", "#FFFFFF", "#381932", "#FFFFFF")
+    if score >= 0.40:
+        return ("#FFFFFF", "#000000", "#381932", "#381932")
+    return ("#FFFBF5", "#000000", "rgba(56,25,50,0.30)", "#381932")
 
 
 def _render_suspicion_score(score: float, explanation: str) -> str:
-    bg, fg = _suspicion_color(score)
-    pct = int(score * 100)
+    bg, fg, border, bar_color = _suspicion_style(score)
+    pct = int(round(score * 100))
+    # Bar track tinted relative to the panel: dark plum for light panels,
+    # semi-transparent white for the dark high-suspicion panel.
+    bar_track = "rgba(255,255,255,0.30)" if bg == "#381932" else "rgba(56,25,50,0.18)"
     return (
-        f'<div id="suspicion-panel" style="background:{bg};'
-        f'border:1px solid {fg}33;">'
+        f'<div id="suspicion-panel" style="background:{bg};color:{fg};'
+        f'border:1px solid {border};">'
         f'<p id="suspicion-label" style="color:{fg};">Suspicion Score</p>'
         f'<p id="suspicion-score" style="color:{fg};">{score:.2f}</p>'
-        # Horizontal progress bar (animated via CSS)
-        f'<div style="background:rgba(127,127,127,0.15);height:8px;'
-        f'border-radius:4px;overflow:hidden;margin:10px 0 8px;">'
+        f'<div style="background:{bar_track};height:6px;'
+        f'border-radius:999px;overflow:hidden;margin:14px 0 10px;">'
         f'<div class="suspicion-bar-fill" '
-        f'style="background:{fg};width:{pct}%;height:100%;"></div>'
+        f'style="background:{bar_color};width:{pct}%;height:100%;"></div>'
         f"</div>"
-        f'<p id="suspicion-explanation">{explanation or "No signals detected."}</p>'
+        f'<p id="suspicion-explanation" style="color:{fg};">'
+        f'{explanation or "No signals detected."}</p>'
         "</div>"
     )
 
 
 def _render_outcome_badge(text: str) -> str:
-    # Tone-aware background: success/danger/neutral based on content
-    if "MONEY EXTRACTED" in text:
-        bg, fg = "rgba(201, 42, 42, 0.12)", "#C92A2A"
-    elif "FROZE" in text or "REFUSED" in text or "VERIFIED" in text:
-        bg, fg = "rgba(43, 138, 62, 0.12)", "#2B8A3E"
-    elif "FLAGGED" in text:
-        bg, fg = "rgba(230, 126, 34, 0.12)", "#E67E22"
+    """Outcome badge — same plum/cream + black/white contract."""
+    upper = text.upper()
+    if "MONEY EXTRACTED" in upper:
+        # Decisive negative → solid plum + white
+        bg, fg, border = "#381932", "#FFFFFF", "#381932"
+    elif "FROZE" in upper or "REFUSED" in upper or "VERIFIED" in upper:
+        # Decisive positive resolution → also plum (matches "decisive action")
+        bg, fg, border = "#381932", "#FFFFFF", "#381932"
+    elif "FLAGGED" in upper:
+        # Mid-state → white + plum border + black
+        bg, fg, border = "#FFFFFF", "#000000", "#381932"
     else:
-        bg, fg = "rgba(127,127,127,0.08)", "var(--body-text-color, #333)"
+        # Neutral / in-progress → cream-2 + plum hairline
+        bg, fg, border = "#FFFBF5", "#000000", "rgba(56,25,50,0.18)"
     return (
         f'<div class="outcome-badge" style="background:{bg};color:{fg};'
-        f'border:1px solid {fg if isinstance(fg, str) and fg.startswith("#") else "#999"}33;">'
-        f"{text}</div>"
+        f'border:1px solid {border};">{text}</div>'
     )
 
 
 def _render_metadata(ep: ReplayedEpisode, current_turn: int, total_turns: int) -> str:
+    """Episode metadata — rendered as a horizontal strip of readable chips."""
+    items = [
+        ("Seed", str(ep.seed)),
+        ("Profile", ep.profile.value),
+        ("Category", ep.outcome.scam_category.value),
+        ("Turn", f"{current_turn} / {total_turns}"),
+    ]
+    chips = "".join(
+        '<div class="meta-chip">'
+        f'<span class="meta-chip-label">{label}</span>'
+        f'<span class="meta-chip-value">{value}</span>'
+        "</div>"
+        for label, value in items
+    )
     return (
-        f"&nbsp;&nbsp;**Seed**: `{ep.seed}` &nbsp;·&nbsp; "
-        f"**Profile**: `{ep.profile.value}` &nbsp;·&nbsp; "
-        f"**Category**: `{ep.outcome.scam_category.value}` &nbsp;·&nbsp; "
-        f"**Turn**: `{current_turn}/{total_turns}`"
+        '<div class="metadata-strip" role="group" aria-label="Episode metadata">'
+        f"{chips}</div>"
     )
 
 
@@ -379,14 +974,19 @@ def build_app() -> gr.Blocks:
 
     with gr.Blocks(title=TITLE) as app:
         with gr.Column(elem_classes=["chakravyuh-container"]):
-            gr.Markdown(f'<div class="chakravyuh-title">{TITLE}</div>')
-            gr.Markdown(f'<div class="chakravyuh-subtitle">{SUBTITLE}</div>')
+            gr.HTML(
+                '<header class="chakravyuh-hero" role="banner">'
+                '<span class="chakravyuh-eyebrow">Chakravyuh · Multi-Agent Fraud Arena</span>'
+                f'<h1 class="chakravyuh-title">{TITLE}</h1>'
+                f'<p class="chakravyuh-subtitle">{SUBTITLE}</p>'
+                "</header>"
+            )
 
             with gr.Tabs():
                 # =================================================
                 # REPLAY TAB
                 # =================================================
-                with gr.Tab("🎬 Replay (5 Cherry-Picked Episodes)"):
+                with gr.Tab("Replay · Curated episodes"):
                     with gr.Row():
                         episode_picker = gr.Radio(
                             choices=labels,
@@ -400,7 +1000,7 @@ def build_app() -> gr.Blocks:
                             label="Playback",
                         )
 
-                    info_panel = gr.Markdown("")
+                    info_panel = gr.HTML("")
 
                     # Hero: agent cards + attack timeline
                     gr.Markdown(
@@ -526,41 +1126,153 @@ def build_app() -> gr.Blocks:
                 # =================================================
                 # LIVE Q&A TAB
                 # =================================================
-                with gr.Tab("🔬 Live (Try Your Own Message)"):
-                    gr.Markdown(
-                        "Paste a suspicious message and the Analyzer scores it live. "
-                        "Day 1 uses a rule-based baseline; Day 2+ swaps in the LoRA-trained Qwen2.5-7B."
+                with gr.Tab("Live · Score your own message"):
+                    gr.HTML(
+                        '<div class="panel-heading">Try the Analyzer</div>'
+                        '<p style="margin:0 0 18px;font-size:14px;line-height:1.6;'
+                        'color:var(--ck-slate);opacity:0.8;max-width:760px;">'
+                        "Paste any SMS or chat snippet — the rule-based "
+                        "Analyzer returns a suspicion score, declared signals, and a "
+                        "natural-language explanation in one round-trip. The trained "
+                        "<code>Qwen2.5-7B-LoRA-v2</code> adapter is hot-swappable "
+                        "with <code>get_trained_analyzer()</code> when a GPU is available."
+                        "</p>"
                     )
-                    user_input = gr.Textbox(
-                        label="Message to analyze",
-                        placeholder="e.g. 'Your SBI KYC expires today, share OTP to verify...'",
-                        lines=4,
-                    )
-                    analyze_btn = gr.Button("🔎 Analyze", variant="primary")
-                    live_suspicion = gr.HTML(
-                        value=_render_suspicion_score(
-                            0.0, "Enter a message and click Analyze."
-                        )
-                    )
+                    with gr.Row():
+                        with gr.Column(scale=3, min_width=320):
+                            user_input = gr.Textbox(
+                                label="Message",
+                                placeholder=(
+                                    "e.g. \"Dear customer, your SBI KYC expires today. "
+                                    "Click https://sbi-kyc.xyz within 2 hours or account frozen.\""
+                                ),
+                                lines=5,
+                            )
+                            analyze_btn = gr.Button("Analyze message", variant="primary")
+                        with gr.Column(scale=2, min_width=260):
+                            live_suspicion = gr.HTML(
+                                value=_render_suspicion_score(
+                                    0.0, "Paste a message and press Analyze."
+                                )
+                            )
                     analyze_btn.click(
                         on_live_analyze,
                         inputs=[user_input],
                         outputs=[live_suspicion],
                     )
+                    user_input.submit(
+                        on_live_analyze,
+                        inputs=[user_input],
+                        outputs=[live_suspicion],
+                    )
+                    gr.HTML('<div class="panel-heading">Quick samples</div>')
                     gr.Examples(
                         examples=[
                             "Dear customer, your SBI KYC expires today. Click https://sbi-kyc.xyz to update within 2 hours or account frozen.",
                             "Congratulations! You won Rs 25,000 in PNB lucky draw. Share OTP to claim.",
                             "Your Amazon order is out for delivery. Expected between 4-7 PM. Track at amazon.in/orders",
+                            "Urgent! Income Tax refund of Rs 23,400 pending. Verify your Aadhaar at it-refund-portal.in within 24 hours.",
+                            "RBI Sachet Advisory: Beware of fake KYC update messages. RBI / your bank will NEVER ask for OTP, CVV, PIN. Report fraud to 1930.",
                         ],
                         inputs=[user_input],
+                        label="",
                     )
 
-            gr.Markdown(
-                "---\n*Chakravyuh is an open-source benchmark for Indian UPI fraud detection. "
-                "Benchmark: `chakravyuh-bench-v0` (n=135). MIT license.*"
+            gr.HTML(
+                '<footer class="chakravyuh-footer">'
+                "Chakravyuh is an open-source benchmark for Indian UPI fraud detection — "
+                'an entry to the Meta PyTorch <abbr title="Open Reinforcement Learning Environment">OpenEnv</abbr> '
+                "Hackathon 2026, Bangalore. "
+                "Bench <code>chakravyuh-bench-v0</code> (n=175 scenarios) · "
+                "Adapter <code>ujjwalpardeshi/chakravyuh-analyzer-lora-v2</code> · "
+                "MIT-licensed code, CC-BY-4.0 dataset."
+                "</footer>"
             )
     return app
+
+
+def _build_theme() -> gr.themes.Base:
+    """Two-color theme: deep plum (#381932) + warm cream (#FFF3E6).
+
+    Strict white/black text rule — no greys. Plum scale built around #381932;
+    neutral scale built around the cream surface. We start from `Base` so we
+    can paint exact colors and not inherit Gradio's default blue/grey.
+    """
+    plum_scale = gr.themes.Color(
+        c50="#FBEAF6",
+        c100="#F5D2EA",
+        c200="#E0A4C9",
+        c300="#C476A8",
+        c400="#9C4F87",
+        c500="#7A3565",
+        c600="#5A234C",
+        c700="#381932",   # primary plum
+        c800="#2A0F25",
+        c900="#1A0717",
+        c950="#0D030B",
+    )
+    neutral_scale = gr.themes.Color(
+        c50="#FFFBF5",     # cream-2 (lifted)
+        c100="#FFF3E6",    # cream (page surface)
+        c200="#FFE8D2",    # cream-3
+        c300="#F5D8BB",
+        c400="#E2BEA0",
+        c500="#B89880",
+        c600="#8E7461",
+        c700="#5C4B3F",
+        c800="#3A2F27",
+        c900="#1F1813",
+        c950="#0E0A07",
+    )
+    return gr.themes.Base(
+        primary_hue=plum_scale,
+        secondary_hue=plum_scale,
+        neutral_hue=neutral_scale,
+        font=[gr.themes.GoogleFont("Inter"), "Segoe UI", "system-ui", "sans-serif"],
+        font_mono=[gr.themes.GoogleFont("JetBrains Mono"), "Consolas", "monospace"],
+    ).set(
+        # Light mode (the only mode we ship)
+        body_background_fill="#FFF3E6",
+        body_text_color="#000000",
+        body_text_color_subdued="#000000",
+        background_fill_primary="#FFF3E6",
+        background_fill_secondary="#FFFBF5",
+        block_background_fill="#FFFBF5",
+        border_color_primary="rgba(56,25,50,0.18)",
+        button_primary_background_fill="#381932",
+        button_primary_background_fill_hover="#2A0F25",
+        button_primary_text_color="#FFFFFF",
+        button_secondary_background_fill="#FFFFFF",
+        button_secondary_background_fill_hover="rgba(56,25,50,0.08)",
+        button_secondary_text_color="#000000",
+        input_background_fill="#FFFFFF",
+        input_border_color="rgba(56,25,50,0.18)",
+        input_border_color_focus="#381932",
+        link_text_color="#381932",
+        block_label_text_color="#000000",
+        block_title_text_color="#000000",
+        # Dark-mode overrides — applied when OS is in dark mode. We intentionally
+        # mirror the light values so the UI stays cream + plum either way.
+        body_background_fill_dark="#FFF3E6",
+        body_text_color_dark="#000000",
+        body_text_color_subdued_dark="#000000",
+        background_fill_primary_dark="#FFF3E6",
+        background_fill_secondary_dark="#FFFBF5",
+        block_background_fill_dark="#FFFBF5",
+        border_color_primary_dark="rgba(56,25,50,0.18)",
+        button_primary_background_fill_dark="#381932",
+        button_primary_background_fill_hover_dark="#2A0F25",
+        button_primary_text_color_dark="#FFFFFF",
+        button_secondary_background_fill_dark="#FFFFFF",
+        button_secondary_background_fill_hover_dark="rgba(56,25,50,0.08)",
+        button_secondary_text_color_dark="#000000",
+        input_background_fill_dark="#FFFFFF",
+        input_border_color_dark="rgba(56,25,50,0.18)",
+        input_border_color_focus_dark="#381932",
+        link_text_color_dark="#381932",
+        block_label_text_color_dark="#000000",
+        block_title_text_color_dark="#000000",
+    )
 
 
 def main() -> None:
@@ -570,7 +1282,7 @@ def main() -> None:
         server_name="0.0.0.0",
         server_port=7860,
         css=CUSTOM_CSS,
-        theme=gr.themes.Soft(),
+        theme=_build_theme(),
     )
 
 

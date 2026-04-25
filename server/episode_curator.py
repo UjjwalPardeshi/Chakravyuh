@@ -269,32 +269,37 @@ def outcome_badge(outcome: EpisodeOutcome) -> str:
 
 # -- (B) Keyword highlighting ------------------------------------------------
 
-# Patterns to highlight inside scammer messages. Ordered by priority:
-# highest-risk categories highlighted most prominently.
-_HIGHLIGHT_PATTERNS: tuple[tuple[str, str, str], ...] = (
-    # (category, color, regex)
+# Two-color palette + strict white/black text. Highlight priority is
+# expressed via fill density on the plum (#381932) ramp:
+#   info          → solid plum + WHITE text (heaviest, direct PII ask)
+#   urgency       → white bg + 1.5px plum border + BLACK text (medium)
+#   impersonation → cream-3 bg + plum hairline + BLACK text (lightest)
+_HIGHLIGHT_STYLES: dict[str, str] = {
+    "info":          "background:#381932;color:#FFFFFF;border:1px solid #381932;",
+    "urgency":       "background:#FFFFFF;color:#000000;border:1.5px solid #381932;",
+    "impersonation": "background:#FFE8D2;color:#000000;border:1px solid rgba(56,25,50,0.30);",
+}
+_HIGHLIGHT_PATTERNS: tuple[tuple[str, str], ...] = (
     (
         "info",
-        "#C92A2A",
         r"\b(otp|aadhaar|adhar|pan|cvv|pin|upi\s+pin|card\s+number|bank\s+details)\b",
     ),
     (
         "urgency",
-        "#E67E22",
         r"\b(urgent|urgently|immediately|now|expires?|expired|minutes?|hours?\s+left|within\s+\d+|last\s+chance|hurry|act\s+fast|deadline|suspended|block(?:ed)?)\b",
     ),
     (
         "impersonation",
-        "#8E44AD",
         r"\b(sbi|hdfc|icici|axis\s+bank|yes\s+bank|kotak|canara|pnb|rbi|uidai|income\s+tax|epfo|cbi|police|cyber\s+cell|customer\s+care|fraud\s+team|manager|officer)\b",
     ),
 )
 
 
 def _highlight_keywords(text: str) -> str:
-    """Wrap keyword matches in colored <mark> tags. HTML-safe."""
+    """Wrap keyword matches in palette-aligned <mark> tags. HTML-safe."""
     escaped = _html_escape(text)
-    # Also highlight suspicious URLs
+
+    # Suspicious URLs — heaviest mark (solid plum + white text)
     def _url_replacer(match: re.Match) -> str:
         url = match.group(0)
         low = url.lower()
@@ -302,20 +307,22 @@ def _highlight_keywords(text: str) -> str:
             short in low for short in _URL_SHORTENERS
         ):
             return (
-                f'<mark style="background:#FFE4B3;color:#C92A2A;'
-                f'padding:2px 4px;border-radius:3px;font-weight:600;">'
+                '<mark style="background:#381932;color:#FFFFFF;'
+                'padding:2px 6px;border-radius:4px;font-weight:600;'
+                'text-decoration:underline;text-decoration-color:#FFFFFF;'
+                'text-underline-offset:2px;">'
                 f"{url}</mark>"
             )
         return url
 
     escaped = _URL_PATTERN.sub(_url_replacer, escaped)
-    for _, color, pattern in _HIGHLIGHT_PATTERNS:
+    for category, pattern in _HIGHLIGHT_PATTERNS:
+        style = _HIGHLIGHT_STYLES[category]
         escaped = re.sub(
             pattern,
-            lambda m, c=color: (
-                f'<mark style="background:#FFF3CD;color:{c};'
-                f'padding:1px 4px;border-radius:3px;font-weight:600;">'
-                f"{m.group(0)}</mark>"
+            lambda m, s=style: (
+                f'<mark style="{s}padding:1px 6px;border-radius:4px;'
+                f'font-weight:700;">{m.group(0)}</mark>'
             ),
             escaped,
             flags=re.IGNORECASE,
@@ -338,23 +345,40 @@ def format_chat_html(
         if up_to_turn is not None and msg.turn > up_to_turn:
             continue
         who = "Scammer" if msg.sender == "scammer" else "Victim"
-        accent = "#E85A4F" if msg.sender == "scammer" else "#4F81E8"
-        bg = "#FEF2F1" if msg.sender == "scammer" else "#F1F5FE"
-        text_color = "#1a1a1a"
+        # Two-color contract:
+        #   Scammer  → white bg + 3px plum left border (the threat — full ink edge)
+        #   Victim   → cream-3 bg + 3px plum-tint left border (softer)
+        # Both sides: BLACK text on light surface.
+        if msg.sender == "scammer":
+            bg = "#FFFFFF"
+            accent = "#381932"
+        else:
+            bg = "#FFE8D2"
+            accent = "rgba(56,25,50,0.30)"
         body = (
             _highlight_keywords(msg.text)
             if (highlight and msg.sender == "scammer")
             else _html_escape(msg.text)
         )
         rows.append(
-            f'<div style="margin:8px 0;padding:12px;background:{bg};'
-            f'border-left:4px solid {accent};border-radius:4px;'
-            f'color:{text_color};font-size:14px;line-height:1.55;">'
-            f'<b style="color:{accent}">T{msg.turn} — {who}:</b> '
-            f'<span style="color:{text_color}">{body}</span>'
-            f"</div>"
+            f'<div style="margin:10px 0;padding:14px 16px;background:{bg};'
+            f'border-left:3px solid {accent};border-radius:8px;'
+            'color:#000000;font-size:14px;line-height:1.6;'
+            'border-top:1px solid rgba(56,25,50,0.10);'
+            'border-right:1px solid rgba(56,25,50,0.10);'
+            'border-bottom:1px solid rgba(56,25,50,0.10);">'
+            '<div style="font-size:11px;font-weight:700;letter-spacing:1.4px;'
+            'text-transform:uppercase;color:#381932;'
+            f'margin-bottom:6px;">T{msg.turn} · {who}</div>'
+            f'<div style="color:#000000;">{body}</div>'
+            "</div>"
         )
-    return "".join(rows) or '<i style="color:#888">No messages yet.</i>'
+    return "".join(rows) or (
+        '<div style="padding:14px;color:#000000;opacity:0.55;font-style:italic;'
+        'font-size:13px;text-align:center;background:#FFFBF5;'
+        'border:1px dashed rgba(56,25,50,0.30);border-radius:8px;">'
+        "No messages yet.</div>"
+    )
 
 
 # -- (A) Suspicion timeline --------------------------------------------------
@@ -367,30 +391,33 @@ def format_suspicion_timeline(
     visible = [s for s in snapshots if up_to_turn is None or s.turn <= up_to_turn]
     if not visible:
         return (
-            '<div style="padding:12px;color:#888;font-style:italic;font-size:13px;">'
+            '<div style="padding:14px;color:#000000;opacity:0.65;font-style:italic;'
+            'font-size:13px;text-align:center;background:#FFFBF5;'
+            'border:1px dashed rgba(56,25,50,0.30);border-radius:8px;">'
             "Analyzer has not evaluated yet."
             "</div>"
         )
-    rows = ['<div style="padding:8px 4px;">']
+    rows = ['<div style="padding:10px 4px;">']
     for snap in visible:
         pct = int(snap.score * 100)
-        # Color by severity
-        if snap.score >= 0.70:
-            bar_color = "#E03131"
-        elif snap.score >= 0.40:
-            bar_color = "#E67E22"
-        else:
-            bar_color = "#2B8A3E"
+        # Two-color contract: bar is always plum; severity encoded by length.
+        # Score number: BLACK on cream surface (always readable).
+        bar_color = "#381932"
         rows.append(
-            f'<div style="margin:6px 0;font-size:13px;">'
-            f'<div style="display:flex;align-items:center;gap:8px;">'
-            f'<span style="color:#666;min-width:42px;font-weight:600;">T{snap.turn}</span>'
-            f'<div style="flex:1;background:#eee;border-radius:3px;height:16px;position:relative;overflow:hidden;">'
-            f'<div style="background:{bar_color};width:{pct}%;height:100%;"></div>'
-            f'</div>'
-            f'<span style="color:{bar_color};font-weight:700;min-width:44px;text-align:right;">{snap.score:.2f}</span>'
-            f'</div>'
-            f'</div>'
+            '<div style="margin:8px 0;font-size:13px;">'
+            '<div style="display:flex;align-items:center;gap:10px;">'
+            '<span style="color:#000000;min-width:40px;'
+            'font-weight:700;font-size:11px;letter-spacing:1.2px;">'
+            f'T{snap.turn}</span>'
+            '<div style="flex:1;background:rgba(56,25,50,0.12);'
+            'border-radius:999px;height:8px;overflow:hidden;">'
+            f'<div class="suspicion-bar-fill" '
+            f'style="background:{bar_color};width:{pct}%;height:100%;"></div>'
+            "</div>"
+            '<span style="color:#000000;font-weight:700;'
+            'min-width:44px;text-align:right;font-variant-numeric:tabular-nums;">'
+            f'{snap.score:.2f}</span>'
+            "</div></div>"
         )
     rows.append("</div>")
     return "".join(rows)
@@ -420,8 +447,9 @@ def format_bank_panel(
 
     if not visible and transaction is None:
         return (
-            '<div style="padding:16px;border:1px dashed #ccc;border-radius:6px;'
-            'color:#888;font-size:13px;text-align:center;">'
+            '<div style="padding:16px;border:1px dashed rgba(56,25,50,0.30);'
+            'border-radius:12px;color:#000000;opacity:0.7;font-size:13px;'
+            'text-align:center;background:#FFFBF5;">'
             "Bank Monitor inactive — no transaction attempted yet."
             "</div>"
         )
@@ -429,39 +457,72 @@ def format_bank_panel(
     # Latest bank decision (or pending)
     if visible:
         latest = visible[-1]
-        decision_color = {
-            "approve": ("#2B8A3E", "#E8F6E9", "APPROVED"),
-            "flag": ("#E67E22", "#FFF9DB", "FLAGGED"),
-            "freeze": ("#C92A2A", "#FDECEA", "FROZEN"),
-        }[latest.decision]
-        fg, bg, label = decision_color
+        # Two-color contract:
+        #   approve → white bg, BLACK text (lightest, no friction)
+        #   flag    → cream-3 bg, BLACK text, plum left-border (medium)
+        #   freeze  → solid plum bg, WHITE text (heaviest — decisive action)
+        if latest.decision == "freeze":
+            bg, fg, accent = "#381932", "#FFFFFF", "#381932"
+            label = "FROZEN"
+        elif latest.decision == "flag":
+            bg, fg, accent = "#FFE8D2", "#000000", "#381932"
+            label = "FLAGGED"
+        else:
+            bg, fg, accent = "#FFFFFF", "#000000", "rgba(56,25,50,0.30)"
+            label = "APPROVED"
         tx = transaction
         rows = [
-            f'<div style="background:{bg};border-left:4px solid {fg};'
-            f'border-radius:4px;padding:14px;">',
-            f'<div style="font-size:12px;letter-spacing:1px;color:#666;'
-            f'text-transform:uppercase;margin-bottom:8px;">Bank Monitor · T{latest.turn}</div>',
-            f'<div style="font-size:22px;font-weight:800;color:{fg};'
-            f'margin-bottom:8px;">{label}</div>',
+            f'<div style="background:{bg};border:1px solid {accent};'
+            f'border-left:3px solid {accent};color:{fg};'
+            'border-radius:12px;padding:16px 18px;">',
+            f'<div style="font-size:10px;letter-spacing:1.6px;color:{fg};'
+            'text-transform:uppercase;font-weight:700;'
+            f'margin-bottom:10px;">Bank Monitor · T{latest.turn}</div>',
+            f'<div style="font-size:20px;font-weight:800;color:{fg};'
+            'letter-spacing:0.4px;margin-bottom:10px;line-height:1.1;">'
+            f'{label}</div>',
         ]
         if tx is not None:
+            # Hairline color depends on the panel: plum-tint on light bg,
+            # white-tint on the dark FROZEN bg.
+            divider = (
+                "rgba(255,255,255,0.20)" if bg == "#381932"
+                else "rgba(56,25,50,0.18)"
+            )
+            row_style = (
+                "display:flex;justify-content:space-between;gap:8px;"
+                f"padding:6px 0;border-top:1px solid {divider};"
+                f"font-size:13px;color:{fg};"
+            )
+            label_style = f"font-weight:700;color:{fg};opacity:0.78;"
             rows.append(
-                f'<div style="color:#333;font-size:13px;line-height:1.7;">'
-                f'<b>Amount:</b> ₹{tx.amount:,.0f}<br>'
-                f'<b>Receiver:</b> {"🆕 NEW PAYEE" if tx.receiver_new else "Known"}<br>'
-                f'<b>Frequency (24h):</b> {tx.frequency_24h} txns<br>'
-                f'<b>Reason:</b> {_html_escape(latest.reason)}'
-                f"</div>"
+                f'<div style="font-size:13px;line-height:1.55;color:{fg};">'
+                f'<div style="{row_style}border-top:none;">'
+                f'<span style="{label_style}">Amount</span>'
+                '<span style="font-variant-numeric:tabular-nums;font-weight:700;">'
+                f'₹{tx.amount:,.0f}</span></div>'
+                f'<div style="{row_style}">'
+                f'<span style="{label_style}">Receiver</span>'
+                f'<span style="font-weight:600;">'
+                f'{"New payee" if tx.receiver_new else "Known"}</span></div>'
+                f'<div style="{row_style}">'
+                f'<span style="{label_style}">Frequency · 24h</span>'
+                '<span style="font-variant-numeric:tabular-nums;font-weight:600;">'
+                f'{tx.frequency_24h} txn</span></div>'
+                f'<div style="margin-top:10px;font-size:12px;line-height:1.55;'
+                f'color:{fg};"><span style="{label_style}">'
+                f'Reason · </span>{_html_escape(latest.reason)}</div>'
+                "</div>"
             )
         rows.append("</div>")
         return "".join(rows)
 
     # Pending — tx exists but bank hasn't acted yet
     return (
-        '<div style="padding:14px;border:1px solid #ddd;border-radius:4px;'
-        'color:#666;font-size:13px;">'
-        f"Transaction pending bank review: ₹{transaction.amount:,.0f}"
-        f" to {'new' if transaction.receiver_new else 'known'} payee."
+        '<div style="padding:14px 16px;border:1px solid rgba(56,25,50,0.18);'
+        'border-radius:12px;color:#000000;font-size:13px;background:#FFFBF5;">'
+        f"Transaction pending bank review · ₹{transaction.amount:,.0f}"
+        f" → {'new' if transaction.receiver_new else 'known'} payee."
         "</div>"
     )
 
@@ -493,13 +554,20 @@ def max_turn(episode: ReplayedEpisode) -> int:
 # Agent-state derivation + card/timeline rendering
 # ---------------------------------------------------------------------------
 
-# Per-agent brand colors (ACCESSIBLE on both light + dark backgrounds)
+# Two-color palette. All agents share plum ink + alternating bg fill so the
+# 5 cards form a paired cream / cream-2 / white rhythm:
+#   scammer   = plum-tinted cream (subtle threat presence)
+#   victim    = white            (the target — clearest)
+#   analyzer  = cream-2          (the protagonist — lifted)
+#   bank      = white            (oversight — clean)
+#   regulator = cream-3          (passive meta — heavier ground)
+# All accents are plum #381932; all body text is BLACK.
 AGENT_COLORS: dict[str, dict[str, str]] = {
-    "scammer":   {"accent": "#E85A4F", "soft": "rgba(232, 90, 79, 0.12)",  "icon": "🎭"},
-    "victim":    {"accent": "#4F81E8", "soft": "rgba(79, 129, 232, 0.12)", "icon": "👤"},
-    "analyzer":  {"accent": "#8E44AD", "soft": "rgba(142, 68, 173, 0.12)", "icon": "🔍"},
-    "bank":      {"accent": "#2B8A3E", "soft": "rgba(43, 138, 62, 0.12)",  "icon": "🏦"},
-    "regulator": {"accent": "#E67E22", "soft": "rgba(230, 126, 34, 0.12)", "icon": "📜"},
+    "scammer":   {"accent": "#381932", "soft": "rgba(56,25,50,0.08)", "icon": "🎭"},
+    "victim":    {"accent": "#381932", "soft": "#FFFFFF",             "icon": "👤"},
+    "analyzer":  {"accent": "#381932", "soft": "#FFFBF5",             "icon": "🔍"},
+    "bank":      {"accent": "#381932", "soft": "#FFFFFF",             "icon": "🏦"},
+    "regulator": {"accent": "#381932", "soft": "#FFE8D2",             "icon": "📜"},
 }
 
 
@@ -513,12 +581,20 @@ class AgentState:
     tone: Literal["idle", "active", "warning", "critical", "safe"]
 
 
+# Tone severity is encoded in the AGENT-CARD STATUS LINE COLOR ONLY.
+# Strict white/black text rule: status text is always BLACK (on light card)
+# except `critical` which gets a solid plum chip (white text) to demand
+# attention without violating the contract.
+#
+# We return a tuple-style spec via two parallel dicts: the visible color of
+# the status text, plus an optional inline "chip" wrapper for the critical
+# state (handled in `format_agent_cards_html`).
 _TONE_COLOR: dict[str, str] = {
-    "idle":     "#888",
-    "active":   "#4F81E8",
-    "warning":  "#E67E22",
-    "critical": "#C92A2A",
-    "safe":     "#2B8A3E",
+    "idle":     "#000000",   # status will use opacity:0.40 in the card render
+    "active":   "#000000",
+    "warning":  "#000000",   # status will be wrapped in a plum hairline pill
+    "critical": "#FFFFFF",   # status will be wrapped in a solid plum chip
+    "safe":     "#000000",   # status will be wrapped in a plum hairline pill
 }
 
 
@@ -642,40 +718,79 @@ def compute_agent_states(
 
 
 def format_agent_cards_html(states: list[AgentState]) -> str:
-    """Render 5-agent status cards as a horizontal grid."""
+    """Render 5-agent status cards. Two-color, strict white/black text."""
     cells = []
     for st in states:
         brand = AGENT_COLORS[st.agent]
-        tone_color = _TONE_COLOR[st.tone]
         name = st.agent.capitalize()
-        # Tone dot — small pulsing circle that signals "live"
-        pulse = "pulse" if st.tone in ("critical", "warning") else ""
+        # Pulse only on the most demanding tones to avoid visual chatter.
+        pulse_class = "pulse" if st.tone in ("critical", "warning") else ""
+
+        # Status line styling per tone — all variants honour the
+        # cream/plum + white/black contract.
+        status_text = _html_escape(st.status)
+        if st.tone == "critical":
+            status_html = (
+                f'<div class="{pulse_class}" style="display:inline-flex;'
+                'align-items:center;padding:5px 11px;background:#381932;'
+                'color:#FFFFFF;border-radius:999px;font-size:13px;'
+                'font-weight:700;letter-spacing:0.2px;line-height:1.1;'
+                f'align-self:flex-start;">{status_text}</div>'
+            )
+        elif st.tone == "warning":
+            status_html = (
+                f'<div class="{pulse_class}" style="display:inline-flex;'
+                'align-items:center;padding:5px 11px;background:#FFFFFF;'
+                'color:#000000;border:1.5px solid #381932;border-radius:999px;'
+                'font-size:13px;font-weight:700;letter-spacing:0.2px;'
+                f'line-height:1.1;align-self:flex-start;">{status_text}</div>'
+            )
+        elif st.tone == "safe":
+            status_html = (
+                '<div style="display:inline-flex;align-items:center;'
+                'padding:5px 11px;background:#FFE8D2;color:#000000;'
+                'border:1px solid rgba(56,25,50,0.30);border-radius:999px;'
+                'font-size:13px;font-weight:700;letter-spacing:0.2px;'
+                f'line-height:1.1;align-self:flex-start;">{status_text}</div>'
+            )
+        elif st.tone == "active":
+            status_html = (
+                '<div style="font-size:14px;font-weight:700;color:#000000;'
+                f'line-height:1.25;letter-spacing:0.1px;">{status_text}</div>'
+            )
+        else:  # idle
+            status_html = (
+                '<div style="font-size:14px;font-weight:600;color:#000000;'
+                'opacity:0.40;line-height:1.25;letter-spacing:0.1px;">'
+                f'{status_text}</div>'
+            )
+
         cells.append(
             f'<div class="agent-card agent-card-{st.agent}" '
             f'style="background:{brand["soft"]};'
+            'border:1px solid rgba(56,25,50,0.18);'
             f'border-top:3px solid {brand["accent"]};'
-            f'border-radius:10px;padding:14px 12px;'
-            f'display:flex;flex-direction:column;gap:6px;min-height:130px;">'
+            'border-radius:12px;padding:14px 14px 16px;'
+            'display:flex;flex-direction:column;gap:8px;min-height:138px;">'
             # Header row
-            f'<div style="display:flex;align-items:center;gap:6px;font-size:12px;'
-            f'letter-spacing:1px;color:var(--body-text-color-subdued, #888);'
-            f'text-transform:uppercase;font-weight:700;">'
-            f'<span style="font-size:18px;">{brand["icon"]}</span>'
-            f"{name}"
-            f"</div>"
-            # Status line
-            f'<div class="{pulse}" '
-            f'style="font-size:15px;font-weight:700;color:{tone_color};'
-            f'line-height:1.2;">{_html_escape(st.status)}</div>'
-            # Detail
-            f'<div style="font-size:12px;color:var(--body-text-color, #333);'
-            f'line-height:1.35;opacity:0.78;">{_html_escape(st.detail)}</div>'
-            f"</div>"
+            '<div style="display:flex;align-items:center;gap:8px;font-size:10px;'
+            'letter-spacing:1.6px;color:#000000;'
+            'text-transform:uppercase;font-weight:800;">'
+            '<span style="font-size:16px;line-height:1;">'
+            f'{brand["icon"]}</span>{name}'
+            "</div>"
+            # Status line (already pre-rendered with proper contrast)
+            f'{status_html}'
+            # Detail line
+            '<div style="font-size:12px;color:#000000;opacity:0.78;'
+            'line-height:1.5;">'
+            f'{_html_escape(st.detail)}</div>'
+            "</div>"
         )
     return (
         '<div class="agent-grid" style="display:grid;'
         "grid-template-columns:repeat(5, minmax(0, 1fr));"
-        'gap:10px;margin:8px 0 16px;">'
+        'gap:12px;margin:10px 0 18px;">'
         + "".join(cells)
         + "</div>"
     )
@@ -724,12 +839,13 @@ def _turn_icon(episode: ReplayedEpisode, turn: int) -> tuple[str, str, str]:
             return ("🚩", AGENT_COLORS["bank"]["accent"], "Turn 8 — Bank flagged")
         return ("✓", AGENT_COLORS["bank"]["accent"], "Turn 8 — Bank approved")
     if turn == 9:
+        # All turn-9 outcome icons use plum — they're all "decisive" turns.
         if episode.outcome.money_extracted:
-            return ("💸", "#C92A2A", "Turn 9 — Money extracted")
+            return ("💸", "#381932", "Turn 9 — Money extracted")
         if episode.outcome.bank_froze:
-            return ("🔒", "#2B8A3E", "Turn 9 — Transaction blocked")
-        return ("✅", "#2B8A3E", "Turn 9 — Outcome logged")
-    return ("·", "#888", f"Turn {turn}")
+            return ("🔒", "#381932", "Turn 9 — Transaction blocked")
+        return ("✅", "#381932", "Turn 9 — Outcome logged")
+    return ("·", "rgba(56,25,50,0.40)", f"Turn {turn}")
 
 
 def format_attack_timeline_html(
@@ -748,25 +864,28 @@ def format_attack_timeline_html(
             if t == cutoff and visible
             else ""
         )
+        # White circle on cream surface, plum 1.5px ring + plum icon.
         cells.append(
             f'<div title="{_html_escape(tooltip)}" '
-            f'class="timeline-step" '
-            f'style="display:flex;flex-direction:column;align-items:center;'
-            f"gap:4px;opacity:{opacity};transition:opacity 0.3s ease;\">"
-            f'<div style="width:34px;height:34px;border-radius:50%;'
-            f"background:{color}20;border:2px solid {color};"
-            f"display:flex;align-items:center;justify-content:center;"
-            f'font-size:16px;{active_ring}">'
+            'class="timeline-step" '
+            'style="display:flex;flex-direction:column;align-items:center;'
+            f'gap:6px;opacity:{opacity};transition:opacity 0.3s ease;">'
+            '<div style="width:36px;height:36px;border-radius:50%;'
+            'background:#FFFFFF;'
+            f'border:1.5px solid {color};'
+            'display:flex;align-items:center;justify-content:center;'
+            f'font-size:16px;color:{color};{active_ring}">'
             f"{icon}"
-            f"</div>"
-            f'<div style="font-size:10px;color:var(--body-text-color-subdued, #888);'
-            f'font-weight:600;">T{t}</div>'
-            f"</div>"
+            "</div>"
+            '<div style="font-size:10px;color:#000000;opacity:0.7;'
+            'font-weight:700;letter-spacing:0.8px;">'
+            f'T{t}</div>'
+            "</div>"
         )
     return (
         '<div class="attack-timeline" '
         'style="display:flex;justify-content:space-between;align-items:flex-start;'
-        'gap:4px;padding:12px 4px;max-width:640px;margin:0 auto;">'
+        'gap:6px;padding:14px 8px;max-width:680px;margin:0 auto;">'
         + "".join(cells)
         + "</div>"
     )
