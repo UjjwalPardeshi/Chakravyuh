@@ -73,6 +73,22 @@ ROLE_FLIP_PATTERNS = (
     re.compile(r"set\s+(suspicion|score|risk)\s*(=|to)\s*[01](\.\d+)?", re.I),
     re.compile(r"this\s+(message|chat|conversation)\s+is\s+(safe|benign|legitimate)", re.I),
     re.compile(r"do\s+not\s+(flag|score|analyze|inspect)", re.I),
+    # Role-play / persona-hijack attacks (added v3 round)
+    re.compile(r"let'?s\s+play\s+(a\s+)?(game|role|scenario)", re.I),
+    re.compile(r"you\s+are\s+['\"][^'\"]{2,40}['\"]", re.I),
+    re.compile(r"as\s+(?:badbank|fakebank|fakeanalyzer|admin|root|developer|jailbreak)\b", re.I),
+    re.compile(r"(?:always|just|simply)\s+scores?\s+[01](\.\d+)?", re.I),
+    re.compile(r"fictional\s+(analyzer|model|ai|assistant|persona)", re.I),
+    re.compile(r"pretend\s+(to\s+be\s+|you\s+are\s+|that\s+)", re.I),
+)
+
+# Adversarial-suffix / token-jailbreak patterns (random bytes, template injection, "now write opposite" suffixes)
+ADVERSARIAL_SUFFIX_PATTERNS = (
+    re.compile(r"\\x[0-9a-f]{2}", re.I),
+    re.compile(r"\{\{[^}]{0,40}\}\}"),
+    re.compile(r"now\s+write\s+(opposite|reverse|inverse|contrary)", re.I),
+    re.compile(r"sure[, ]+here\s+is", re.I),
+    re.compile(r"[\x00-\x08\x0b-\x1f]{2,}"),
 )
 
 # Cyrillic / Greek lookalikes for Latin characters. Lossless replacement.
@@ -189,6 +205,16 @@ def sanitize(
             )
         transforms.append(f"role_flip_warning_{len(role_flip_hits)}")
 
+    # 4b. Adversarial-suffix detection (random bytes, template injection, jailbreak suffixes)
+    adv_hits: list[str] = []
+    for pat in ADVERSARIAL_SUFFIX_PATTERNS:
+        m = pat.search(text)
+        if m:
+            adv_hits.append(m.group(0)[:40])
+    if adv_hits:
+        flags.append("adversarial_suffix_detected")
+        transforms.append(f"adversarial_suffix_warning_{len(adv_hits)}")
+
     # 5. Base64-like quarantine — wrap in `<<base64>>...<</base64>>` so the
     #    model treats them as opaque payloads rather than instructions.
     b64_hits = B64_LIKE.findall(text)
@@ -208,6 +234,7 @@ def sanitize(
             "original_length": original_len,
             "final_length": len(text),
             "role_flip_hits": role_flip_hits,
+            "adversarial_suffix_hits": adv_hits,
             "b64_hit_count": len(b64_hits),
         },
     )

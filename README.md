@@ -257,7 +257,7 @@ print(obs.reward, obs.reward_breakdown)
 
 ```bash
 pytest tests/ -v
-# 300 collected · 298 passed · 2 skipped (LLM-judge tests skip without GROQ_API_KEY)
+# 305 collected · 303 passed · 2 skipped (LLM-judge tests skip without GROQ_API_KEY)
 # Coverage: openenv contract, rubrics, scripted env, demo, explanation judge,
 # GRPO reward, MCP compliance, mode-C bench, negotiation, leaderboard, training data,
 # benign augmentation, known/novel split, red-team robustness, input sanitizer.
