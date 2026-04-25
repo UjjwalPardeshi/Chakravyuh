@@ -124,9 +124,9 @@ def test_low_suspicion_score_does_not_flag() -> None:
         pytest.skip("Episode ended at reset for this seed")
 
     # Intentionally under-score at both decision points → no flag.
-    env.step(_A(score=0.10, flag_threshold=0.55, explanation="ignore"))
+    env.step(_A(score=0.10, flag_threshold=0.5, explanation="ignore"))
     if not env.state.done:
-        env.step(_A(score=0.10, flag_threshold=0.55, explanation="ignore"))
+        env.step(_A(score=0.10, flag_threshold=0.5, explanation="ignore"))
 
     assert env.state.analyzer_flagged is False
 

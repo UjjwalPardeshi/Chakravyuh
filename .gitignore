@@ -63,10 +63,23 @@ data/raw/
 !data/*.jsonl
 !data/README.md
 
-# Logs
+# Logs (keep eval/bench/leaderboard artifacts; ignore wandb runs and stdout)
 logs/*.log
 logs/wandb/
 wandb/
+!logs/eval_v2.json
+!logs/eval_v2_known_novel.json
+!logs/bootstrap_v2.json
+!logs/bootstrap_per_difficulty.json
+!logs/leaderboard.jsonl
+!logs/scripted_baseline_n5_archived.csv
+!logs/v2_trainer_state.json
+!logs/baseline_day1.json
+!logs/mode_c_scripted_baseline.json
+!logs/mode_c_scripted_n135.json
+!logs/benign_augmented_v2_scripted_fpr.json
+!logs/analyzer_robustness.json
+!logs/time_to_detection.json
 
 # OS
 .DS_Store
@@ -79,8 +92,11 @@ HACKATHON_AUDIT.md
 HACKATHON_AUDIT_DETAILED.md
 PROJECT_JOURNEY.md
 
-# Plot artifacts (hosted on GitHub raw, not in repo — HF Space rejects binaries)
+# Plot artifacts under plots/ are gitignored (HF Space rejects binaries at the
+# repo root). The README-rendered PNGs live under docs/assets/plots/ and are
+# tracked normally — that path is not copied into the HF Docker image.
 plots/*.png
 plots/*.zip
 plots/**/*.png
 plots/**/*.zip
+!docs/assets/plots/*.png

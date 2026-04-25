@@ -1,0 +1,53 @@
+{
+  "n_episodes": 100,
+  "n_flagged": 57,
+  "detection_rate": 0.57,
+  "avg_detection_turn": 3.05,
+  "median_detection_turn": 3,
+  "min_detection_turn": 3,
+  "max_detection_turn": 6,
+  "pct_detected_by_turn_2": 0.0,
+  "pct_detected_by_turn_3": 0.56,
+  "pct_detected_by_turn_4": 0.56,
+  "pct_detected_by_turn_5": 0.56,
+  "by_category": {
+    "impersonation": {
+      "n": 16,
+      "n_flagged": 6,
+      "detection_rate": 0.375,
+      "avg_detection_turn": 3.5
+    },
+    "investment_fraud": {
+      "n": 18,
+      "n_flagged": 2,
+      "detection_rate": 0.1111,
+      "avg_detection_turn": 3
+    },
+    "kyc_fraud": {
+      "n": 30,
+      "n_flagged": 26,
+      "detection_rate": 0.8667,
+      "avg_detection_turn": 3
+    },
+    "loan_app_fraud": {
+      "n": 14,
+      "n_flagged": 1,
+      "detection_rate": 0.0714,
+      "avg_detection_turn": 3
+    },
+    "otp_theft": {
+      "n": 22,
+      "n_flagged": 22,
+      "detection_rate": 1.0,
+      "avg_detection_turn": 3
+    }
+  },
+  "histogram": {
+    "T6": 1,
+    "T3": 56,
+    "never": 43
+  },
+  "source": "logs/baseline_day1.json",
+  "analyzer": "rule_based_scripted",
+  "notes": "Time-to-detection on the 100-episode env-rollout baseline (scripted scammer \u00d7 scripted analyzer \u00d7 scripted bank). LoRA-v2 time-to-detection in episode rollouts requires GPU re-inference \u2014 pending v3."
+}

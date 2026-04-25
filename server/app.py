@@ -26,6 +26,8 @@ from openenv.core.env_server import create_app
 
 from chakravyuh_env.openenv_environment import ChakravyuhOpenEnv
 from chakravyuh_env.openenv_models import ChakravyuhAction, ChakravyuhObservation
+from server.diagnose_endpoint import attach_to_app as attach_diagnose
+from server.eval_endpoint import attach_to_app as attach_eval
 from server.leaderboard import attach_to_app
 
 # One factory call per concurrent session → fully isolated episodes.
@@ -42,6 +44,11 @@ app = create_app(
 # Public leaderboard endpoints (E.10): GET /leaderboard, POST /submit.
 # Persistence at logs/leaderboard.jsonl (override via CHAKRAVYUH_LEADERBOARD_PATH).
 attach_to_app(app)
+
+# Research endpoints: GET /eval (and /eval/{bootstrap,known-novel,redteam,…}),
+# POST /diagnose (single-message rubric breakdown using AnalyzerRubricV2).
+attach_eval(app)
+attach_diagnose(app)
 
 
 # ---------------------------------------------------------------------------
@@ -268,6 +275,18 @@ _LANDING_HTML = """<!doctype html>
       <code>GET /leaderboard</code>
       <span>Ranked submissions on chakravyuh-bench-v0 (3 seeded entries).</span>
     </a>
+    <a class="endpoint" href="/eval">
+      <code>GET /eval</code>
+      <span>v2 eval artifact — detection / FPR / F1 / per-difficulty.</span>
+    </a>
+    <a class="endpoint" href="/eval/bootstrap">
+      <code>GET /eval/bootstrap</code>
+      <span>10k-iteration percentile bootstrap 95% CIs.</span>
+    </a>
+    <a class="endpoint" href="/docs#/diagnose/post_diagnose_diagnose_post">
+      <code>POST /diagnose</code>
+      <span>Score one message; get full 8-rubric AnalyzerRubricV2 decomposition.</span>
+    </a>
     <a class="endpoint" href="/docs">
       <code>/docs · /openapi.json</code>
       <span>Interactive API explorer + OpenAPI 3.1 schema.</span>
@@ -315,13 +334,14 @@ def _mount_demo() -> None:
 
 
 # Mount on import so uvicorn picks it up without a separate startup hook.
-# Failures here must not crash the OpenEnv API surface — log and continue.
+# Failures here must not crash the OpenEnv API surface — log full traceback
+# and continue so /reset, /step, /state, /eval, /diagnose still serve.
 try:
     _mount_demo()
-except Exception as exc:  # pragma: no cover — diagnostic surface only
+except Exception:  # pragma: no cover — diagnostic surface only
     import logging
-    logging.getLogger("chakravyuh.app").warning(
-        "Failed to mount Gradio demo at /demo: %s", exc
+    logging.getLogger("chakravyuh.app").exception(
+        "Failed to mount Gradio demo at /demo"
     )
 
 

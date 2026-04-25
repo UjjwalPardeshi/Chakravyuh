@@ -27,9 +27,13 @@ class ChakravyuhAction(Action):
     """Analyzer decision for one turn of the conversation.
 
     score: suspicion score in [0, 1]
-    flag_threshold: score at/above which the analyzer is considered to have
-        flagged the conversation. Kept on the action (not the env) so the
-        caller controls per-episode thresholding; defaults to 0.55.
+    flag_threshold: pinned at 0.5. The training/eval reward and the env's
+        flag-decision logic both compare ``score >= flag_threshold``. Allowing
+        the agent to tune the threshold opens an exploit:
+        ``score=0.95, flag_threshold=0.99`` collects calibration credit
+        without paying the false-positive penalty (audit P2 reward-design).
+        We accept any value in [0.5, 0.5] — i.e. exactly 0.5 — to keep the
+        wire format unchanged while removing the gaming surface.
     signals: string names of AnalyzerSignal enum values (e.g. ``"urgency"``).
         Accepted as strings on the wire for maximum client-language
         portability; validated on the server against the AnalyzerSignal enum.
@@ -37,7 +41,7 @@ class ChakravyuhAction(Action):
     """
 
     score: float = Field(ge=0.0, le=1.0)
-    flag_threshold: float = Field(default=0.55, ge=0.0, le=1.0)
+    flag_threshold: float = Field(default=0.5, ge=0.5, le=0.5)
     signals: list[str] = Field(default_factory=list)
     explanation: str = Field(default="", max_length=300)
 

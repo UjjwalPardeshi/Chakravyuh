@@ -449,6 +449,14 @@ def compute_reward(
 ) -> RewardParts:
     """Reward a single completion given its ground truth.
 
+    The 8-component breakdown returned here mirrors
+    :class:`chakravyuh_env.AnalyzerRubricV2` 's leaf-rubric structure
+    (detection, missed_scam, false_positive, calibration, explanation,
+    signal_accuracy, format, length). The two implementations are kept in
+    numerical parity by ``tests/test_v2_reward_parity.py``; the env serves
+    the rubric-based view at ``GET /eval`` and ``POST /diagnose`` so judges
+    inspect the same reward profile this function optimizes.
+
     reward_profile:
       "v1" — original weights (FP=-0.3, format=0.15, calibration=0.3).
              Trained LoRA v1 with this; produced F1=0.963 but FPR=35.5%.

@@ -83,8 +83,8 @@ def _try_run_v2(scenario: dict[str, Any], adapter: str) -> dict[str, Any] | None
             "score": float(result["score"]),
             "signals": list(result["signals"]),
             "explanation": result["explanation"],
-            "flagged": float(result["score"]) >= 0.55,
-            "threshold": 0.55,
+            "flagged": float(result["score"]) >= 0.5,
+            "threshold": 0.5,
             "measured_directly": True,
             "adapter": adapter,
         }

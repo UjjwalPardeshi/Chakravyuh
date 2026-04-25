@@ -1,0 +1,68 @@
+{
+  "n_scenarios": 135,
+  "threshold": 0.5,
+  "default_weights": {
+    "detection": 1.0,
+    "missed_scam": -0.5,
+    "false_positive": -0.3,
+    "calibration": 0.2,
+    "explanation": 0.4
+  },
+  "rubric_class": "AnalyzerRubric",
+  "full_summary": {
+    "n": 135,
+    "tp": 83,
+    "fp": 6,
+    "fn": 32,
+    "tn": 14,
+    "detection": 0.7217,
+    "fpr": 0.3,
+    "precision": 0.9326,
+    "f1": 0.8137
+  },
+  "full_avg_reward": 0.7336,
+  "ablations": [
+    {
+      "rubric_zeroed": "detection",
+      "default_weight": 1.0,
+      "avg_reward_full": 0.7336,
+      "avg_reward_zeroed": 0.1188,
+      "delta_reward": -0.6148,
+      "interpretation": "rubric matters (reward dropped without it)"
+    },
+    {
+      "rubric_zeroed": "missed_scam",
+      "default_weight": -0.5,
+      "avg_reward_full": 0.7336,
+      "avg_reward_zeroed": 0.7336,
+      "delta_reward": 0.0,
+      "interpretation": "no effect"
+    },
+    {
+      "rubric_zeroed": "false_positive",
+      "default_weight": -0.3,
+      "avg_reward_full": 0.7336,
+      "avg_reward_zeroed": 0.7469,
+      "delta_reward": 0.0133,
+      "interpretation": "rubric helps (reward rose without it)"
+    },
+    {
+      "rubric_zeroed": "calibration",
+      "default_weight": 0.2,
+      "avg_reward_full": 0.7336,
+      "avg_reward_zeroed": 0.6015,
+      "delta_reward": -0.1321,
+      "interpretation": "rubric matters (reward dropped without it)"
+    },
+    {
+      "rubric_zeroed": "explanation",
+      "default_weight": 0.4,
+      "avg_reward_full": 0.7336,
+      "avg_reward_zeroed": 0.7336,
+      "delta_reward": 0.0,
+      "interpretation": "no effect"
+    }
+  ],
+  "notes": "Post-hoc, eval-time ablation on scripted-baseline scenarios. Each rubric is zeroed in turn; we report \u0394 in average composite reward across the bench. This is a sensitivity probe, not a retrain-ablation \u2014 true 'rubric contribution to learning' requires retraining v2 with each rubric removed (GPU; v3 work).",
+  "source_mode": "bench"
+}

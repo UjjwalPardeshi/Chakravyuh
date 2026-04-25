@@ -1,5 +1,12 @@
 """Frontier LLM baseline runner against `chakravyuh-bench-v0`.
 
+> **STATUS (2026-04-25): NOT YET RUN.** The frontier comparison requires
+> ~$40–80 in OpenAI / Anthropic / Google API fees and a ≥30-scenario
+> sample. Until that run executes against ≥4 providers, **do not cite
+> any output of this script as a "frontier baseline"**. The previous
+> 1-row scripted-only stub at `logs/frontier_comparison.csv` has been
+> renamed `logs/scripted_baseline_n5_archived.csv` to remove ambiguity.
+
 Runs GPT-4o-mini, Claude Haiku, Groq Llama-3.3-70B, and Gemini 2.0 Flash
 through the EXACT SAME AnalyzerProtocol the Mode C runner uses. Produces
 a comparison CSV + bootstrap 95% CIs + pairwise permutation tests.

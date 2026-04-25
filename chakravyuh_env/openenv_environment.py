@@ -50,7 +50,7 @@ from chakravyuh_env.openenv_models import (
     ChakravyuhState,
 )
 from chakravyuh_env.reward import compute_rewards
-from chakravyuh_env.rubrics import AnalyzerRubric
+from chakravyuh_env.rubrics import AnalyzerRubric, AnalyzerRubricV2
 from chakravyuh_env.schemas import (
     AnalyzerConsultation,
     AnalyzerSignal,
@@ -98,11 +98,17 @@ class ChakravyuhOpenEnv(Environment[ChakravyuhAction, ChakravyuhObservation, Cha
         rubric: Rubric | None = None,
         enable_negotiation: bool = False,
     ) -> None:
-        # Default to the composable AnalyzerRubric — satisfies the
-        # judging-criterion "Uses OpenEnv's Rubric system thoughtfully
-        # (composable rubrics > monolithic scoring)". Callers may pass
-        # their own Rubric (e.g. an LLMJudge) to override.
-        super().__init__(rubric=rubric if rubric is not None else AnalyzerRubric())
+        # ``enable_negotiation`` is opt-in for v0 reproducibility — flipping
+        # the default would change reward dynamics across the existing bench.
+        # Negotiation is fully wired (see step()); pass ``True`` to enable.
+        # See docs/negotiation_protocol.md for the protocol details.
+        # Default rubric is :class:`AnalyzerRubricV2` so the rubric the env
+        # exposes matches the weights v2's LoRA was trained against (FP=-0.8,
+        # calibration=+0.5, plus three new shaping leaves promoted from the
+        # trainer's inline reward). Callers may pass their own Rubric (e.g. a
+        # legacy ``AnalyzerRubric`` for v1-weight reproducibility, or an
+        # ``LLMJudge`` for advanced setups) to override.
+        super().__init__(rubric=rubric if rubric is not None else AnalyzerRubricV2())
         self._victim_profile = victim_profile
         self._gullibility = gullibility
         self._novelty_scorer = build_novelty_scorer(use_embeddings=use_embeddings)
@@ -124,7 +130,7 @@ class ChakravyuhOpenEnv(Environment[ChakravyuhAction, ChakravyuhObservation, Cha
         self._turn: int = 0
         self._decision_index: int = 0
         self._state_obj = ChakravyuhState()
-        self._last_flag_threshold: float = 0.55
+        self._last_flag_threshold: float = 0.5
         # Tracks the most recent analyzer action so the rubric can be
         # evaluated at terminal time. None until the first step().
         self._last_action: ChakravyuhAction | None = None

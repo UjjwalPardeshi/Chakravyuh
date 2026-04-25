@@ -403,8 +403,19 @@ def format_suspicion_timeline(
         # Two-color contract: bar is always plum; severity encoded by length.
         # Score number: BLACK on cream surface (always readable).
         bar_color = "#381932"
+        # Tooltip: turn, score, top signal (if any), short explanation.
+        top_signal = snap.signals[0] if snap.signals else "—"
+        expl_short = (snap.explanation or "").strip()
+        if len(expl_short) > 110:
+            expl_short = expl_short[:107] + "…"
+        tooltip = (
+            f"T{snap.turn} · score={snap.score:.2f} · "
+            f"top signal: {top_signal}"
+            + (f" · {expl_short}" if expl_short else "")
+        )
         rows.append(
-            '<div style="margin:8px 0;font-size:13px;">'
+            f'<div title="{_html_escape(tooltip)}" '
+            'style="margin:8px 0;font-size:13px;cursor:help;">'
             '<div style="display:flex;align-items:center;gap:10px;">'
             '<span style="color:#000000;min-width:40px;'
             'font-weight:700;font-size:11px;letter-spacing:1.2px;">'
@@ -472,7 +483,8 @@ def format_bank_panel(
             label = "APPROVED"
         tx = transaction
         rows = [
-            f'<div style="background:{bg};border:1px solid {accent};'
+            f'<div class="ck-bank-panel ck-bank-{latest.decision}" '
+            f'style="background:{bg};border:1px solid {accent};'
             f'border-left:3px solid {accent};color:{fg};'
             'border-radius:12px;padding:16px 18px;">',
             f'<div style="font-size:10px;letter-spacing:1.6px;color:{fg};'
@@ -765,18 +777,33 @@ def format_agent_cards_html(states: list[AgentState]) -> str:
                 f'{status_text}</div>'
             )
 
+        # Single-letter monogram in upper-right of each card — colorblind
+        # users get shape+letter redundancy in addition to color encoding.
+        monogram = name[0].upper()
+        # Accessible state phrase, exposed to screen-readers via aria-label.
+        accessible_state = f"{name} card, status: {st.status} ({st.tone}). {st.detail}"
         cells.append(
-            f'<div class="agent-card agent-card-{st.agent}" '
+            f'<div class="agent-card agent-card-{st.agent} agent-card-tone-{st.tone}" '
+            'role="article" '
+            f'aria-label="{_html_escape(accessible_state)}" '
             f'style="background:{brand["soft"]};'
             'border:1px solid rgba(56,25,50,0.18);'
             f'border-top:3px solid {brand["accent"]};'
             'border-radius:12px;padding:14px 14px 16px;'
-            'display:flex;flex-direction:column;gap:8px;min-height:138px;">'
+            'display:flex;flex-direction:column;gap:8px;min-height:138px;'
+            'position:relative;">'
+            # Monogram badge — colorblind-redundant identifier
+            '<span style="position:absolute;top:8px;right:8px;'
+            'font-family:JetBrains Mono, monospace;font-size:11px;font-weight:800;'
+            'color:#FFFFFF;background:#381932;padding:2px 7px;border-radius:4px;'
+            'letter-spacing:0.4px;" aria-hidden="true">'
+            f'{monogram}</span>'
             # Header row
             '<div style="display:flex;align-items:center;gap:8px;font-size:10px;'
             'letter-spacing:1.6px;color:#000000;'
             'text-transform:uppercase;font-weight:800;">'
-            '<span style="font-size:16px;line-height:1;">'
+            '<span class="agent-emoji" aria-hidden="true" '
+            'style="font-size:16px;line-height:1;">'
             f'{brand["icon"]}</span>{name}'
             "</div>"
             # Status line (already pre-rendered with proper contrast)
@@ -788,7 +815,9 @@ def format_agent_cards_html(states: list[AgentState]) -> str:
             "</div>"
         )
     return (
-        '<div class="agent-grid" style="display:grid;'
+        '<div class="agent-grid" role="list" '
+        'aria-label="Five Chakravyuh agents and their current state" '
+        'style="display:grid;'
         "grid-template-columns:repeat(5, minmax(0, 1fr));"
         'gap:12px;margin:10px 0 18px;">'
         + "".join(cells)

@@ -1,0 +1,131 @@
+{
+  "_provenance": {
+    "what": "Archived v1 vs v2 analyzer responses across 5 representative bench scenarios.",
+    "why": "Live LoRA serving requires a GPU; HF Space ships CPU-only. To still demonstrate the v1→v2 reward-hacking-and-fix story interactively, this file ships hand-crafted responses representing each adapter's documented behavior on these scenarios. The numbers are NOT live re-runs — they are reconstructed from documented v1 (detection=100%/FPR=36%) and v2 (logs/eval_v2.json: 99.3%/6.7%) behavior plus the per-scenario score conventions in docs/v2_error_analysis.md.",
+    "honest_note": "Treat this file as illustrative replay material, not as new measurements. The aggregate numbers (v1:100/36 vs v2:99.3/6.7) are the load-bearing claims; per-scenario scores below are representative.",
+    "produced_by": "manual curation, 2026-04-25",
+    "ground_truth_source": "data/chakravyuh-bench-v0/scenarios.jsonl",
+    "see_also": [
+      "logs/eval_v2.json",
+      "logs/bootstrap_v2.json",
+      "docs/v2_error_analysis.md",
+      "AUDIT.md §10 — Wow-moment strategy"
+    ]
+  },
+  "scenarios": [
+    {
+      "id": "modec_001",
+      "label": "Scam · OTP theft · easy",
+      "ground_truth": "scam",
+      "category": "otp_theft",
+      "difficulty": "easy",
+      "prompt": "Dear customer, your SBI debit card will be blocked today due to KYC expiry. Please share the OTP sent to your number for verification.",
+      "v1": {
+        "score": 0.95,
+        "flagged": true,
+        "signals": ["urgency", "impersonation", "info_request"],
+        "explanation": "Strong urgency + bank impersonation + OTP request. SCAM."
+      },
+      "v2": {
+        "score": 0.93,
+        "flagged": true,
+        "signals": ["urgency", "impersonation", "info_request"],
+        "explanation": "Urgency (\"today\") + SBI impersonation + OTP info_request — classic OTP-theft pattern."
+      },
+      "verdict": "Both adapters catch it. Detection unchanged is the v1→v2 invariant."
+    },
+    {
+      "id": "modec_086",
+      "label": "Benign · transaction confirmation",
+      "ground_truth": "benign",
+      "category": "benign",
+      "difficulty": "easy",
+      "prompt": "Dear Customer, Rs 12,500 debited from A/c XX1234 on 15-Mar-2024 at 14:32 to VPA john@okicici. UPI Ref 12345678. If not authorised, call 1800-103-1906.",
+      "v1": {
+        "score": 0.78,
+        "flagged": true,
+        "signals": ["urgency", "info_request"],
+        "explanation": "Mentions debit + account number + helpline. Suspicious. SCAM."
+      },
+      "v2": {
+        "score": 0.06,
+        "flagged": false,
+        "signals": [],
+        "explanation": "Standard transaction-debit confirmation SMS. Includes UPI Ref + helpline (legitimate format). Not a scam."
+      },
+      "verdict": "v1 over-flags this benign (the FPR=36% fingerprint). v2 correctly recognises the legitimate transaction-debit SMS shape — this is the asymmetric improvement in action."
+    },
+    {
+      "id": "modec_088",
+      "label": "Benign · delivery confirmation",
+      "ground_truth": "benign",
+      "category": "benign",
+      "difficulty": "easy",
+      "prompt": "Your Amazon order #402-3837592-1234567 is out for delivery today. Expected between 4:00 PM and 7:00 PM. Track at amazon.in/orders.",
+      "v1": {
+        "score": 0.62,
+        "flagged": true,
+        "signals": ["urgency"],
+        "explanation": "Mentions \"today\" + tracking URL. Suspicious."
+      },
+      "v2": {
+        "score": 0.04,
+        "flagged": false,
+        "signals": [],
+        "explanation": "Standard Amazon delivery notification with order ID and amazon.in tracking link. Benign."
+      },
+      "verdict": "v1 trips on \"today\" as urgency keyword. v2 understands legitimate delivery-window context."
+    },
+    {
+      "id": "modec_034",
+      "label": "Scam · KYC fraud · medium",
+      "ground_truth": "scam",
+      "category": "kyc_fraud",
+      "difficulty": "medium",
+      "prompt": "Passport Seva: Your passport linked KYC flagged. Suspension in 48 hrs. Verify at https://passport-seva-reverify.co. Travel ban until fixed.",
+      "v1": {
+        "score": 0.98,
+        "flagged": true,
+        "signals": ["urgency", "impersonation", "fear", "suspicious_link"],
+        "explanation": "Urgency (48h suspension) + Passport Seva impersonation + fake .co domain. SCAM."
+      },
+      "v2": {
+        "score": 0.91,
+        "flagged": true,
+        "signals": ["urgency", "impersonation", "fear", "suspicious_link"],
+        "explanation": "48-hour suspension threat + Passport Seva impersonation + non-gov.in URL (passport-seva-reverify.co). KYC-fraud pattern."
+      },
+      "verdict": "Both adapters catch. Note v2 explanation cites the specific TLD red-flag."
+    },
+    {
+      "id": "modec_106",
+      "label": "Scam · novel deepfake CEO IPO",
+      "ground_truth": "scam",
+      "category": "investment_fraud",
+      "difficulty": "novel",
+      "prompt": "[Deepfake voice of Infosys CEO]: Exclusive employee IPO allocation. Invest Rs 1 lakh via company portal. HR calling now for UPI transfer. Limited to first 100 employees.",
+      "v1": {
+        "score": 0.99,
+        "flagged": true,
+        "signals": ["urgency", "impersonation", "greed", "info_request"],
+        "explanation": "Deepfake CEO + IPO + UPI transfer ask. SCAM."
+      },
+      "v2": {
+        "score": 0.94,
+        "flagged": true,
+        "signals": ["urgency", "impersonation", "greed"],
+        "explanation": "Authority impersonation (CEO) + scarcity (\"first 100\") + investment lure routed through UPI. Post-2024 deepfake-CEO pattern — this is the kind of scenario the scripted baseline misses (caught 50% of novel; v2 catches 97%)."
+      },
+      "verdict": "Both catch. The post-2024 novel-attack class is where the scripted baseline collapses (50% detection); v2 hits 97% on novel."
+    }
+  ],
+  "summary": {
+    "v1": {"detection": 1.0, "fpr": 0.36, "f1": 0.96, "n": 135, "label": "reward-hacked"},
+    "v2": {"detection": 0.993, "fpr": 0.067, "f1": 0.99, "n": 174, "label": "principled retrain"},
+    "delta": {
+      "detection": "≈ unchanged (100% → 99%)",
+      "fpr": "5× better (36% → 6.7%)",
+      "interpretation": "The asymmetry — detection unchanged while FPR collapsed — is the signature of the model learning the task instead of gaming the reward."
+    }
+  }
+}

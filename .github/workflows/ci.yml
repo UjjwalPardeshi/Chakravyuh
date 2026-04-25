@@ -34,8 +34,28 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e '.[llm,eval,demo,frontier,dev]'
 
+      - name: Verify dependency consistency
+        run: pip check
+
       - name: Run pytest
         run: pytest tests/ -v --tb=short
+
+      - name: Smoke test (env reset+step)
+        run: make smoke-test
+
+      - name: Link check (local paths, strict)
+        run: make link-check
+
+  link-check-http:
+    name: README http(s) link probe (allowed-fail)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: HEAD-probe external links
+        run: make link-check-http
 
   validate-openenv:
     name: openenv validate

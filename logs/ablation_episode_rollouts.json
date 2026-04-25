@@ -1,0 +1,95 @@
+{
+  "n_scenarios": 100,
+  "threshold": 0.5,
+  "default_weights": {
+    "detection": 1.0,
+    "missed_scam": -0.5,
+    "false_positive": -0.8,
+    "calibration": 0.5,
+    "explanation": 0.4,
+    "signal_accuracy": 0.2,
+    "format": 0.15,
+    "length": 0.15
+  },
+  "rubric_class": "AnalyzerRubricV2",
+  "full_summary": {
+    "n": 100,
+    "tp": 57,
+    "fp": 0,
+    "fn": 43,
+    "tn": 0,
+    "detection": 0.57,
+    "fpr": 0.0,
+    "precision": 1.0,
+    "f1": 0.7261
+  },
+  "full_avg_reward": 1.1264,
+  "ablations": [
+    {
+      "rubric_zeroed": "detection",
+      "default_weight": 1.0,
+      "avg_reward_full": 1.1264,
+      "avg_reward_zeroed": 0.5664,
+      "delta_reward": -0.56,
+      "interpretation": "rubric matters (reward dropped without it)"
+    },
+    {
+      "rubric_zeroed": "missed_scam",
+      "default_weight": -0.5,
+      "avg_reward_full": 1.1264,
+      "avg_reward_zeroed": 1.1264,
+      "delta_reward": 0.0,
+      "interpretation": "no effect"
+    },
+    {
+      "rubric_zeroed": "false_positive",
+      "default_weight": -0.8,
+      "avg_reward_full": 1.1264,
+      "avg_reward_zeroed": 1.1264,
+      "delta_reward": 0.0,
+      "interpretation": "no effect"
+    },
+    {
+      "rubric_zeroed": "calibration",
+      "default_weight": 0.5,
+      "avg_reward_full": 1.1264,
+      "avg_reward_zeroed": 0.7984,
+      "delta_reward": -0.328,
+      "interpretation": "rubric matters (reward dropped without it)"
+    },
+    {
+      "rubric_zeroed": "explanation",
+      "default_weight": 0.4,
+      "avg_reward_full": 1.1264,
+      "avg_reward_zeroed": 0.888,
+      "delta_reward": -0.2384,
+      "interpretation": "rubric matters (reward dropped without it)"
+    },
+    {
+      "rubric_zeroed": "signal_accuracy",
+      "default_weight": 0.2,
+      "avg_reward_full": 1.1264,
+      "avg_reward_zeroed": 1.1264,
+      "delta_reward": 0.0,
+      "interpretation": "no effect"
+    },
+    {
+      "rubric_zeroed": "format",
+      "default_weight": 0.15,
+      "avg_reward_full": 1.1264,
+      "avg_reward_zeroed": 1.1264,
+      "delta_reward": 0.0,
+      "interpretation": "no effect"
+    },
+    {
+      "rubric_zeroed": "length",
+      "default_weight": 0.15,
+      "avg_reward_full": 1.1264,
+      "avg_reward_zeroed": 1.1264,
+      "delta_reward": 0.0,
+      "interpretation": "no effect"
+    }
+  ],
+  "notes": "Post-hoc, eval-time ablation on scripted-baseline scenarios. Each rubric is zeroed in turn; we report \u0394 in average composite reward across the bench. This is a sensitivity probe, not a retrain-ablation \u2014 true 'rubric contribution to learning' requires retraining v2 with each rubric removed (GPU; v3 work).",
+  "source_mode": "env-rollout"
+}

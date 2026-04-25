@@ -180,7 +180,7 @@ Expected output (JSON):
 2. **Single-seed training.** Multi-seed retrains are deferred to v3.
 3. **Bench is a proxy.** 175 curated scenarios do not span real-world Indian fraud diversity. Production performance will be lower.
 4. **One epoch over 619 templates.** More data + more epochs are deferred to v3.
-5. **English-dominant training.** Multi-language detection numbers (Tamil, Telugu, etc.) require per-language eval — not yet measured at the time of writing.
+5. **Language coverage is English-dominant, not 7-language production-grade.** Bench v0 distribution is en=161, hi=9, and *one sample each* of ta/te/kn/bn/mr. The HF Hub `language:` field above lists all seven (Hub convention for tag-discoverability), but the bench has placeholder coverage only for the five non-English-non-Hindi languages. Per-language detection eval is v3 work.
 
 See [docs/RESPONSIBLE_USE.md](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/docs/RESPONSIBLE_USE.md) for intended use and dual-use considerations.
 

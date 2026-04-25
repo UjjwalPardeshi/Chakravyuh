@@ -479,6 +479,86 @@ fieldset > legend,
 }
 .pulse { animation: pulse-dot 1.6s ease-in-out infinite; }
 
+/* === 5-agent hero cascade — entrance animation === */
+@keyframes ck-agent-cascade {
+  0%, 18%   { opacity: 0; transform: translateY(8px); }
+  22%, 100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes ck-rubric-grow {
+  0%   { width: 0%; }
+  100% { width: var(--ck-rubric-w, 60%); }
+}
+.ck-hero-strip {
+  display: flex; gap: 10px; flex-wrap: wrap;
+  margin: 4px 0 18px;
+  padding: 14px 16px;
+  background: var(--ck-cream-2);
+  border: 1px solid var(--ck-plum-tint-18);
+  border-radius: var(--ck-radius-md);
+}
+.ck-hero-agent {
+  flex: 1 1 130px; min-width: 130px;
+  padding: 10px 12px; text-align: center;
+  background: var(--ck-cream);
+  border: 1px solid var(--ck-plum-tint-18);
+  border-radius: var(--ck-radius-sm);
+  font-size: 12px; font-weight: 700; color: var(--ck-black);
+  animation: ck-agent-cascade 5s ease-in-out infinite;
+}
+.ck-hero-agent:nth-child(1) { animation-delay: 0s; }
+.ck-hero-agent:nth-child(2) { animation-delay: 1s; }
+.ck-hero-agent:nth-child(3) { animation-delay: 2s; }
+.ck-hero-agent:nth-child(4) { animation-delay: 3s; }
+.ck-hero-agent:nth-child(5) { animation-delay: 4s; }
+.ck-hero-agent .ck-hero-emoji {
+  display: block; font-size: 24px; margin-bottom: 4px;
+}
+.ck-hero-agent .ck-hero-letter {
+  display: inline-block; padding: 1px 6px;
+  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  background: var(--ck-plum); color: var(--ck-white);
+  border-radius: 4px; margin-left: 4px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ck-hero-agent { animation-duration: 0.01s !important; }
+}
+
+/* === Hot-key overlay modal === */
+.ck-hotkey-modal {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.45); z-index: 9000;
+  align-items: center; justify-content: center;
+  font-family: var(--ck-font-stack);
+}
+.ck-hotkey-modal.open { display: flex; }
+.ck-hotkey-modal-card {
+  max-width: 460px; width: calc(100% - 32px);
+  padding: 24px 28px; border-radius: var(--ck-radius-md);
+  background: var(--ck-cream); color: var(--ck-black);
+  border: 1px solid var(--ck-plum);
+  box-shadow: var(--ck-shadow-2);
+}
+.ck-hotkey-modal h3 {
+  margin: 0 0 12px; font-size: 16px; color: var(--ck-plum);
+}
+.ck-hotkey-row {
+  display: flex; justify-content: space-between;
+  align-items: center; padding: 6px 0;
+  border-bottom: 1px solid var(--ck-plum-tint-12);
+  font-size: 13px;
+}
+.ck-hotkey-row:last-child { border-bottom: 0; }
+.ck-hotkey-key {
+  font-family: 'JetBrains Mono', monospace;
+  padding: 2px 8px; border-radius: 4px;
+  background: var(--ck-plum); color: var(--ck-white);
+  font-size: 11px; font-weight: 700;
+}
+.ck-hotkey-hint {
+  margin-top: 10px; font-size: 11px;
+  color: var(--ck-black-72); text-align: center;
+}
+
 /* === Playback controls === */
 #playback-controls {
   gap: 10px !important;
@@ -734,6 +814,90 @@ code::before, code::after { content: none !important; }
     -webkit-text-fill-color: var(--ck-white) !important;
   }
 }
+
+/* ---------- How-it-works accordion ---------- */
+.ck-howto > .label-wrap,
+.ck-howto > button,
+.ck-howto label {
+  background: var(--ck-cream-2) !important;
+  color: var(--ck-black) !important;
+  font-weight: 700 !important;
+  border: 1px solid var(--ck-plum-30) !important;
+  border-radius: 12px !important;
+}
+.ck-howto-body {
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--ck-black);
+  padding: 14px 18px 6px;
+}
+.ck-howto-body p {
+  margin: 0 0 8px;
+}
+.ck-howto-body p strong {
+  color: var(--ck-plum);
+}
+.ck-howto-list {
+  margin: 0 0 14px 22px;
+  padding: 0;
+}
+.ck-howto-list li {
+  margin: 4px 0;
+}
+.ck-howto-list li strong {
+  color: var(--ck-plum);
+}
+.ck-howto-body code {
+  background: var(--ck-cream-3) !important;
+  color: var(--ck-black) !important;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
+}
+
+/* ---------- Decisive-moment micro-animations ---------- */
+@keyframes ck-pulse-plum {
+  0%   { transform: scale(1);     box-shadow: 0 0 0 0 rgba(56, 25, 50, 0.0); }
+  35%  { transform: scale(1.025); box-shadow: 0 0 0 12px rgba(56, 25, 50, 0.18); }
+  100% { transform: scale(1);     box-shadow: 0 0 0 0 rgba(56, 25, 50, 0.0); }
+}
+@keyframes ck-shake {
+  0%, 100% { transform: translateX(0); }
+  25%      { transform: translateX(-3px); }
+  50%      { transform: translateX(3px); }
+  75%      { transform: translateX(-2px); }
+}
+@keyframes ck-slide-in-success {
+  0%   { opacity: 0; transform: translateY(-6px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.ck-bank-freeze,
+.ck-bank-flag {
+  animation: ck-pulse-plum 1.2s ease-out 1;
+}
+.agent-card-analyzer.agent-card-tone-critical,
+.agent-card-bank.agent-card-tone-critical {
+  animation: ck-pulse-plum 1.2s ease-out 1;
+}
+.agent-card-analyzer.agent-card-tone-critical .agent-emoji {
+  animation: ck-shake 0.6s ease-in-out 1;
+  display: inline-block;
+}
+.agent-card-victim.agent-card-tone-safe {
+  animation: ck-slide-in-success 0.45s ease-out 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ck-bank-freeze,
+  .ck-bank-flag,
+  .agent-card-analyzer.agent-card-tone-critical,
+  .agent-card-bank.agent-card-tone-critical,
+  .agent-card-analyzer.agent-card-tone-critical .agent-emoji,
+  .agent-card-victim.agent-card-tone-safe {
+    animation: none !important;
+  }
+}
 """
 
 MODE_AUTO = "Auto-play (full episode)"
@@ -807,6 +971,22 @@ def _render_metadata(ep: ReplayedEpisode, current_turn: int, total_turns: int) -
         ("Category", ep.outcome.scam_category.value),
         ("Turn", f"{current_turn} / {total_turns}"),
     ]
+    # Outcome chip at terminal turn (judges see immediately how the episode resolved)
+    if current_turn >= total_turns and total_turns > 0:
+        oc = ep.outcome
+        if oc.money_extracted:
+            outcome_label = "💸 Scammed"
+        elif oc.bank_froze:
+            outcome_label = "🛡️ Bank froze"
+        elif oc.victim_sought_verification:
+            outcome_label = "📞 Verified"
+        elif oc.victim_refused:
+            outcome_label = "🙅 Refused"
+        elif oc.analyzer_flagged:
+            outcome_label = "🚨 Flagged"
+        else:
+            outcome_label = "—"
+        items.append(("Outcome", outcome_label))
     chips = "".join(
         '<div class="meta-chip">'
         f'<span class="meta-chip-label">{label}</span>'
@@ -962,6 +1142,117 @@ def on_live_analyze(user_text: str) -> str:
     return _render_suspicion_score(0.0, "Analyzer returned no score.")
 
 
+def _load_leaderboard_rows() -> list[list[str]]:
+    """Read logs/leaderboard.jsonl and return rows for gr.Dataframe.
+
+    Columns: Rank · Method · F1 · Detection · FPR · n · Notes.
+    """
+    import json
+    from pathlib import Path
+
+    path = Path(__file__).resolve().parent.parent / "logs" / "leaderboard.jsonl"
+    rows: list[dict] = []
+    if path.exists():
+        for line in path.open():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                rows.append(json.loads(line))
+            except json.JSONDecodeError:
+                continue
+
+    rows.sort(key=lambda e: -float(e.get("f1", 0.0)))
+
+    table: list[list[str]] = []
+    for i, e in enumerate(rows, start=1):
+        det = float(e.get("detection", 0.0))
+        fpr = float(e.get("fpr", 0.0))
+        f1 = float(e.get("f1", 0.0))
+        n = e.get("n_evaluated", "—")
+        notes = (e.get("notes") or "").strip()
+        if len(notes) > 110:
+            notes = notes[:107] + "…"
+        table.append([
+            str(i),
+            str(e.get("method", "(unknown)")),
+            f"{f1:.3f}",
+            f"{det * 100:.1f}%",
+            f"{fpr * 100:.1f}%",
+            str(n),
+            notes,
+        ])
+    if not table:
+        table = [["—", "(no submissions yet)", "—", "—", "—", "—", ""]]
+    return table
+
+
+def on_adversarial_attempt(user_text: str) -> tuple[float, str, dict, str, str]:
+    """Adversarial 'You vs Analyzer' helper.
+
+    Returns:
+        (score, flagged_label, signals_dict, explanation, banner_html)
+    """
+    if not user_text.strip():
+        empty_banner = (
+            '<div style="padding:12px 16px;background:#FFFBF5;'
+            'border:1px dashed rgba(56,25,50,0.30);border-radius:10px;'
+            'color:#000000;font-size:13px;text-align:center;">'
+            "Type a scam attempt above and press <strong>Send to Analyzer</strong>."
+            "</div>"
+        )
+        return 0.0, "", {}, "", empty_banner
+
+    analyzer = ScriptedAnalyzer()
+    obs = Observation(
+        agent_role="analyzer",
+        turn=1,
+        chat_history=[ChatMessage(sender="scammer", turn=1, text=user_text)],
+    )
+    action = analyzer.act(obs)
+
+    if not isinstance(action, AnalyzerScore):
+        return 0.0, "Analyzer error", {}, "", (
+            '<div style="padding:12px 16px;background:#FFE8D2;'
+            'border:1px solid #381932;border-radius:10px;color:#000000;'
+            'font-size:13px;">Analyzer returned no score.</div>'
+        )
+
+    score = float(action.score)
+    threshold = 0.5
+    flagged = score >= threshold
+
+    signals_dict = {sig.name if hasattr(sig, "name") else str(sig): "fired"
+                    for sig in (action.signals or [])}
+
+    explanation = action.explanation or "(no explanation produced)"
+    flagged_label = (
+        "✅ YES — Analyzer flagged your attempt"
+        if flagged else "❌ NO — Analyzer let it through"
+    )
+
+    if flagged:
+        banner_html = (
+            '<div style="padding:14px 18px;background:#381932;color:#FFFFFF;'
+            'border-radius:10px;font-weight:700;font-size:15px;'
+            'letter-spacing:0.3px;text-align:center;">'
+            f'❌ CAUGHT — Analyzer scored {score:.2f} (≥ {threshold:.2f}). '
+            "Try a subtler approach to bypass."
+            "</div>"
+        )
+    else:
+        banner_html = (
+            '<div style="padding:14px 18px;background:#FFE8D2;color:#000000;'
+            'border:2px solid #381932;border-radius:10px;font-weight:700;'
+            'font-size:15px;letter-spacing:0.3px;text-align:center;">'
+            f'🏴 BYPASSED — Analyzer scored {score:.2f} (&lt; {threshold:.2f}). '
+            "Your attempt slipped past the rule-based detector."
+            "</div>"
+        )
+
+    return score, flagged_label, signals_dict, explanation, banner_html
+
+
 # ---------------------------------------------------------------------------
 # App
 # ---------------------------------------------------------------------------
@@ -970,7 +1261,7 @@ def on_live_analyze(user_text: str) -> str:
 def build_app() -> gr.Blocks:
     labels = [e.label for e in CURATED_EPISODES]
     default_label = labels[0]
-    default_mode = MODE_AUTO
+    default_mode = MODE_STEP
 
     with gr.Blocks(title=TITLE) as app:
         with gr.Column(elem_classes=["chakravyuh-container"]):
@@ -980,6 +1271,54 @@ def build_app() -> gr.Blocks:
                 f'<h1 class="chakravyuh-title">{TITLE}</h1>'
                 f'<p class="chakravyuh-subtitle">{SUBTITLE}</p>'
                 "</header>"
+                # 5-agent CSS hero strip — pure animation, no interaction.
+                '<div class="ck-hero-strip" role="img" '
+                'aria-label="Five Chakravyuh agents: Scammer, Victim, Analyzer, Bank Monitor, Regulator">'
+                '<div class="ck-hero-agent">'
+                '<span class="ck-hero-emoji" aria-hidden="true">🪤</span>'
+                'Scammer<span class="ck-hero-letter">S</span></div>'
+                '<div class="ck-hero-agent">'
+                '<span class="ck-hero-emoji" aria-hidden="true">📱</span>'
+                'Victim<span class="ck-hero-letter">V</span></div>'
+                '<div class="ck-hero-agent">'
+                '<span class="ck-hero-emoji" aria-hidden="true">🛡️</span>'
+                'Analyzer<span class="ck-hero-letter">A</span></div>'
+                '<div class="ck-hero-agent">'
+                '<span class="ck-hero-emoji" aria-hidden="true">🏦</span>'
+                'Bank Monitor<span class="ck-hero-letter">B</span></div>'
+                '<div class="ck-hero-agent">'
+                '<span class="ck-hero-emoji" aria-hidden="true">⚖️</span>'
+                'Regulator<span class="ck-hero-letter">R</span></div>'
+                '</div>'
+                # Hot-key overlay modal (CSS-only; toggled via inline script).
+                '<div class="ck-hotkey-modal" id="ck-hotkey-modal" role="dialog" '
+                'aria-label="Keyboard shortcuts" aria-hidden="true">'
+                '<div class="ck-hotkey-modal-card">'
+                '<h3>Keyboard shortcuts</h3>'
+                '<div class="ck-hotkey-row">'
+                '<span>Toggle this overlay</span><span class="ck-hotkey-key">?</span></div>'
+                '<div class="ck-hotkey-row">'
+                '<span>Close overlay</span><span class="ck-hotkey-key">Esc</span></div>'
+                '<div class="ck-hotkey-row">'
+                '<span>Scroll to next tab heading</span><span class="ck-hotkey-key">N</span></div>'
+                '<div class="ck-hotkey-row">'
+                '<span>Open the GitHub repo</span><span class="ck-hotkey-key">G</span></div>'
+                '<p class="ck-hotkey-hint">'
+                'Shortcuts ignore typing inside text inputs. Press <strong>?</strong> any time.'
+                '</p>'
+                '</div></div>'
+                "<script>"
+                "(function(){"
+                "  function inField(t){return t&&t.matches&&t.matches('input,textarea,[contenteditable]');}"
+                "  document.addEventListener('keydown',function(e){"
+                "    if(inField(e.target))return;"
+                "    var m=document.getElementById('ck-hotkey-modal');"
+                "    if(e.key==='?'){m.classList.toggle('open');m.setAttribute('aria-hidden',m.classList.contains('open')?'false':'true');e.preventDefault();}"
+                "    if(e.key==='Escape'){m.classList.remove('open');m.setAttribute('aria-hidden','true');}"
+                "    if(e.key==='g'||e.key==='G'){window.open('https://github.com/UjjwalPardeshi/Chakravyuh','_blank');}"
+                "  });"
+                "})();"
+                "</script>"
             )
 
             with gr.Tabs():
@@ -987,6 +1326,30 @@ def build_app() -> gr.Blocks:
                 # REPLAY TAB
                 # =================================================
                 with gr.Tab("Replay · Curated episodes"):
+                    with gr.Accordion("How this demo works (30 seconds)", open=False, elem_classes=["ck-howto"]):
+                        gr.HTML(
+                            '<div class="ck-howto-body">'
+                            '<p><strong>The 9-turn schedule:</strong></p>'
+                            '<ol class="ck-howto-list">'
+                            '<li><strong>T1 Scammer opener</strong> → T2 Victim reply → '
+                            '<strong>T3 Analyzer decision #1</strong></li>'
+                            '<li>T4 Scammer escalates → T5 Victim reply → '
+                            '<strong>T6 Analyzer decision #2</strong></li>'
+                            '<li>T7 Scammer transaction ask → '
+                            '<strong>T8 Bank Monitor decision</strong> → T9 Outcome</li>'
+                            '</ol>'
+                            '<p><strong>The 5 agents:</strong></p>'
+                            '<ul class="ck-howto-list">'
+                            '<li><strong>Scammer</strong> — adversary, 376 NPCI/RBI-grounded templates · 7 languages</li>'
+                            '<li><strong>Victim</strong> — scripted target, profile-based gullibility (SENIOR / SEMI_URBAN / YOUNG_URBAN)</li>'
+                            '<li><strong>Analyzer</strong> — oversight LLM under training (Qwen2.5-7B + LoRA via GRPO). Sees chat only.</li>'
+                            '<li><strong>Bank Monitor</strong> — second-tier oversight. Sees transaction metadata only — never chat.</li>'
+                            '<li><strong>Regulator</strong> — meta-agent that adapts rule weights from aggregate outcomes.</li>'
+                            '</ul>'
+                            '<p><strong>What to watch:</strong> The <em>Suspicion timeline</em> climbing across analyzer turns; the <em>Bank Monitor panel</em> changing from <code>review</code> → <code>flag</code> → <code>freeze</code>; the <em>Outcome</em> badge at T9 (✅ saved, ❌ scammed, or 🤝 verified).</p>'
+                            '</div>'
+                        )
+
                     with gr.Row():
                         episode_picker = gr.Radio(
                             choices=labels,
@@ -998,6 +1361,21 @@ def build_app() -> gr.Blocks:
                             choices=[MODE_AUTO, MODE_STEP],
                             value=default_mode,
                             label="Playback",
+                        )
+                        language_picker = gr.Dropdown(
+                            choices=[
+                                "English",
+                                "Hindi (हिन्दी)",
+                                "Tamil (தமிழ்)",
+                                "Telugu (తెలుగు)",
+                                "Kannada (ಕನ್ನಡ)",
+                                "Bengali (বাংলা)",
+                                "Marathi (मराठी)",
+                            ],
+                            value="English",
+                            label="Language",
+                            info="Demo episodes are English. Bench v0 is primarily English (n=161/175) with Hindi (n=9) and 5 single-sample placeholder languages tracked as v3 expansion targets. See DATASET_CARD.md.",
+                            interactive=False,
                         )
 
                     info_panel = gr.HTML("")
@@ -1022,7 +1400,7 @@ def build_app() -> gr.Blocks:
                             chat_display = gr.HTML(value=format_chat_html([]))
                         with gr.Column(scale=1):
                             gr.Markdown(
-                                '<div class="panel-heading">🔍 Analyzer Verdict</div>'
+                                '<div class="panel-heading">🔍 Analyzer says…</div>'
                             )
                             suspicion_display = gr.HTML(
                                 value=_render_suspicion_score(0.0, "")
@@ -1116,11 +1494,14 @@ def build_app() -> gr.Blocks:
                     bank_display.value = bk
                     outcome_display.value = oc
                     info_panel.value = mt
+                    _initial_total = max_turn(_load_episode(default_label))
                     state.value = {
                         "label": default_label,
                         "mode": default_mode,
-                        "current_turn": max_turn(_load_episode(default_label)),
-                        "total_turns": max_turn(_load_episode(default_label)),
+                        # STEP mode starts at turn 0 so judges control playback;
+                        # AUTO mode jumps straight to the final turn.
+                        "current_turn": 0 if default_mode == MODE_STEP else _initial_total,
+                        "total_turns": _initial_total,
                     }
 
                 # =================================================
@@ -1159,23 +1540,181 @@ def build_app() -> gr.Blocks:
                         on_live_analyze,
                         inputs=[user_input],
                         outputs=[live_suspicion],
+                        show_progress="full",
                     )
                     user_input.submit(
                         on_live_analyze,
                         inputs=[user_input],
                         outputs=[live_suspicion],
+                        show_progress="full",
                     )
-                    gr.HTML('<div class="panel-heading">Quick samples</div>')
-                    gr.Examples(
-                        examples=[
-                            "Dear customer, your SBI KYC expires today. Click https://sbi-kyc.xyz to update within 2 hours or account frozen.",
-                            "Congratulations! You won Rs 25,000 in PNB lucky draw. Share OTP to claim.",
-                            "Your Amazon order is out for delivery. Expected between 4-7 PM. Track at amazon.in/orders",
-                            "Urgent! Income Tax refund of Rs 23,400 pending. Verify your Aadhaar at it-refund-portal.in within 24 hours.",
-                            "RBI Sachet Advisory: Beware of fake KYC update messages. RBI / your bank will NEVER ask for OTP, CVV, PIN. Report fraud to 1930.",
-                        ],
-                        inputs=[user_input],
-                        label="",
+                    with gr.Accordion("Try these examples", open=False):
+                        gr.Examples(
+                            examples=[
+                                "Dear customer, your SBI KYC expires today. Click https://sbi-kyc.xyz to update within 2 hours or account frozen.",
+                                "Congratulations! You won Rs 25,000 in PNB lucky draw. Share OTP to claim.",
+                                "Your Amazon order is out for delivery. Expected between 4-7 PM. Track at amazon.in/orders",
+                                "Urgent! Income Tax refund of Rs 23,400 pending. Verify your Aadhaar at it-refund-portal.in within 24 hours.",
+                                "RBI Sachet Advisory: Beware of fake KYC update messages. RBI / your bank will NEVER ask for OTP, CVV, PIN. Report fraud to 1930.",
+                            ],
+                            inputs=[user_input],
+                            label="",
+                        )
+
+                # =================================================
+                # YOU VS ANALYZER TAB
+                # =================================================
+                with gr.Tab("You vs Analyzer"):
+                    gr.HTML(
+                        '<div class="panel-heading">Try to bypass the Analyzer</div>'
+                        '<p style="margin:0 0 18px;font-size:14px;line-height:1.6;'
+                        'color:var(--ck-slate);opacity:0.85;max-width:760px;">'
+                        "<strong>Note:</strong> this tab runs the rule-based <em>scripted</em> "
+                        "Analyzer. Score ≥ 0.50 means caught; below means bypassed. The trained "
+                        "<code>Qwen2.5-7B-LoRA-v2</code> adapter scores tighter — see the "
+                        "<em>Leaderboard</em> tab for v1 vs v2 deltas. LoRA serving in this "
+                        "Space requires a GPU; routing through HF Inference API is on the v3 roadmap."
+                        "</p>"
+                    )
+                    with gr.Row():
+                        adv_input = gr.Textbox(
+                            label="Your scam attempt",
+                            placeholder=(
+                                "e.g. \"Hi, I'm Rohan from SBI. Your account will be "
+                                "frozen at 6PM. Share OTP to verify.\""
+                            ),
+                            lines=4,
+                        )
+                    with gr.Row():
+                        adv_send = gr.Button("Send to Analyzer", variant="primary")
+                        adv_clear = gr.Button("Clear")
+                    adv_banner = gr.HTML(value="")
+                    with gr.Row():
+                        with gr.Column():
+                            adv_score = gr.Number(
+                                label="Suspicion score (0=clean · 1=scam)",
+                                precision=3,
+                                interactive=False,
+                            )
+                            adv_flagged = gr.Textbox(
+                                label="Flagged?", interactive=False
+                            )
+                        with gr.Column():
+                            adv_signals = gr.JSON(label="Signals fired")
+                    adv_explanation = gr.Textbox(
+                        label="Analyzer reasoning", lines=2, interactive=False
+                    )
+
+                    adv_send.click(
+                        on_adversarial_attempt,
+                        inputs=[adv_input],
+                        outputs=[adv_score, adv_flagged, adv_signals, adv_explanation, adv_banner],
+                        show_progress="full",
+                    )
+                    adv_input.submit(
+                        on_adversarial_attempt,
+                        inputs=[adv_input],
+                        outputs=[adv_score, adv_flagged, adv_signals, adv_explanation, adv_banner],
+                        show_progress="full",
+                    )
+                    adv_clear.click(
+                        lambda: ("", 0.0, "", {}, "", ""),
+                        inputs=[],
+                        outputs=[adv_input, adv_score, adv_flagged, adv_signals, adv_explanation, adv_banner],
+                    )
+
+                # =================================================
+                # v1 vs v2 TAB — the wow moment
+                # =================================================
+                with gr.Tab("v1 vs v2 — the reward-hacking fix"):
+                    from server.demo_v1_v2 import (
+                        list_scenario_choices,
+                        render_summary_banner,
+                        render_toggle_view,
+                    )
+
+                    gr.HTML(
+                        '<div class="panel-heading">Same scenario · Same model · Three reward changes</div>'
+                        '<p style="margin:0 0 14px;font-size:14px;line-height:1.6;'
+                        'color:#000000;max-width:760px;">'
+                        "Pick a scenario. The v1 panel shows the reward-hacked adapter; "
+                        "the v2 panel shows the principled retrain. The asymmetric "
+                        "improvement — detection ≈ unchanged, FPR collapsed 5× — is the "
+                        "signal that v2 learned the task instead of the proxy."
+                        "</p>"
+                    )
+                    vs_banner = gr.HTML(value=render_summary_banner())
+                    vs_choices = list_scenario_choices()
+                    vs_default_id = vs_choices[1][1] if len(vs_choices) >= 2 else vs_choices[0][1]
+                    vs_picker = gr.Radio(
+                        choices=[label for label, _ in vs_choices],
+                        value=next(label for label, sid in vs_choices if sid == vs_default_id),
+                        label="Scenario (try the benigns to see v1 over-flag)",
+                    )
+                    vs_prompt = gr.HTML()
+                    with gr.Row():
+                        with gr.Column():
+                            vs_v1 = gr.HTML()
+                        with gr.Column():
+                            vs_v2 = gr.HTML()
+                    vs_asymmetry = gr.HTML()
+
+                    def _vs_handler(label_value: str) -> tuple[str, str, str, str]:
+                        sid = next(
+                            (sid for label, sid in vs_choices if label == label_value),
+                            vs_default_id,
+                        )
+                        return render_toggle_view(sid)
+
+                    # Prime the initial render.
+                    _initial_vs = _vs_handler(
+                        next(label for label, sid in vs_choices if sid == vs_default_id)
+                    )
+                    vs_prompt.value = _initial_vs[0]
+                    vs_v1.value = _initial_vs[1]
+                    vs_v2.value = _initial_vs[2]
+                    vs_asymmetry.value = _initial_vs[3]
+
+                    vs_picker.change(
+                        _vs_handler,
+                        inputs=[vs_picker],
+                        outputs=[vs_prompt, vs_v1, vs_v2, vs_asymmetry],
+                    )
+
+                # =================================================
+                # LEADERBOARD TAB
+                # =================================================
+                with gr.Tab("Leaderboard"):
+                    gr.HTML(
+                        '<div class="panel-heading">chakravyuh-bench-v0 leaderboard</div>'
+                        '<p style="margin:0 0 18px;font-size:14px;line-height:1.6;'
+                        'color:var(--ck-slate);opacity:0.85;max-width:760px;">'
+                        "Methods ranked by F1 on the 174-scenario bench. "
+                        "v1 (reward-hacked) is kept on the board to motivate v2's principled retrain. "
+                        "Submit your model: <code>POST /submit</code> with the schema in "
+                        "<code>server/leaderboard.py</code>."
+                        "</p>"
+                        '<p style="margin:0 0 18px;font-size:13px;line-height:1.55;'
+                        'color:var(--ck-slate);opacity:0.78;max-width:760px;">'
+                        "<strong>Why F1?</strong> F1 balances detection (recall) and false-positive "
+                        "avoidance — a model that flags everything has high recall but low F1. The "
+                        "asymmetric v1→v2 lift (recall ≈ unchanged, FPR ↓5×) is exactly the kind "
+                        "of move F1 surfaces and detection-only ranking would hide."
+                        "</p>"
+                    )
+                    leaderboard_table = gr.Dataframe(
+                        headers=["#", "Method", "F1", "Detection", "FPR", "n", "Notes"],
+                        value=_load_leaderboard_rows(),
+                        datatype=["str", "str", "str", "str", "str", "str", "str"],
+                        interactive=False,
+                        wrap=True,
+                        elem_classes=["ck-leaderboard"],
+                    )
+                    refresh_btn = gr.Button("↻ Refresh leaderboard")
+                    refresh_btn.click(
+                        lambda: _load_leaderboard_rows(),
+                        inputs=[],
+                        outputs=[leaderboard_table],
                     )
 
             gr.HTML(

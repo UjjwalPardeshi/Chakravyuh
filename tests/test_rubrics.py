@@ -89,8 +89,25 @@ class TestDetectionRubric:
 
     def test_returns_zero_on_false_positive(self) -> None:
         # Flagged early but the episode was benign → NOT a detection win.
+        # Semantic ground truth lives on `is_benign`; the legacy
+        # `false_positive` shortcut produced wrong answers when benign was
+        # not flagged (audit P1-11). Tests now declare ground truth via
+        # `is_benign` directly.
         r = DetectionRubric()
-        out = {"analyzer_flagged": True, "detected_by_turn": 3, "false_positive": True}
+        out = {
+            "analyzer_flagged": True,
+            "detected_by_turn": 3,
+            "is_benign": True,
+            "false_positive": True,
+        }
+        assert r(_action(), _obs(outcome=out)) == 0.0
+
+    def test_returns_zero_on_benign_not_flagged(self) -> None:
+        # Benign episode that didn't get flagged is not a detection (regression
+        # test for the audit P1-11 fix — legacy code returned 1.0 here when
+        # the action would have set `false_positive=False`).
+        r = DetectionRubric()
+        out = {"analyzer_flagged": False, "detected_by_turn": None, "is_benign": True}
         assert r(_action(), _obs(outcome=out)) == 0.0
 
     def test_custom_cutoff(self) -> None:
@@ -424,3 +441,162 @@ class TestRubricIntegration:
         # One rubric call per step (2 steps) — pre + post each.
         assert calls.count("pre") >= 1
         assert any(c.startswith("post:") for c in calls)
+
+
+# ---------------------------------------------------------------------------
+# V2 anti-collapse profile + new leaf rubrics
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+class TestSignalAccuracyRubric:
+    def test_zero_when_no_expected_signals(self) -> None:
+        from chakravyuh_env import SignalAccuracyRubric
+
+        r = SignalAccuracyRubric()
+        out = {"analyzer_flagged": True, "expected_signals": ()}
+        assert r(_action(signals=["urgency"]), _obs(outcome=out)) == 0.0
+
+    def test_full_match_returns_one(self) -> None:
+        from chakravyuh_env import SignalAccuracyRubric
+
+        r = SignalAccuracyRubric()
+        out = {"analyzer_flagged": True, "expected_signals": ["urgency", "info_request"]}
+        action = _action(signals=["urgency", "info_request"])
+        assert r(action, _obs(outcome=out)) == 1.0
+
+    def test_partial_match_proportional(self) -> None:
+        from chakravyuh_env import SignalAccuracyRubric
+
+        r = SignalAccuracyRubric()
+        out = {
+            "analyzer_flagged": True,
+            "expected_signals": ["urgency", "info_request", "impersonation"],
+        }
+        action = _action(signals=["urgency"])
+        assert abs(r(action, _obs(outcome=out)) - (1 / 3)) < 1e-6
+
+
+@pytest.mark.unit
+class TestFormatRubric:
+    def test_zero_on_empty_explanation(self) -> None:
+        from chakravyuh_env import FormatRubric
+
+        r = FormatRubric()
+        assert r(_action(explanation=""), _obs(outcome={"is_benign": False})) == 0.0
+
+    def test_zero_on_non_json_explanation(self) -> None:
+        from chakravyuh_env import FormatRubric
+
+        r = FormatRubric()
+        action = _action(explanation="just plain text reasoning")
+        assert r(action, _obs(outcome={"is_benign": False})) == 0.0
+
+    def test_one_on_well_formed_json_for_scam(self) -> None:
+        from chakravyuh_env import FormatRubric
+
+        r = FormatRubric()
+        action = _action(
+            score=0.9,
+            explanation='{"score": 0.9, "explanation": "scam"}',
+        )
+        out = {"is_benign": False}
+        assert r(action, _obs(outcome=out)) == 1.0
+
+    def test_zero_on_benign_flagged_as_scam(self) -> None:
+        """v2 anti-collapse: deny format reward when flagging benign as scam."""
+        from chakravyuh_env import FormatRubric
+
+        r = FormatRubric()
+        action = _action(
+            score=0.9,  # >= 0.5 default threshold → flagged
+            explanation='{"score": 0.9, "explanation": "scam"}',
+        )
+        out = {"is_benign": True}
+        assert r(action, _obs(outcome=out)) == 0.0
+
+
+@pytest.mark.unit
+class TestLengthRubric:
+    def test_zero_on_empty(self) -> None:
+        from chakravyuh_env import LengthRubric
+
+        r = LengthRubric()
+        assert r(_action(explanation=""), _obs(outcome={})) == 0.0
+
+    def test_peak_at_target(self) -> None:
+        from chakravyuh_env import LengthRubric
+
+        r = LengthRubric(target_tokens=45)
+        # exactly 45 tokens
+        text = " ".join(["word"] * 45)
+        assert r(_action(explanation=text), _obs(outcome={})) == 1.0
+
+    def test_negative_above_upper_band(self) -> None:
+        from chakravyuh_env import LengthRubric
+
+        r = LengthRubric(upper_band=70)
+        # Use a duck-typed action so we can exceed Pydantic's 300-char
+        # explanation limit (the trainer's reward function sees raw model
+        # output, not a validated ChakravyuhAction).
+        text = " ".join(["w"] * 130)  # 130 tokens, well above upper_band=70
+        action = SimpleNamespace(score=0.5, explanation=text, signals=[])
+        result = r(action, _obs(outcome={}))
+        assert result == -1.0
+
+
+@pytest.mark.unit
+class TestAnalyzerRubricV2:
+    def test_default_weights_match_v2(self) -> None:
+        from chakravyuh_env import AnalyzerRubricV2, V2_WEIGHTS
+
+        r = AnalyzerRubricV2()
+        assert r.weights == V2_WEIGHTS
+        assert r.weights["false_positive"] == -0.8
+        assert r.weights["calibration"] == 0.5
+
+    def test_eight_children_registered(self) -> None:
+        from chakravyuh_env import AnalyzerRubricV2
+
+        r = AnalyzerRubricV2()
+        names = {name for name, _ in r.named_children()}
+        assert names == {
+            "detection",
+            "missed_scam",
+            "false_positive",
+            "calibration",
+            "explanation",
+            "signal_accuracy",
+            "format",
+            "length",
+        }
+
+    def test_weighted_sum_includes_new_leaves(self) -> None:
+        from chakravyuh_env import AnalyzerRubricV2
+
+        r = AnalyzerRubricV2()
+        action = _action(
+            score=0.95,
+            signals=["urgency", "info_request"],
+            explanation='{"score": 0.95, "explanation": "OTP urgency info_request impersonation flag"}',
+        )
+        out = {
+            "analyzer_flagged": True,
+            "detected_by_turn": 3,
+            "is_benign": False,
+            "false_positive": False,
+            "money_extracted": False,
+            "expected_signals": ["urgency", "info_request"],
+        }
+        result = r(action, _obs(outcome=out))
+        # detection (1 * 1.0) + calibration (~0.95 * 0.5) +
+        # explanation (1 * 0.4) + signal_accuracy (1 * 0.2) + format (1 * 0.15)
+        # plus length contribution ~ 0 (short text). False positive = 0.
+        assert result > 1.5
+        assert result < 2.5
+
+    def test_env_default_is_v2(self) -> None:
+        from chakravyuh_env import AnalyzerRubricV2, ChakravyuhOpenEnv
+
+        env = ChakravyuhOpenEnv()
+        assert isinstance(env.rubric, AnalyzerRubricV2)

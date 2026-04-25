@@ -44,6 +44,27 @@ DEFAULT_WEIGHTS: dict[str, float] = {
     "explanation": 0.4,
 }
 
+# v2 anti-collapse weights (matches `training/grpo_analyzer.py:compute_reward`
+# at `reward_profile="v2"`). Three differences vs v1:
+#   - false_positive  -0.3 → -0.8  (over-flagging is now expensive)
+#   - calibration     +0.2 → +0.5  (stronger gradient toward score≤0.2 on benign)
+#   - format reward denied on benign-flagged-scam (encoded in FormatRubric.forward)
+#
+# Two new shaping rubrics promoted from the trainer:
+#   - signal_accuracy +0.2  (fraction of expected signals named correctly)
+#   - format          +0.15 (JSON-emission bonus, denied on benign-as-scam)
+#   - length          +0.15 (continuous, ±0.15, peak at ~45 tokens)
+V2_WEIGHTS: dict[str, float] = {
+    "detection": 1.0,
+    "missed_scam": -0.5,
+    "false_positive": -0.8,
+    "calibration": 0.5,
+    "explanation": 0.4,
+    "signal_accuracy": 0.2,
+    "format": 0.15,
+    "length": 0.15,
+}
+
 
 def _outcome(observation: Any) -> dict[str, Any] | None:
     """Return the outcome dict on a terminal observation, else None.
@@ -82,7 +103,12 @@ class DetectionRubric(Rubric):
             return 0.0
         flagged = bool(outcome.get("analyzer_flagged"))
         turn = outcome.get("detected_by_turn")
-        is_scam = outcome.get("false_positive", False) is False
+        # `is_scam` is the ground truth — derived directly from the outcome's
+        # `is_benign` flag. The legacy code computed it from the `false_positive`
+        # flag, which is correct only when an FP is recorded but is fragile when
+        # benigns aren't flagged (see AUDIT.md P1-11). The explicit form is both
+        # clearer and robust to future benign-rollout additions.
+        is_scam = not bool(outcome.get("is_benign", False))
         early = flagged and is_scam and turn is not None and turn <= self.early_cutoff
         return 1.0 if early else 0.0
 
@@ -204,6 +230,101 @@ class ExplanationRubric(Rubric):
         return min(1.0, score)
 
 
+class SignalAccuracyRubric(Rubric):
+    """Fraction of expected signals the action correctly named, in [0, 1].
+
+    Reads ``outcome["expected_signals"]`` (set by trainers / eval pipelines
+    that know the ground-truth signal taxonomy). When the expected set is
+    empty or the action declared no signals, returns 0.0.
+
+    This rubric was inlined in the trainer's ``compute_reward`` (as
+    ``signal_bonus``) before the v2 unification — promoted to a first-class
+    leaf rubric here so the env exposes the same reward decomposition the
+    trainer optimizes.
+    """
+
+    def forward(self, action: Any, observation: Any) -> float:
+        outcome = _outcome(observation)
+        if outcome is None:
+            return 0.0
+        expected = outcome.get("expected_signals") or ()
+        if not expected:
+            return 0.0
+        declared = [str(s).lower() for s in (getattr(action, "signals", []) or [])]
+        if not declared:
+            return 0.0
+        expected_lc = {str(s).lower() for s in expected}
+        matched = sum(1 for d in declared if d in expected_lc)
+        return min(1.0, matched / max(1, len(expected_lc)))
+
+
+class FormatRubric(Rubric):
+    """JSON-emission shaping bonus, in [0, 1].
+
+    Rewards a parseable JSON object with a ``score`` key (the canonical
+    output schema) when the action's ``explanation`` looks like JSON. The
+    v2 anti-collapse fix is: deny this bonus when the analyzer flags a
+    benign episode as scam — removing the "lazy over-flag still gets
+    format credit" loophole.
+    """
+
+    def forward(self, action: Any, observation: Any) -> float:
+        outcome = _outcome(observation)
+        if outcome is None:
+            return 0.0
+        text = (getattr(action, "explanation", "") or "").strip()
+        if not text:
+            return 0.0
+        looks_json = text.startswith("{") and "score" in text.lower() and text.endswith("}")
+        if not looks_json:
+            return 0.0
+        # v2 anti-collapse: deny when flagging benign as scam.
+        is_benign = bool(outcome.get("is_benign", False))
+        score = float(getattr(action, "score", 0.0))
+        threshold = float(getattr(action, "flag_threshold", 0.5))
+        flagged_benign_as_scam = is_benign and score >= threshold
+        if flagged_benign_as_scam:
+            return 0.0
+        return 1.0
+
+
+class LengthRubric(Rubric):
+    """Length-shaping bonus peaking around 45 tokens, in [-1, 1].
+
+    Rewards explanations near the target length (~45 tokens), penalises
+    runaway prose. Inlined in trainer's ``compute_reward`` previously;
+    promoted here for trainer/env reward parity.
+
+    Returns the same units as ``compute_reward`` (continuous, can be
+    negative). The top-level rubric weights it at +0.15, matching the
+    trainer's ±0.15 cap.
+    """
+
+    target_tokens: int
+    upper_band: int
+
+    def __init__(self, target_tokens: int = 45, upper_band: int = 70) -> None:
+        super().__init__()
+        self.target_tokens = target_tokens
+        self.upper_band = upper_band
+
+    def forward(self, action: Any, observation: Any) -> float:
+        outcome = _outcome(observation)
+        if outcome is None:
+            return 0.0
+        text = (getattr(action, "explanation", "") or "").strip()
+        if not text:
+            return 0.0
+        n = len(text.split())
+        if n <= 0:
+            return 0.0
+        if 20 <= n <= self.upper_band:
+            return max(0.0, 1.0 - abs(n - self.target_tokens) / 30.0)
+        if n > self.upper_band:
+            return -min(1.0, (n - self.upper_band) / 60.0)
+        return 0.0
+
+
 # ---------------------------------------------------------------------------
 # Top-level composed rubric.
 # ---------------------------------------------------------------------------
@@ -284,3 +405,65 @@ class AnalyzerRubric(Rubric):
     def load_state_dict(self, state: dict[str, Any]) -> None:
         if "weights" in state:
             self.weights = dict(state["weights"])
+
+
+class AnalyzerRubricV2(AnalyzerRubric):
+    """v2 anti-collapse profile — the weights v2's LoRA was trained against.
+
+    Three v1→v2 weight changes are visible in :data:`V2_WEIGHTS`:
+
+      * ``false_positive``  -0.3 → -0.8  (over-flagging now expensive)
+      * ``calibration``     +0.2 → +0.5  (stronger gradient on benign)
+      * ``format`` reward denied when flagging a benign as scam
+        (encoded inside :class:`FormatRubric.forward`)
+
+    Three new shaping leaves promoted from the trainer's inline reward so
+    the env's rubric exposes the same decomposition that produced v2:
+
+      * ``SignalAccuracyRubric``  (was ``signal_bonus``)
+      * ``FormatRubric``          (was ``format_r``)
+      * ``LengthRubric``          (was ``length_r``)
+
+    The env serves this rubric by default — see
+    :class:`chakravyuh_env.openenv_environment.ChakravyuhOpenEnv`.
+    """
+
+    def __init__(self, weights: dict[str, float] | None = None) -> None:
+        # Validate against the V2 keyset before delegating.
+        weights = dict(V2_WEIGHTS if weights is None else weights)
+        missing = set(V2_WEIGHTS) - set(weights)
+        if missing:
+            raise ValueError(
+                f"AnalyzerRubricV2 weights missing keys: {sorted(missing)}"
+            )
+        # Bypass the parent validator (which checks against DEFAULT_WEIGHTS).
+        Rubric.__init__(self)
+        self.weights = weights
+        self.detection = DetectionRubric()
+        self.missed_scam = MissedScamRubric()
+        self.false_positive = FalsePositiveRubric()
+        self.calibration = CalibrationRubric()
+        self.explanation = ExplanationRubric()
+        self.signal_accuracy = SignalAccuracyRubric()
+        self.format = FormatRubric()
+        self.length = LengthRubric()
+
+    def forward(self, action: Any, observation: Any) -> float:
+        # Run all eight children so their last_score fields are populated
+        # whether or not the observation is terminal.
+        children = (
+            ("detection", self.detection),
+            ("missed_scam", self.missed_scam),
+            ("false_positive", self.false_positive),
+            ("calibration", self.calibration),
+            ("explanation", self.explanation),
+            ("signal_accuracy", self.signal_accuracy),
+            ("format", self.format),
+            ("length", self.length),
+        )
+        if not getattr(observation, "done", False):
+            for _, child in children:
+                child(action, observation)
+            return 0.0
+        scores = {name: float(child(action, observation)) for name, child in children}
+        return float(sum(self.weights[k] * v for k, v in scores.items()))
