@@ -287,7 +287,7 @@ The scripted baseline closes only **50% of novel post-2024 attacks**. Closing th
 | Metric | v1 (reward-hacked) | v2 (retrained) | Change | 95% CI (v2) |
 |---|---|---|---|---|
 | Detection rate | 100.0% | **99.3%** | ≈ same | [96.2%, 99.9%] |
-| False positive rate | 36.0% | **6.5%** | **−29.5 pp (~5×)** | [1.8%, 20.7%] |
+| False positive rate | 36.0% | **6.7%** | **−29.5 pp (~5×)** | [1.8%, 20.7%] |
 | Precision | — | 98.6% | — | — |
 | F1 | 0.96 | **0.99** | +0.03 | — |
 | Bench n | 135 | 174 (scored) / 175 total | — | — |
@@ -311,7 +311,7 @@ v1 hit detection=100% but FPR=36%. That combination — *everything* gets flagge
 
 #### Limitations — be honest about what the bench can and can't tell you
 
-1. **Small benign sample (n=31).** FPR=6.5% has a wide Wilson 95% CI of **[1.8%, 20.7%]**. A single additional benign misclassification would move the point estimate from 6.5% to 9.7%. We stand behind the "~5× FPR reduction vs v1" claim (statistically real) but not the specific "6.5%" number as a precise estimate.
+1. **Small benign sample (n=31).** FPR=6.7% has a wide Wilson 95% CI of **[1.8%, 20.7%]**. A single additional benign misclassification would move the point estimate from 6.7% to 10.0%. We stand behind the "~5× FPR reduction vs v1" claim (statistically real) but not the specific "6.7%" number as a precise estimate.
 2. **Bench is a proxy.** 175 curated scenarios do not span real-world fraud diversity. Production performance will be lower.
 3. **1 epoch over 619 training examples.** The trainer hit the dataset natural endpoint at step 619 (not 700). More epochs + larger training corpus would sharpen the signal.
 4. **Per-scenario false-positive audit pending.** We have not yet manually inspected *which* 2 benigns were misclassified. Until that audit runs, we cannot rule out a specific templated blind spot.
