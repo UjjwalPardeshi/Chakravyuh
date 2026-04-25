@@ -1,5 +1,9 @@
 # Chakravyuh
 
+[![CI](https://github.com/UjjwalPardeshi/Chakravyuh/actions/workflows/ci.yml/badge.svg)](https://github.com/UjjwalPardeshi/Chakravyuh/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+
 A multi-agent RL environment for Indian UPI fraud detection — built for the **Meta PyTorch OpenEnv Hackathon 2026 (Bangalore)**.
 
 In the Mahabharata, the Chakravyuh was an impenetrable multi-layered battle formation. We've built a modern one — five AI agents forming a multi-layered trap around India's digital payment system.
@@ -164,7 +168,11 @@ print(obs.reward, obs.reward_breakdown)
 
 ```bash
 pytest tests/ -v
-# 131 passing: test_openenv.py (27) + test_rubrics.py (38) + test_smoke.py (6) + ...
+# 199 passing: test_openenv.py (27) + test_rubrics.py (38) + test_smoke.py (6)
+# + test_demo.py + test_demo_v2.py + test_explanation_judge.py + test_grpo_reward.py
+# + test_mcp_compliance.py (2) + test_mode_c.py + test_training_data.py
+# Tests require the package's [llm] extras (openenv-core etc.) — install with:
+#   pip install -e '.[llm,eval]'
 ```
 
 ---
@@ -295,7 +303,7 @@ v2 was trained with three anti-collapse reward changes: FP penalty tightened fro
 | **Hard** | **43%** | **100%** | **+57 pp** |
 | **Novel** | **50%** | **97%** | **+47 pp** |
 
-The largest lifts appear exactly where the scripted rule-based baseline fails most — hard and novel scenarios. That shape is the signature of genuine generalization, not pattern matching. See [`docs/assets/plots/v2_per_difficulty_check.png`](docs/assets/plots/v2_per_difficulty_check.png).
+The largest lifts appear exactly where the scripted rule-based baseline fails most — hard and novel scenarios. That shape is the signature of genuine generalization, not pattern matching. The full per-difficulty chart will be published at [`plots/chakravyuh_plots/v2_per_difficulty_check.png`](plots/chakravyuh_plots/v2_per_difficulty_check.png) (synced from the v2 training run); for now, see [`plots/chakravyuh_plots/temporal_gap_closure.png`](plots/chakravyuh_plots/temporal_gap_closure.png) for the analogous scripted-baseline gap.
 
 #### Why v1 was reward-hacked (and how we diagnosed it)
 
@@ -333,7 +341,7 @@ The scripted Analyzer is intentionally a *competent-but-beatable* baseline — s
 
 ### Training curves
 
-The v1 training curve (`docs/assets/plots/training_curve.png`) is published alongside the v1 reward-hacking diagnostic (`docs/assets/plots/reward_hacking_diagnostic.png`) to let readers see what the hack looked like in reward/loss space. The v2 per-difficulty bar chart is at `docs/assets/plots/v2_per_difficulty_check.png`. Full trainer state for v2 lives in `checkpoints/analyzer_lora_v2/checkpoint-619/trainer_state.json`.
+The v1 training curve (`plots/chakravyuh_plots/training_reward_curve.png`) is published alongside the v1 reward-hacking diagnostic (`plots/chakravyuh_plots/reward_hacking_diagnostic.png`) to let readers see what the hack looked like in reward/loss space. The v2 per-difficulty bar chart is at `plots/chakravyuh_plots/v2_per_difficulty_check.png`. Full trainer state for v2 lives at `huggingface.co/ujjwalpardeshi/chakravyuh-analyzer-lora-v2/blob/main/trainer_state.json` (after the model repo is published — see `WIN_PLAN.md` task A.4).
 
 ---
 
@@ -446,11 +454,10 @@ The Gradio UI provides two tabs:
 
 Historical planning documents (for context, not active execution):
 
-- [`docs/CHAKRAVYUH_WIN_PLAN.md`](docs/CHAKRAVYUH_WIN_PLAN.md) — Full strategic plan
+- [`WIN_PLAN.md`](WIN_PLAN.md) — Audit-corrected, measurement-first execution plan (current source of truth)
+- [`docs/CHAKRAVYUH_WIN_PLAN.md`](docs/CHAKRAVYUH_WIN_PLAN.md) — Earlier strategic plan
 - [`docs/CHAKRAVYUH_IMPROVEMENTS.md`](docs/CHAKRAVYUH_IMPROVEMENTS.md) — Move-by-move score-lift plan
-- [`docs/CHAKRAVYUH_EXECUTION_PLAN.md`](docs/CHAKRAVYUH_EXECUTION_PLAN.md) — Day-by-day execution
-- [`PROJECT_JOURNEY.md`](PROJECT_JOURNEY.md) — Chronological build journal (bugs, fixes, lessons)
-- [`HACKATHON_AUDIT_DETAILED.md`](HACKATHON_AUDIT_DETAILED.md) — Criterion-by-criterion self-audit
+- [`docs/CHAKRAVYUH_EXECUTION_PLAN.md`](docs/CHAKRAVYUH_EXECUTION_PLAN.md) — Earlier day-by-day execution
 
 ## Data Sources
 

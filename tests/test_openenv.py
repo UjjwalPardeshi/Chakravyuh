@@ -294,7 +294,11 @@ def test_websocket_full_episode_round_trip() -> None:
     import signal
     import socket
     import subprocess
+    import sys
     import time
+    from pathlib import Path
+
+    repo_root = Path(__file__).resolve().parent.parent
 
     # Pick a free port by binding to 0 and releasing.
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -303,7 +307,9 @@ def test_websocket_full_episode_round_trip() -> None:
 
     proc = subprocess.Popen(
         [
-            ".venv/bin/uvicorn",
+            sys.executable,
+            "-m",
+            "uvicorn",
             "server.app:app",
             "--host",
             "127.0.0.1",
@@ -312,7 +318,7 @@ def test_websocket_full_episode_round_trip() -> None:
             "--log-level",
             "error",
         ],
-        cwd="/home/palkia/code/Chakravyuh",
+        cwd=str(repo_root),
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )
