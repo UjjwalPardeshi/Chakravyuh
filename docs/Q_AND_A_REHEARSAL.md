@@ -20,7 +20,30 @@ We diagnosed reward hacking explicitly — that's exactly the v1 → v2 story. v
 
 ## 3. How is your bench different from your training data?
 
-Soft-leakage filter, enforced before training: every training example is min-hash compared to every bench example, and any pair above the similarity threshold is dropped from training. Code is at `training/grpo_analyzer.py:_filter_soft_leakage`. We publish the filter precisely so the claim is checkable. Final training corpus is 619 examples (456 scam + 204 benign templates) — already post-filter.
+Two answers, in order of how they hit:
+
+**Substring filter (committed code, runs before training).** Every canonical training template is checked against every bench scammer text; any whose `opener` or `escalation` appears as a substring of a bench text is dropped. 41 / 200 canonical templates filtered out. Code at `training/grpo_analyzer.py:_filter_soft_leakage`.
+
+**Semantic audit (we ran this ourselves; result is in our submission).** We embedded all 1,177 training texts and all 174 bench scenarios with MiniLM-L6 and computed nearest-neighbor cosine similarity. Result: **mean cosine = 0.80, 44.8 % of bench has cosine > 0.85, 18.4 % > 0.95**. The substring filter does NOT catch paraphrases. We disclose this in [`docs/limitations.md`](limitations.md) and the artifact is at [`logs/semantic_leakage_audit.json`](../logs/semantic_leakage_audit.json) + the histogram at [`plots/chakravyuh_plots/semantic_leakage_histogram.png`](../plots/chakravyuh_plots/semantic_leakage_histogram.png).
+
+The honest implication: the 100 % numbers on easy/medium/hard are partly memorization. The v1 → v2 FPR fix and the scripted-baseline novel collapse are **unaffected** (relative comparisons within the same bench). v3 ships a held-out template-family split.
+
+---
+
+## 3b. Top-judge follow-up: "If 44.8 % of bench is high-similarity to training, your 99.3 % is inflated. What's your real generalization number?"
+
+The honest framing has three parts:
+
+1. **Internal-bench number (99.3 %)** is in-distribution per the audit and is partially memorization. We don't claim it as out-of-distribution generalization.
+
+2. **The leakage-clean subset of bench** (cosine < 0.70 to nearest training neighbor): 38 scams + 12 benigns = 50 scenarios. Re-evaluating v2 on this slice with logged per-scenario logits is v3 work — flagged in [`docs/limitations.md`](limitations.md) under "v3 plan to fix."
+
+3. **The signals that survive the leakage critique:**
+   - **v1 → v2 FPR collapse** (36 % → 6.7 %, 5×). Both versions evaluated on the same bench. Relative improvement is real regardless of leakage.
+   - **Scripted-baseline novel-split collapse** (50 %). Measures rule fragility, not LoRA memorization.
+   - **Per-rubric ablation** ([`docs/ablation_study.md`](ablation_study.md)): zeroing each rubric weight changes reward by measurably-different deltas, evidence the trained policy uses each rubric.
+
+We pre-emptively published this audit as part of the submission. Discovering it ourselves and disclosing it is the strongest move available; trying to hide it would have been disqualifying.
 
 ---
 
