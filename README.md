@@ -20,7 +20,7 @@ A multi-agent RL environment for Indian UPI fraud detection — built for the **
 
 > **TL;DR for judges** — *Chakravyuh is a 5-agent OpenEnv environment for Indian UPI fraud detection. We trained Qwen2.5-7B with GRPO, **caught ourselves reward-hacking** (v1: detection=100% / FPR=36%), diagnosed and fixed it (v2: 99.3% / 6.7%, F1=0.99 on n=174). The asymmetric improvement is the signal — detection unchanged, FPR 5× down. Themes: **#1 Multi-Agent** (primary) · **#4 Self-Improvement** (primary). Live demo: [`/demo`](https://ujjwalpardeshi-chakravyuh.hf.space/demo/) · adapter: [`chakravyuh-analyzer-lora-v2`](https://huggingface.co/ujjwalpardeshi/chakravyuh-analyzer-lora-v2) · bench: [`chakravyuh-bench-v0`](https://huggingface.co/datasets/ujjwalpardeshi/chakravyuh-bench-v0). Full v1→v2 story below.*
 
-![Per-difficulty detection: scripted vs Chakravyuh v2](docs/assets/plots/v2_per_difficulty_check.png)
+![Per-difficulty detection: scripted vs Chakravyuh v2](https://raw.githubusercontent.com/UjjwalPardeshi/Chakravyuh/a9e723bf495182724845dbf1f69f8968434a9e02/docs/assets/plots/v2_per_difficulty_check.png)
 
 > *Per-difficulty detection on the 174-scenario bench — scripted rules vs the Chakravyuh v2 LoRA. The scripted baseline collapses on `hard` and `novel` post-2024 attacks; v2 closes the gap to **100%** on hard and **97%** on novel. Backing artifact: [`logs/eval_v2.json`](logs/eval_v2.json).*
 
@@ -392,7 +392,7 @@ v2 was trained with three anti-collapse reward changes: FP penalty tightened fro
 | **Hard** | **43%** | **100%** | **+57 pp** |
 | **Novel** | **50%** | **97%** | **+47 pp** |
 
-The largest lifts appear exactly where the scripted rule-based baseline fails most — hard and novel scenarios. That shape is the signature of genuine generalization, not pattern matching. Per-difficulty chart: [`docs/assets/plots/v2_per_difficulty_check.png`](docs/assets/plots/v2_per_difficulty_check.png). Analogous scripted-baseline temporal gap: [`docs/assets/plots/temporal_gap_closure.png`](docs/assets/plots/temporal_gap_closure.png).
+The largest lifts appear exactly where the scripted rule-based baseline fails most — hard and novel scenarios. That shape is the signature of genuine generalization, not pattern matching. Per-difficulty chart: [`v2_per_difficulty_check.png`](https://raw.githubusercontent.com/UjjwalPardeshi/Chakravyuh/a9e723bf495182724845dbf1f69f8968434a9e02/docs/assets/plots/v2_per_difficulty_check.png). Analogous scripted-baseline temporal gap: [`temporal_gap_closure.png`](https://raw.githubusercontent.com/UjjwalPardeshi/Chakravyuh/a9e723bf495182724845dbf1f69f8968434a9e02/docs/assets/plots/temporal_gap_closure.png).
 
 #### Why v1 was reward-hacked (and how we diagnosed it)
 
@@ -430,7 +430,7 @@ The scripted Analyzer is intentionally a *competent-but-beatable* baseline — s
 
 ### Training curves
 
-The v1 training curve [`docs/assets/plots/training_reward_curve.png`](docs/assets/plots/training_reward_curve.png) is published alongside the v1 reward-hacking diagnostic [`docs/assets/plots/reward_hacking_diagnostic.png`](docs/assets/plots/reward_hacking_diagnostic.png) so readers can see what the hack looked like in reward/loss space. The v2 per-difficulty bar chart is at [`docs/assets/plots/v2_per_difficulty_check.png`](docs/assets/plots/v2_per_difficulty_check.png). Full trainer state for v2 lives at [`logs/v2_trainer_state.json`](logs/v2_trainer_state.json).
+The v1 training curve [`training_reward_curve.png`](https://raw.githubusercontent.com/UjjwalPardeshi/Chakravyuh/a9e723bf495182724845dbf1f69f8968434a9e02/docs/assets/plots/training_reward_curve.png) is published alongside the v1 reward-hacking diagnostic [`reward_hacking_diagnostic.png`](https://raw.githubusercontent.com/UjjwalPardeshi/Chakravyuh/a9e723bf495182724845dbf1f69f8968434a9e02/docs/assets/plots/reward_hacking_diagnostic.png) so readers can see what the hack looked like in reward/loss space. The v2 per-difficulty bar chart is at [`v2_per_difficulty_check.png`](https://raw.githubusercontent.com/UjjwalPardeshi/Chakravyuh/a9e723bf495182724845dbf1f69f8968434a9e02/docs/assets/plots/v2_per_difficulty_check.png). Full trainer state for v2 lives at [`logs/v2_trainer_state.json`](logs/v2_trainer_state.json).
 
 ---
 
@@ -494,7 +494,7 @@ The Gradio UI provides two tabs:
 | Working training script (TRL / Unsloth, Colab) | ✅ [`training/train_colab.ipynb`](training/train_colab.ipynb) + [`notebooks/v2_retrain_safe.ipynb`](notebooks/v2_retrain_safe.ipynb) |
 | Multiple independent reward functions | ✅ 5 composable child rubrics |
 | Anti-reward-hacking design | ✅ [Anti-Reward-Hacking Design](#anti-reward-hacking-design) + [`logs/analyzer_robustness.json`](logs/analyzer_robustness.json) |
-| Real training evidence (reward/loss plots) | ✅ [`docs/assets/plots/`](docs/assets/plots/) (training reward, reward-hacking diagnostic, per-difficulty) |
+| Real training evidence (reward/loss plots) | ✅ [training reward](https://raw.githubusercontent.com/UjjwalPardeshi/Chakravyuh/a9e723bf495182724845dbf1f69f8968434a9e02/docs/assets/plots/training_reward_curve.png) · [reward-hacking diagnostic](https://raw.githubusercontent.com/UjjwalPardeshi/Chakravyuh/a9e723bf495182724845dbf1f69f8968434a9e02/docs/assets/plots/reward_hacking_diagnostic.png) · [per-difficulty](https://raw.githubusercontent.com/UjjwalPardeshi/Chakravyuh/a9e723bf495182724845dbf1f69f8968434a9e02/docs/assets/plots/v2_per_difficulty_check.png) |
 | HF Space deployed | ✅ [LIVE](https://huggingface.co/spaces/ujjwalpardeshi/chakravyuh) |
 | Mini-blog OR <2-min video | ✅ [`docs/blog_post.md`](docs/blog_post.md) (draft) · video pending |
 | README links to all materials | ✅ (see Submission Materials) |

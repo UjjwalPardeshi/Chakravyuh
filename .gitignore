@@ -92,11 +92,13 @@ HACKATHON_AUDIT.md
 HACKATHON_AUDIT_DETAILED.md
 PROJECT_JOURNEY.md
 
-# Plot artifacts under plots/ are gitignored (HF Space rejects binaries at the
-# repo root). The README-rendered PNGs live under docs/assets/plots/ and are
-# tracked normally — that path is not copied into the HF Docker image.
+# Plot artifacts are gitignored everywhere. HF Space rejects binaries on push,
+# so the README references PNGs via SHA-pinned GitHub raw URLs that resolve to
+# the historical blob in commit a9e723b — see README.md hero/temporal/training
+# image links. To refresh the plots: regenerate locally, commit them on a
+# GitHub-only branch, then update the SHA-pin in README to the new commit.
 plots/*.png
 plots/*.zip
 plots/**/*.png
 plots/**/*.zip
-!docs/assets/plots/*.png
+docs/assets/plots/*.png
