@@ -1,3 +1,15 @@
+---
+title: Chakravyuh
+emoji: 🛡️
+colorFrom: indigo
+colorTo: blue
+sdk: docker
+app_port: 8000
+pinned: true
+license: mit
+short_description: Multi-agent OpenEnv environment for Indian UPI fraud detection
+---
+
 # Chakravyuh
 
 [![CI](https://github.com/UjjwalPardeshi/Chakravyuh/actions/workflows/ci.yml/badge.svg)](https://github.com/UjjwalPardeshi/Chakravyuh/actions/workflows/ci.yml)
