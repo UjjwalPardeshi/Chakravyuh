@@ -27,7 +27,7 @@ The composable rubric system ([chakravyuh_env/rubrics.py](chakravyuh_env/rubrics
 
 | Asset | Link |
 |---|---|
-| Hugging Face Space (live env) | [ujjwalpardeshi/chakravyuh-env](https://huggingface.co/spaces/ujjwalpardeshi/chakravyuh-env) _(deploying)_ |
+| Hugging Face Space (live env) | [ujjwalpardeshi/chakravyuh](https://huggingface.co/spaces/ujjwalpardeshi/chakravyuh) _(deploying)_ |
 | Training Colab (TRL + GRPO) | [`training/train_colab.ipynb`](training/train_colab.ipynb) |
 | 2-min overview video | _TBD_ |
 | HF Blog post | _TBD_ |
@@ -109,7 +109,7 @@ uvicorn server.app:app --host 0.0.0.0 --port 8000
 uv sync && uv run server
 
 # Option A.3 — Docker
-docker build -t chakravyuh-env . && docker run -p 8000:8000 chakravyuh-env
+docker build -t chakravyuh . && docker run -p 8000:8000 chakravyuh
 
 # Option A.4 — Hugging Face Space
 #   See "Submission Materials" above for the live HF Space URL
@@ -408,7 +408,7 @@ The repo is HF-Space-ready (Docker runtime):
 ```bash
 openenv push .                      # from OpenEnv CLI
 # or
-git remote add hf https://huggingface.co/spaces/<user>/chakravyuh-env && git push hf main
+git remote add hf https://huggingface.co/spaces/ujjwalpardeshi/chakravyuh && git push hf main
 ```
 
 ### Replay UI (for the demo)

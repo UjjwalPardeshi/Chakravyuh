@@ -70,7 +70,7 @@ State of the repo, audited against the guidelines.
 
 | Issue | Reality | Plan item |
 |---|---|---|
-| HF Space URL `huggingface.co/spaces/ujjwalpardeshi/chakravyuh-env` | Not yet deployed (status from current README: "deploying") | **P0.1** |
+| HF Space URL `huggingface.co/spaces/ujjwalpardeshi/chakravyuh` | Not yet deployed (status from current README: "deploying") | **P0.1** |
 | `checkpoints/analyzer_lora_v2/` | Doesn't exist on disk; v2 weights only on Drive (646 MB) | **P0.3** (push to HF Hub) |
 | `logs/eval_v2.json` | Doesn't exist on disk; only on Drive | **P0.4** |
 | `docs/assets/plots/*.png` references in README | Actual plots are in `plots/chakravyuh_plots/`. `docs/assets/plots/` does not exist. | **P0.5** |
@@ -252,7 +252,7 @@ These satisfy the **Minimum Submission Requirements**. Without any one, the subm
 
 ### P0.1 — Deploy Hugging Face Space (LIVE, not "deploying")
 
-- **What:** Push the repo to `huggingface.co/spaces/<user>/chakravyuh-env` and confirm the server responds with HTTP 200 on `/health`, `/schema`, `/metadata`, `/openapi.json`, `/mcp`. Replace the README's "deploying" text with a verified live URL — no placeholders.
+- **What:** Push the repo to `huggingface.co/spaces/ujjwalpardeshi/chakravyuh` and confirm the server responds with HTTP 200 on `/health`, `/schema`, `/metadata`, `/openapi.json`, `/mcp`. Replace the README's "deploying" text with a verified live URL — no placeholders.
 
 - **How:**
   ```bash
@@ -261,11 +261,11 @@ These satisfy the **Minimum Submission Requirements**. Without any one, the subm
   openenv push .     # preferred path — uses openenv.yaml + Dockerfile
 
   # Verify live:
-  curl -s -o /dev/null -w "%{http_code}\n" https://<user>-chakravyuh-env.hf.space
+  curl -s -o /dev/null -w "%{http_code}\n" https://ujjwalpardeshi-chakravyuh.hf.space
   # Expect: 200
 
   # Runtime validation:
-  openenv validate --url https://<user>-chakravyuh-env.hf.space
+  openenv validate --url https://ujjwalpardeshi-chakravyuh.hf.space
   # Expect: pass on 6/6 endpoints
   ```
 
@@ -1809,7 +1809,7 @@ Quick items, compounding credibility.
     - family-names: "<Surname>"
       given-names: "<Name>"
   date-released: 2026-04-26
-  url: "https://huggingface.co/spaces/<user>/chakravyuh-env"
+  url: "https://huggingface.co/spaces/ujjwalpardeshi/chakravyuh"
   license: MIT
   type: software
   ```
