@@ -21,10 +21,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
           cache: pip
@@ -47,15 +47,21 @@ jobs:
         run: make link-check
 
   link-check-http:
+    # External URL probe — best-effort. Step-level continue-on-error so the
+    # job shows green even when transient external failures happen (e.g. HF
+    # Space mid-rebuild after a push).
     name: README http(s) link probe (allowed-fail)
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: HEAD-probe external links
+        continue-on-error: true
         run: make link-check-http
+
+      - name: Annotate result (always succeeds)
+        run: echo "Link probe ran (failures, if any, are non-blocking)."
 
   validate-openenv:
     name: openenv validate
@@ -63,10 +69,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Python 3.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.11"
           cache: pip
