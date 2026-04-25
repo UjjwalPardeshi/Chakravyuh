@@ -17,10 +17,70 @@ multi-agent simulation. See `openenv_environment.ChakravyuhOpenEnv`.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from openenv.core.env_server import Action, Observation, State
-from pydantic import Field
+from pydantic import BaseModel, ConfigDict, Field
+
+# OpenEnv schema version. Bump this when ChakravyuhObservation's wire shape
+# changes incompatibly so old training runs / replays can detect mismatch.
+CHAKRAVYUH_SCHEMA_VERSION = "0.2.0"
+
+
+class ChatTurn(BaseModel):
+    """One turn of the multi-agent chat trace. Documents the wire shape
+    consumed by ChakravyuhObservation.chat_history.
+
+    Kept as a separate validator (not as a typed list element) so existing
+    constructors that emit raw dicts continue to work; downstream code that
+    wants a typed view can call ChatTurn.model_validate(turn_dict).
+    """
+    model_config = ConfigDict(extra="ignore")
+    sender: Literal["scammer", "victim", "analyzer", "bank_monitor", "regulator"]
+    turn: int = Field(ge=0)
+    text: str
+    intent: str | None = None
+
+
+class TransactionMeta(BaseModel):
+    """Bank-turn transaction payload shape (currently dict[str, Any] on wire)."""
+    model_config = ConfigDict(extra="ignore")
+    amount: float = Field(ge=0)
+    receiver_new: bool = False
+    receiver_id_hash: str | None = None
+    frequency_24h: int = Field(default=0, ge=0)
+
+
+class EpisodeOutcome(BaseModel):
+    """Terminal-observation outcome shape (currently dict[str, Any] on wire)."""
+    model_config = ConfigDict(extra="ignore")
+    money_extracted: bool = False
+    victim_refused: bool = False
+    victim_sought_verification: bool = False
+    analyzer_flagged: bool = False
+    detected_by_turn: int | None = None
+    is_benign: bool = False
+    false_positive: bool = False
+    bank_flagged: bool = False
+    bank_froze: bool = False
+
+
+class RewardBreakdown(BaseModel):
+    """Per-rubric reward decomposition shape (currently dict[str, Any] on wire).
+
+    Field names match AnalyzerRubricV2 child rubrics in
+    chakravyuh_env/rubrics.py.
+    """
+    model_config = ConfigDict(extra="ignore")
+    detection: float = 0.0
+    missed_scam: float = 0.0
+    false_positive: float = 0.0
+    calibration: float = 0.0
+    explanation: float = 0.0
+    signal_accuracy: float = 0.0
+    format: float = 0.0
+    length: float = 0.0
+    composite: float = 0.0
 
 
 class ChakravyuhAction(Action):
@@ -73,6 +133,8 @@ class ChakravyuhObservation(Observation):
     # Populated only on terminal observations.
     outcome: dict[str, Any] | None = None
     reward_breakdown: dict[str, Any] | None = None
+    # Wire-shape version. Bump CHAKRAVYUH_SCHEMA_VERSION when changing fields.
+    schema_version: str = Field(default=CHAKRAVYUH_SCHEMA_VERSION)
     # Inherited from Observation: done, reward, metadata
 
 

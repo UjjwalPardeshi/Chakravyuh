@@ -312,6 +312,70 @@ def landing() -> HTMLResponse:
     return HTMLResponse(_LANDING_HTML)
 
 
+_DEMO_PREVIEW_HTML = """<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chakravyuh — warming up</title>
+<style>
+  body { font-family: -apple-system, system-ui, Segoe UI, sans-serif;
+         margin: 0; padding: 48px 24px; background: #faf9f6; color: #1a1a1a; }
+  main { max-width: 720px; margin: 0 auto; }
+  h1 { font-size: 26px; margin: 0 0 6px; }
+  .sub { color: #666; margin: 0 0 24px; font-size: 14px; }
+  figure { margin: 0 0 24px; }
+  img { max-width: 100%; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  figcaption { font-size: 12px; color: #777; margin-top: 6px; }
+  .pill { display: inline-block; padding: 4px 10px; border-radius: 999px;
+          background: rgba(46,125,50,0.10); color: #1b5e20; font-size: 12px;
+          letter-spacing: 0.04em; text-transform: uppercase; }
+  a { color: #1565c0; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 16px 0 24px; }
+  .card { padding: 14px; background: #fff; border-radius: 10px;
+          box-shadow: 0 1px 4px rgba(0,0,0,0.06); font-size: 13px; line-height: 1.5; }
+  .card strong { color: #b71c1c; }
+  @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
+</style>
+</head><body><main>
+  <span class="pill">Warming up · ~10–30s</span>
+  <h1>Chakravyuh — multi-agent UPI fraud detection</h1>
+  <p class="sub">The interactive demo is booting. While it warms up, here's the headline result.</p>
+  <figure>
+    <img src="https://raw.githubusercontent.com/UjjwalPardeshi/Chakravyuh/a9e723bf495182724845dbf1f69f8968434a9e02/docs/assets/plots/v2_per_difficulty_check.png"
+         alt="Per-difficulty detection: scripted analyzer vs Chakravyuh v2 LoRA — scripted catches 50% on novel post-2024 scams; v2 catches 97%.">
+    <figcaption>Per-difficulty detection — scripted vs Chakravyuh v2 (n = 174 bench scenarios).</figcaption>
+  </figure>
+  <div class="grid">
+    <div class="card">
+      <strong>v1 (reward-hacked)</strong><br>
+      detection 100 % · FPR <strong>36 %</strong> · F1 0.96 · the model learned to flag everything.
+    </div>
+    <div class="card">
+      <strong>v2 (principled retrain)</strong><br>
+      detection 99.3 % · FPR <strong>6.7 %</strong> · F1 0.99 · same detection, FPR collapsed 5×.
+    </div>
+  </div>
+  <p style="font-size:13px;color:#444">Once the demo is live, you'll see five tabs: Replay, Live Q&amp;A, You vs Analyzer, v1↔v2 toggle, <strong>🔴 Red-team it yourself</strong>, and Leaderboard.</p>
+  <p><a href="/">← back to landing</a> · <a href="/demo/" id="live-link">try the live demo</a></p>
+<script>
+  // Poll /demo/ every 2s; redirect when 200.
+  (function poll() {
+    fetch('/demo/', { method: 'HEAD', cache: 'no-store' }).then(function(r){
+      if (r.ok) { window.location.href = '/demo/'; }
+      else { setTimeout(poll, 2000); }
+    }).catch(function(){ setTimeout(poll, 2000); });
+  })();
+</script>
+</main></body></html>"""
+
+
+@app.get("/demo/preview", response_class=HTMLResponse, include_in_schema=False)
+def demo_preview() -> HTMLResponse:
+    """Static fallback that renders instantly while Gradio /demo/ warms up.
+    Self-redirects to /demo/ once that route returns 200."""
+    return HTMLResponse(_DEMO_PREVIEW_HTML)
+
+
 # ---------------------------------------------------------------------------
 # Mount the Gradio demo at /demo. Lazy-import so importing server.app stays
 # cheap for tools that only want the FastAPI app (the existing test suite).
@@ -338,10 +402,16 @@ def _mount_demo() -> None:
 # and continue so /reset, /step, /state, /eval, /diagnose still serve.
 try:
     _mount_demo()
-except Exception:  # pragma: no cover — diagnostic surface only
+except (ImportError, ModuleNotFoundError) as _demo_err:
+    import logging
+    logging.getLogger("chakravyuh.app").error(
+        "Gradio not installed; /demo route disabled. Error: %s", _demo_err
+    )
+except Exception:
     import logging
     logging.getLogger("chakravyuh.app").exception(
-        "Failed to mount Gradio demo at /demo"
+        "Unexpected failure mounting Gradio demo at /demo — /demo will 404 "
+        "but other OpenEnv routes remain healthy. See traceback above."
     )
 
 

@@ -11,13 +11,13 @@ __pycache__
 .codex
 .agents
 checkpoints/
-logs/
+logs/wandb/
+logs/*.log
 wandb/
 training/
 eval/
 tests/
 docs/
-data/chakravyuh-bench-v0/
 *.md
 !README.md
 node_modules/

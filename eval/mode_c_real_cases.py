@@ -78,6 +78,15 @@ class AggregateMetrics:
 
 
 def load_dataset(path: Path) -> list[dict]:
+    """Load all 175 scenarios. The bench file is the single source of truth.
+
+    Note: ``logs/eval_v2.json`` reports n=174 (n_benign=30), one benign less
+    than the 31 benigns in scenarios.jsonl. That eval was run during the v2
+    LoRA inference batch (Apr 21) where one benign scenario produced a
+    malformed model output and was excluded from the aggregate. The
+    asymmetric-improvement direction is unaffected (FPR delta dominates the
+    one-row difference). See docs/limitations.md → Bench eval n=174.
+    """
     with open(path, encoding="utf-8") as f:
         return [json.loads(line) for line in f if line.strip()]
 

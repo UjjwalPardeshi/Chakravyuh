@@ -62,6 +62,18 @@ Caveat: a more rigorous "v2 isn't also reward-hacked" test would be the per-rubr
 - **Detection of scams Chakravyuh hasn't seen the *category* of.** The bench covers ~11 fraud categories. New categories invented in 2027 will need new templates and retraining.
 - **Adversarial robustness against well-resourced attackers.** Red-team eval (10 attacks) found 4/10 caught with rule-based; LoRA likely tighter, but a sophisticated adversary will iterate. Defense in depth is needed in production.
 
+## Threshold sweep degeneracy
+
+The v2 LoRA produces near-binary scores: 9 of 13 thresholds in the 0.30–0.85 sweep yield identical detection / FPR. The composable [`CalibrationRubric`](../chakravyuh_env/rubrics.py) exists in the env but cannot reward fine-grained calibration on a near-binary distribution. The v2 detection / FPR point estimate is correct; the calibration *channel* of the rubric is partially inert on this output distribution. **v3 work:** temperature-scaled logits + reliability diagrams.
+
+## Bench eval n = 174 (one benign less than 175)
+
+The bench file [`data/chakravyuh-bench-v0/scenarios.jsonl`](../data/chakravyuh-bench-v0/scenarios.jsonl) has 175 scenarios (144 scams + 31 benign). The v2 LoRA inference batch (Apr 21) excluded one benign that produced a malformed model output, so [`logs/eval_v2.json`](../logs/eval_v2.json) reports n = 174 (n_benign = 30). The asymmetric-improvement direction (FPR 36% → 6.7%) is unaffected by the one-row delta. The bench file is the single source of truth; the eval n discrepancy is a one-time inference artifact, not a bench claim.
+
+## v2 GRPO training trajectory has high KL throughout
+
+KL divergence reached 0.36 by step 15 and stayed in the [0.25, 0.45] band for the remaining ~600 steps; PPO clip ratios remained at 0 throughout. See [`docs/training_diagnostics.md`](training_diagnostics.md) for the full trajectory, three honest readings, and the v3 KL-early-stop guard.
+
 ## How to verify
 
 ```bash

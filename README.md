@@ -18,7 +18,9 @@ short_description: Multi-agent RL env for Indian UPI fraud detection
 
 A multi-agent RL environment for Indian UPI fraud detection — built for the **Meta PyTorch OpenEnv Hackathon 2026 (Bangalore)**.
 
-> **TL;DR for judges** — *Chakravyuh is a 5-agent OpenEnv environment for Indian UPI fraud detection. We trained Qwen2.5-7B with GRPO, **caught ourselves reward-hacking** (v1: detection=100% / FPR=36%), diagnosed and fixed it (v2: 99.3% / 6.7%, F1=0.99 on n=174). The asymmetric improvement is the signal — detection unchanged, FPR 5× down. Themes: **#1 Multi-Agent** (primary) · **#4 Self-Improvement** (primary). Live demo: [`/demo`](https://ujjwalpardeshi-chakravyuh.hf.space/demo/) · adapter: [`chakravyuh-analyzer-lora-v2`](https://huggingface.co/ujjwalpardeshi/chakravyuh-analyzer-lora-v2) · bench: [`chakravyuh-bench-v0`](https://huggingface.co/datasets/ujjwalpardeshi/chakravyuh-bench-v0). Full v1→v2 story below.*
+> **We trained an LLM to detect UPI fraud and got 100 % detection.** We celebrated for four minutes. Then we noticed: **36 % false-positive rate.** The model wasn't catching scams — it was flagging everything. This README walks through the diagnosis, the three-line reward fix, and the v2 recovery: detection holds at 99.3 %, FPR collapses 5× to 6.7 % on n = 174 real Indian fraud scenarios. The asymmetric improvement — detection unchanged, FPR down — is the signal that the model learned the task instead of gaming the reward.
+>
+> **TL;DR for judges** — *Chakravyuh is a 5-agent OpenEnv environment for Indian UPI fraud detection, plus a worked example of catching reward hacking in GRPO post-training. We trained Qwen2.5-7B with GRPO, **caught ourselves reward-hacking** (v1: detection=100% / FPR=36%), diagnosed and fixed it (v2: 99.3% / 6.7%, F1=0.99 on n=174). Themes: **#1 Multi-Agent** (primary) · **#4 Self-Improvement** (the v1→v2 reward-hacking-fix loop is self-improvement of the *training pipeline* — see `docs/limitations.md`; we deliberately do not claim recursive skill amplification). Live demo: [`/demo`](https://ujjwalpardeshi-chakravyuh.hf.space/demo/) · adapter: [`chakravyuh-analyzer-lora-v2`](https://huggingface.co/ujjwalpardeshi/chakravyuh-analyzer-lora-v2) · bench: [`chakravyuh-bench-v0`](https://huggingface.co/datasets/ujjwalpardeshi/chakravyuh-bench-v0).*
 
 ![Per-difficulty detection: scripted vs Chakravyuh v2](https://raw.githubusercontent.com/UjjwalPardeshi/Chakravyuh/a9e723bf495182724845dbf1f69f8968434a9e02/docs/assets/plots/v2_per_difficulty_check.png)
 
@@ -30,7 +32,7 @@ Imagine a 58-year-old retired teacher in Mumbai. Her son lives in Singapore. A W
 
 ## The 60-second pitch
 
-**Problem.** Indian digital payments lose ₹13,000+ crore/year to UPI fraud. 60 crore users are exposed. Rule-based detectors catch ~80% of pre-2024 scams but only ~50% of post-2024 novel patterns (matrimonial crypto, deepfake CEO, digital arrest, AePS fraud). No public RL environment exists for multi-agent fraud-detection research — so we built one.
+**Problem.** Indian digital payments lose ₹13,000+ crore/year to UPI fraud. 60 crore users are exposed. Rule-based detectors degrade meaningfully on post-2024 attack patterns — we measured **scripted analyzer detection = 50% on the 34-scenario novel split** (matrimonial crypto, deepfake CEO, digital arrest, AePS fraud; from `data/chakravyuh-bench-v0/scenarios.jsonl`). No public RL environment exists for multi-agent fraud-detection research — so we built one.
 
 **Approach.** A 5-agent OpenEnv environment (Scammer, Victim, Analyzer, Bank Monitor, Regulator) with a composable 5-rubric reward. The Analyzer is a Qwen2.5-7B LoRA, post-trained with TRL's GRPO. Reward-hacking diagnosed in v1 (FPR = 36 %), then *measurably* fixed in v2 (FPR = 6.7 % — **5× better**).
 
@@ -146,6 +148,8 @@ Messages stay on the victim's device. Only anonymized risk scores reach the bank
 
 ### Architecture
 
+Visual diagram (Mermaid, GitHub-rendered): [`docs/architecture.md`](docs/architecture.md). Source: [`docs/architecture.mmd`](docs/architecture.mmd).
+
 | Agent | Role | Sees | Trained? |
 |---|---|---|---|
 | Scammer | Adversary | Own plan + victim responses | No (376 curated templates, NPCI/RBI-grounded) |
@@ -253,7 +257,7 @@ print(obs.reward, obs.reward_breakdown)
 
 ```bash
 pytest tests/ -v
-# 275 collected · 273 passed · 2 skipped (LLM-judge tests skip without GROQ_API_KEY)
+# 289 collected · 286 passed · 2 skipped (LLM-judge tests skip without GROQ_API_KEY)
 # Coverage: openenv contract, rubrics, scripted env, demo, explanation judge,
 # GRPO reward, MCP compliance, mode-C bench, negotiation, leaderboard, training data,
 # benign augmentation, known/novel split, red-team robustness.
@@ -365,7 +369,7 @@ A held-out novel split (30 post-2024 attacks, no equivalent in training) catches
 - Cohen's d: **0.694** (medium-to-large effect)
 - 95% CIs **do not overlap** — this is a real distribution-shift gap, not noise
 
-Rule-based detectors catch 80% of pre-2024 scam patterns but only 50% of novel post-2024 attacks (matrimonial crypto grooming, deepfake CEO, digital arrest, metaverse real estate, AI chatbot trading). **This is the gap the LoRA-trained Analyzer is designed to close** — target: ≥75% detection on the novel subset.
+On our 34-scenario post-2024 novel split (matrimonial crypto grooming, deepfake CEO, digital arrest, metaverse real estate, AI chatbot trading), the **scripted analyzer catches 50%**. **This is the gap the LoRA-trained Analyzer is designed to close** — target: ≥75% detection on the novel subset.
 
 ### LoRA-trained Analyzer — v1 (reward-hacked) vs v2 (principled retrain)
 
@@ -511,7 +515,13 @@ All 144 scam-side scenarios are real-incident-grounded (RBI / NPCI / I4C / news 
 - I4C — Indian Cybercrime Coordination Centre (cybercrime.gov.in)
 - IIT Kanpur C3i Center (security.cse.iitk.ac.in)
 
+## Beyond UPI fraud — methodological contribution
+
+Chakravyuh is also a worked example of catching reward hacking in GRPO post-training. The asymmetric-improvement signature — detection unchanged, FPR collapses — is a diagnostic any RLHF/RLAIF pipeline can reuse. The reward-decomposition + per-rubric ablation method is portable to any composable-rubric task. We share the bench, the LoRA, the v1 trainer state, and the live red-team tab specifically so practitioners can apply this diagnostic to their own training runs. See [`docs/training_diagnostics.md`](docs/training_diagnostics.md) for the v2 trajectory and the v3 KL-early-stop guard we plan as a result.
+
 ## License
 
-MIT — see `LICENSE`.
+MIT — see `LICENSE`. Bench dataset is CC-BY-4.0; see [`DATASET_CARD.md`](DATASET_CARD.md).
+
+**Citation:** see [`CITATION.cff`](CITATION.cff).
 

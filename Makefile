@@ -15,7 +15,7 @@ SEED   ?= 42
 help:
 	@echo "Chakravyuh make targets:"
 	@echo "  install          Install repo + LLM + eval extras"
-	@echo "  test             Run pytest (275 collected; 273 pass + 2 skip)"
+	@echo "  test             Run pytest (289 collected; 286 pass + 2 skip)"
 	@echo "  smoke-test       In-process env reset+step smoke test (~5s, no GPU)"
 	@echo "  link-check       Check every local README link / asset path resolves"
 	@echo "  link-check-http  HEAD-probe every http(s) README link (allowed-fail; external)"

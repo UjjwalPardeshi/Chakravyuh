@@ -898,6 +898,209 @@ code::before, code::after { content: none !important; }
     animation: none !important;
   }
 }
+
+/* =============== Live red-team tab — reward-profile asymmetry =============== */
+.redteam-empty {
+  padding: 18px;
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px dashed rgba(0, 0, 0, 0.18);
+  border-radius: 10px;
+  color: #555;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.redteam-card {
+  padding: 16px;
+  border-radius: 12px;
+  border-left: 4px solid;
+  background: rgba(255, 255, 255, 0.55);
+  margin-bottom: 12px;
+}
+.redteam-v1 {
+  border-left-color: #d32f2f;
+  background: linear-gradient(180deg, rgba(211, 47, 47, 0.06), rgba(255, 255, 255, 0.6));
+}
+.redteam-v2 {
+  border-left-color: #2e7d32;
+  background: linear-gradient(180deg, rgba(46, 125, 50, 0.06), rgba(255, 255, 255, 0.6));
+}
+.redteam-card-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 10px;
+}
+.redteam-card-title {
+  font-size: 15px;
+  letter-spacing: 0.02em;
+  color: #000;
+}
+.redteam-card-subtitle {
+  font-size: 12px;
+  opacity: 0.7;
+  color: #000;
+}
+.redteam-card-score-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.redteam-score {
+  font-size: 28px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #000;
+}
+.redteam-flag {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.redteam-flag.flagged {
+  background: rgba(211, 47, 47, 0.15);
+  color: #b71c1c;
+  border: 1px solid rgba(211, 47, 47, 0.5);
+}
+.redteam-flag.clean {
+  background: rgba(46, 125, 50, 0.12);
+  color: #1b5e20;
+  border: 1px solid rgba(46, 125, 50, 0.45);
+}
+.redteam-signals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0 8px;
+}
+.redteam-sig {
+  display: inline-block;
+  padding: 2px 8px;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 6px;
+  font-size: 11px;
+  color: #000;
+}
+.redteam-sig-empty { opacity: 0.5; }
+.redteam-explanation {
+  font-size: 13px;
+  color: #333;
+  margin: 6px 0 12px;
+  line-height: 1.5;
+}
+.redteam-breakdown {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.redteam-breakdown th,
+.redteam-breakdown td {
+  padding: 4px 8px;
+  text-align: right;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+.redteam-breakdown thead th {
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #555;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.18);
+}
+.redteam-leaf-name {
+  text-align: left !important;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 11px;
+}
+.redteam-leaf-val,
+.redteam-leaf-weight,
+.redteam-leaf-contrib {
+  font-variant-numeric: tabular-nums;
+}
+.redteam-leaf-na { opacity: 0.3; }
+.redteam-total-label {
+  text-align: right !important;
+  font-size: 11px;
+  text-transform: uppercase;
+  color: #000;
+}
+.redteam-total-val {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #000;
+}
+.redteam-asym {
+  margin-top: 14px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.redteam-asym-warning {
+  background: rgba(211, 47, 47, 0.10);
+  border: 1px solid rgba(211, 47, 47, 0.35);
+  color: #b71c1c;
+}
+.redteam-asym-mild {
+  background: rgba(255, 152, 0, 0.10);
+  border: 1px solid rgba(255, 152, 0, 0.35);
+  color: #6d4c41;
+}
+.redteam-asym-agree {
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  color: #444;
+}
+@media (max-width: 768px) {
+  #redteam-row > * { width: 100% !important; }
+  .redteam-breakdown { font-size: 11px; }
+  .ck-hero-strip { gap: 6px !important; flex-wrap: wrap !important; }
+  .agent-card { font-size: 13px !important; padding: 8px !important; }
+  .panel-heading { font-size: 14px !important; }
+}
+.live-empty {
+  padding: 14px 16px;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 10px;
+  border: 1px dashed rgba(0, 0, 0, 0.18);
+  font-size: 13px;
+  line-height: 1.5;
+  color: #444;
+}
+.live-error {
+  padding: 14px 16px;
+  background: rgba(211, 47, 47, 0.08);
+  border-radius: 10px;
+  border: 1px solid rgba(211, 47, 47, 0.35);
+  font-size: 13px;
+  color: #b71c1c;
+}
+.live-followup {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: rgba(46, 125, 50, 0.08);
+  border-radius: 8px;
+  font-size: 13px;
+  color: #1b5e20;
+}
+.ck-redteam-pointer {
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  border-left: 3px solid #d32f2f;
+  background: rgba(211, 47, 47, 0.05);
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #000;
+}
+.ck-redteam-pointer em {
+  font-style: normal;
+  font-weight: 600;
+  color: #b71c1c;
+}
 """
 
 MODE_AUTO = "Auto-play (full episode)"
@@ -1127,18 +1330,50 @@ def on_reset(state: dict) -> tuple:
     return (new_state, *ui)
 
 
+_LIVE_EMPTY_HINT = (
+    '<div class="live-empty">'
+    "Type any message above and click <strong>Analyze</strong>. Or try one of these:"
+    '<ul style="margin:8px 0 0 18px;padding:0;">'
+    '<li>"Share your OTP urgently — bank security check"</li>'
+    '<li>"Hi, just confirming our meeting tomorrow at 11"</li>'
+    '<li>"You\'ve won ₹5 lakh — click bit.ly/claim"</li>'
+    "</ul></div>"
+)
+
+
 def on_live_analyze(user_text: str) -> str:
     if not user_text.strip():
-        return _render_suspicion_score(0.0, "Enter a message above.")
-    analyzer = ScriptedAnalyzer()
-    obs = Observation(
-        agent_role="analyzer",
-        turn=1,
-        chat_history=[ChatMessage(sender="scammer", turn=1, text=user_text)],
-    )
-    action = analyzer.act(obs)
+        return _LIVE_EMPTY_HINT
+    try:
+        analyzer = ScriptedAnalyzer()
+        obs = Observation(
+            agent_role="analyzer",
+            turn=1,
+            chat_history=[ChatMessage(sender="scammer", turn=1, text=user_text)],
+        )
+        action = analyzer.act(obs)
+    except Exception as exc:  # noqa: BLE001 — UI surface; never crash the page
+        return (
+            '<div class="live-error" role="alert">'
+            "Something glitched while scoring this. Try a different message, or "
+            "report at <a href=\"https://github.com/UjjwalPardeshi/Chakravyuh/issues\">"
+            "the repo issues</a>. (Detail logged server-side.)"
+            f"<details style=\"margin-top:6px;font-size:12px;opacity:.7;\">"
+            f"<summary>technical detail</summary>{type(exc).__name__}: {exc}"
+            "</details></div>"
+        )
     if isinstance(action, AnalyzerScore):
-        return _render_suspicion_score(action.score, action.explanation)
+        score = float(action.score)
+        if score < 0.30 and not action.signals:
+            # Likely benign + nothing suspicious; nudge user toward a scam example.
+            return (
+                _render_suspicion_score(score, action.explanation or "Looks benign.")
+                + '<div class="live-followup">'
+                "✅ This message looks benign. Try one of the scam examples below "
+                "to see the model react."
+                "</div>"
+            )
+        return _render_suspicion_score(score, action.explanation)
     return _render_suspicion_score(0.0, "Analyzer returned no score.")
 
 
@@ -1326,6 +1561,14 @@ def build_app() -> gr.Blocks:
                 # REPLAY TAB
                 # =================================================
                 with gr.Tab("Replay · Curated episodes"):
+                    gr.HTML(
+                        '<div class="ck-redteam-pointer" role="note">'
+                        "5 archived episodes show how the system works. "
+                        "<strong>Want to stress-test it yourself?</strong> "
+                        "Skip to the <em>🔴 Red-team it yourself</em> tab to "
+                        "score any input against both reward profiles."
+                        "</div>"
+                    )
                     with gr.Accordion("How this demo works (30 seconds)", open=False, elem_classes=["ck-howto"]):
                         gr.HTML(
                             '<div class="ck-howto-body">'
@@ -1679,6 +1922,67 @@ def build_app() -> gr.Blocks:
                         _vs_handler,
                         inputs=[vs_picker],
                         outputs=[vs_prompt, vs_v1, vs_v2, vs_asymmetry],
+                    )
+
+                # =================================================
+                # LIVE RED-TEAM TAB — same analyzer, two reward profiles
+                # =================================================
+                with gr.Tab("🔴 Red-team it yourself"):
+                    from server.redteam_handler import render_redteam_view
+
+                    gr.HTML(
+                        '<div class="panel-heading">Same analyzer · Two reward profiles</div>'
+                        '<p style="margin:0 0 14px;font-size:14px;line-height:1.6;'
+                        'color:#000000;max-width:760px;">'
+                        "Type any scam attempt or borderline benign. The rule-based scripted "
+                        "analyzer scores it once. Then we evaluate the same prediction "
+                        "against the v1 reward profile (5 leaves, the reward-hacked one) "
+                        "and the v2 reward profile (8 leaves, the principled retrain). "
+                        "<strong>The difference between the two reward totals is the "
+                        "reward-hacking signature</strong> — that asymmetry is exactly what "
+                        "shaped v1's 36 % FPR and what v2 fixed. Optionally tag your "
+                        "input as benign / scam to surface the diagnostic explicitly."
+                        "</p>"
+                    )
+                    rt_input = gr.Textbox(
+                        placeholder="e.g. 'Your KYC expires today, click bit.ly/verify-kyc'",
+                        label="Your message",
+                        lines=3,
+                        elem_id="redteam-input",
+                    )
+                    rt_truth = gr.Radio(
+                        choices=[
+                            ("(unspecified)", "none"),
+                            ("ground truth: scam", "scam"),
+                            ("ground truth: benign", "benign"),
+                        ],
+                        value="none",
+                        label="Optional ground-truth tag (sharpens the diagnostic)",
+                    )
+                    rt_btn = gr.Button(
+                        "Score with both reward profiles",
+                        variant="primary",
+                        elem_id="redteam-score-btn",
+                    )
+                    with gr.Row(elem_id="redteam-row"):
+                        with gr.Column():
+                            rt_v1 = gr.HTML()
+                        with gr.Column():
+                            rt_v2 = gr.HTML()
+                    rt_badge = gr.HTML()
+
+                    def _rt_handler(message: str, truth: str) -> tuple[str, str, str]:
+                        is_benign = (
+                            True if truth == "benign"
+                            else False if truth == "scam"
+                            else None
+                        )
+                        return render_redteam_view(message, is_benign_truth=is_benign)
+
+                    rt_btn.click(
+                        _rt_handler,
+                        inputs=[rt_input, rt_truth],
+                        outputs=[rt_v1, rt_v2, rt_badge],
                     )
 
                 # =================================================

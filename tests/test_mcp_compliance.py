@@ -83,3 +83,39 @@ def test_no_reserved_mcp_tool_names() -> None:
 def test_reserved_names_are_actually_reserved() -> None:
     """Sanity: the constant matches the guideline text exactly."""
     assert RESERVED_TOOL_NAMES == frozenset({"reset", "step", "state", "close"})
+
+
+@pytest.mark.integration
+def test_mcp_endpoint_responds() -> None:
+    """POST /mcp must respond (200 or 4xx with a JSON body) — not 5xx,
+    not 404. The exact MCP envelope shape is openenv-core's contract;
+    we just verify the endpoint is wired and doesn't crash."""
+    from fastapi.testclient import TestClient
+    from server.app import app
+
+    client = TestClient(app)
+    response = client.post("/mcp", json={
+        "jsonrpc": "2.0", "method": "tools/list", "id": 1
+    })
+    # 200 OK or any 4xx — both are valid for an MCP endpoint that's
+    # registered. 404/5xx would mean the route isn't there.
+    assert response.status_code < 500, (
+        f"/mcp returned 5xx: {response.status_code} {response.text[:200]}"
+    )
+    assert response.status_code != 404, (
+        "/mcp endpoint is missing — openenv-core MCP contract not registered"
+    )
+
+
+@pytest.mark.integration
+def test_mcp_endpoint_rejects_get() -> None:
+    """The /mcp endpoint is POST-only per MCP spec; GET should return 405.
+    Documents the deployed-Space behaviour where curl -X GET /mcp returns 405."""
+    from fastapi.testclient import TestClient
+    from server.app import app
+
+    client = TestClient(app)
+    response = client.get("/mcp")
+    assert response.status_code in (405, 404), (
+        f"/mcp GET should return 405 Method Not Allowed (or 404); got {response.status_code}"
+    )

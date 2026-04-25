@@ -47,14 +47,14 @@ This deck shows what we measured, what we fixed, and what we still need to ship.
 
 > **Indian digital payments lose ₹13 000+ crore/year to UPI fraud · 60 crore users exposed.**
 
-- Rule-based detectors catch ~80 % of pre-2024 scams but only ~50 % of post-2024 patterns
+- Scripted analyzer detection = 50 % on the 34-scenario novel split
   (matrimonial crypto · deepfake CEO · digital arrest · AePS biometric cloning).
 - No public RL environment exists for multi-agent fraud-detection research — so we built one.
 
 **Theme coverage** (per JC):
 
 - **Theme #1 — Multi-Agent Interactions** *(primary)*: 5 agents · asymmetric information · two-tier oversight · partial observability
-- **Theme #4 — Self-Improvement** *(primary)*: novelty-driven curriculum · regulator meta-agent · self-reporting leaderboard
+- **Theme #4 — Self-Improvement** *(secondary, honest framing)*: the v1→v2 reward-hacking diagnosis-and-fix loop is self-improvement of the *training pipeline*; we do not claim recursive skill amplification
 
 Real-incident grounding cited in [README](https://github.com/UjjwalPardeshi/Chakravyuh#real-incidents-chakravyuh-is-built-for) (Hyderabad ₹11.17 lakh, Mumbai ₹1 crore, Pan-India AePS ₹2 400 crore).
 

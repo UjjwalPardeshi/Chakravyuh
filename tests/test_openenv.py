@@ -263,6 +263,70 @@ def test_determinism_same_seed_same_transcript() -> None:
     assert texts1 == texts2
 
 
+@pytest.mark.unit
+def test_observation_round_trips_through_json() -> None:
+    """Observation must survive a JSON serialise / deserialise round-trip
+    so OpenEnv's wire transport is lossless."""
+    env = ChakravyuhOpenEnv()
+    obs = env.reset(seed=42)
+    raw = obs.model_dump_json()
+    rehydrated = ChakravyuhObservation.model_validate_json(raw)
+
+    assert rehydrated.turn == obs.turn
+    assert rehydrated.decision_index == obs.decision_index
+    assert rehydrated.episode_id == obs.episode_id
+    assert rehydrated.scam_category == obs.scam_category
+    assert rehydrated.victim_profile == obs.victim_profile
+    assert len(rehydrated.chat_history) == len(obs.chat_history)
+    assert rehydrated.schema_version == obs.schema_version
+
+
+@pytest.mark.unit
+def test_observation_carries_schema_version() -> None:
+    """Every observation must carry the OpenEnv schema_version so old
+    training runs can detect wire-format mismatch on replay."""
+    from chakravyuh_env.openenv_models import CHAKRAVYUH_SCHEMA_VERSION
+
+    env = ChakravyuhOpenEnv()
+    obs = env.reset(seed=42)
+    assert obs.schema_version == CHAKRAVYUH_SCHEMA_VERSION
+    assert obs.schema_version == "0.2.0"
+
+
+@pytest.mark.unit
+def test_chat_turn_validator_documents_wire_shape() -> None:
+    """The ChatTurn validator should accept any chat_history dict the env
+    actually emits — guards against drift between wire shape and docs."""
+    from chakravyuh_env.openenv_models import ChatTurn
+
+    env = ChakravyuhOpenEnv()
+    obs = env.reset(seed=42)
+    for turn_dict in obs.chat_history:
+        validated = ChatTurn.model_validate(turn_dict)
+        assert validated.sender in {
+            "scammer", "victim", "analyzer", "bank_monitor", "regulator"
+        }
+        assert validated.turn >= 0
+
+
+@pytest.mark.unit
+def test_reward_breakdown_validator_matches_terminal_obs_shape() -> None:
+    """Terminal observations carry a reward_breakdown dict — its shape
+    must match the RewardBreakdown documented schema."""
+    from chakravyuh_env.openenv_models import RewardBreakdown
+
+    env = ChakravyuhOpenEnv()
+    env.reset(seed=42)
+    obs = env.step(_A(score=0.95, signals=["urgency"], explanation="OTP request"))
+    # Walk through to terminal if not yet done.
+    while not obs.done:
+        obs = env.step(_A(score=0.95, signals=["urgency"], explanation="next"))
+    if obs.reward_breakdown is not None:
+        # extra="ignore" lets unknown keys (e.g. composite_unweighted) pass.
+        validated = RewardBreakdown.model_validate(obs.reward_breakdown)
+        assert isinstance(validated.composite, float)
+
+
 # ---------------------------------------------------------------------------
 # Server factory smoke test — ensures create_app wiring doesn't explode.
 # Runs as a pure import/invocation test; no HTTP server is actually bound.

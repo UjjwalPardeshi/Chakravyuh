@@ -21,7 +21,10 @@ WORKDIR /app
 COPY pyproject.toml README.md /app/
 COPY chakravyuh_env /app/chakravyuh_env
 COPY server /app/server
-RUN pip install --upgrade pip && pip install '.[demo]'
+COPY logs /app/logs
+COPY data /app/data
+RUN pip install --upgrade pip && pip install '.[demo]' \
+    && python -c "import gradio; import server.app; print('demo deps OK')"
 
 # ---- runtime stage ----
 

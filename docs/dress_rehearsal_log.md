@@ -170,3 +170,80 @@ done
 .venv/bin/python eval/error_analysis.py
 ```
 
+---
+
+# Pre-submit dress rehearsal (round 3 — audit-v2 no-GPU batch)
+
+Run on **2026-04-26** after the audit-v2-no-gpu batch (`/multi-execute` of `.claude/plan/audit-v2-no-gpu-execution.md`, batches 0-7). All in-process gates green. Container probe green. **`/demo/` and `/eval/*` 404 in production is fixed by the Dockerfile patch in Batch 0; awaiting user push to GitHub + HF orphan redeploy (Phase H).**
+
+## Verification matrix — round 3
+
+| Gate | Command | Result |
+|---|---|---|
+| pytest full suite | `.venv/bin/python -m pytest tests/ -q` | **287 passed · 2 skipped** (289 collected; +13 vs round-2: `test_redteam_tab` (8) + `test_openenv` round-trip / determinism / schema_version / chat_turn_validator / reward_breakdown_validator (5) + `test_mcp_compliance` integration (2). Net 287 because `test_demo` count drift was reconciled in README invariant.) |
+| `openenv validate .` | `.venv/bin/openenv validate .` | **`[OK] : Ready for multi-mode deployment`** |
+| Env smoke test | `make smoke-test PYTHON=.venv/bin/python` | **OK · turns=2 · done=True · reward=1.81** |
+| README local link integrity | `make link-check` | **All local README links resolve** |
+| README http link integrity | `make link-check-http` | **17 URLs probed · 1 failure** — `/demo/` 404 on HF (existing production state; Batch 0 Dockerfile fix addresses it; awaiting user push) |
+| Tutorial notebook smoke-run | manual cell-by-cell exec | **All 4 code cells execute cleanly · 100-episode rollout completes** |
+| Local `uvicorn server.app:app` — all routes | curl loop | All 10 endpoints + `POST /diagnose` return 200 |
+| **Docker build + container probe** | `docker build -t chakravyuh-test . && docker run -p 8775:8000` | **`/health`, `/schema`, `/metadata`, `/openapi.json`, `/demo/`, `/demo/preview`, `/eval`, `/eval/redteam`, `/eval/known-novel`, `/leaderboard` → all 200 · `POST /diagnose` → 200 · `/demo/` contains `🔴 Red-team it yourself` tab** |
+
+## What changed in round 3 (Batches 0-7 of `audit-v2-no-gpu-execution.md`)
+
+**Batch 0 — UNBLOCK PRODUCTION**
+- `Dockerfile:21-25` — added `COPY logs /app/logs` + `COPY data /app/data` + fail-fast `python -c "import gradio; import server.app"` step.
+- `.dockerignore` — replaced wholesale `logs/`, `data/chakravyuh-bench-v0/`, `eval/`, `tests/`, `docs/` exclusions with surgical `logs/wandb/`, `logs/*.log` (the dirs we *actually* want excluded).
+- `server/app.py:339-348` — replaced bare `except Exception:` with explicit `(ImportError, ModuleNotFoundError)` first, then a fallback `except Exception:` that logs the full traceback. Demo-mount failures now surface in container logs instead of silently 404-ing.
+- **Verified:** Docker container shows `/demo/` and `/eval/*` return 200.
+
+**Batch 1 — RIGOR FIXES**
+- `README.md:33,368`, `docs/LIVE_PITCH.md:16`, `docs/blog_post.md:13` — replaced unsourced "80% pre-2024 / 50% post-2024" with measured "scripted analyzer = 50 % on the 34-scenario novel split".
+- `docs/blog_post.md:115` — replaced unverified Wilson CI with percentile-bootstrap reference.
+- `docs/blog_post.md:124` — replaced unverified κ=0.277 with raw confusion-matrix reference (`logs/eval_v2.json`).
+- `eval/mode_c_real_cases.py:80-91` — added load_dataset docstring noting the n=174 vs n=175 discrepancy.
+- `docs/training_diagnostics.md` (new) — 5-checkpoint trajectory table with reproducer; honest reading of the late-stage KL/reward_std plateau; v3 KL-early-stop guard.
+- `docs/limitations.md` — appended threshold-sweep degeneracy + n=174-vs-175 + GRPO-trajectory paragraphs.
+- `README.md:21`, `docs/chakravyuh_slides.md:57`, `docs/blog_post.md:134` — Theme #4 demoted from "primary" to "secondary, honest framing"; recursive-amplification claim removed.
+
+**Batch 2 — OPENENV CONTRACT TIGHTENING**
+- `chakravyuh_env/openenv_models.py` — added `ChatTurn`, `TransactionMeta`, `EpisodeOutcome`, `RewardBreakdown` Pydantic submodels (importable validators) and `CHAKRAVYUH_SCHEMA_VERSION = "0.2.0"`. Existing wire signatures unchanged (kept `dict[str, Any]`) to avoid breaking call sites pre-deadline; submodels document and runtime-validate the shape.
+- `ChakravyuhObservation` — added `schema_version: str` field.
+- `tests/test_openenv.py` (+5) — round-trip via JSON · schema_version assert · ChatTurn validator over reset() · RewardBreakdown validator over terminal step.
+- `tests/test_mcp_compliance.py` (+2) — POST /mcp returns < 500 · GET /mcp returns 405/404.
+
+**Batch 3 — WOW MOMENT (live red-team tab)**
+- `server/redteam_handler.py` (new, ~200 LOC) — `render_redteam_view(message, is_benign_truth=...)` returns `(v1_card_html, v2_card_html, asymmetry_badge_html)`. Same scripted analyzer scoring; two reward profiles (`AnalyzerRubric` + `DEFAULT_WEIGHTS` vs `AnalyzerRubricV2` + `V2_WEIGHTS`). The asymmetry badge classifies inputs into `redteam-asym-warning` (false-positive or missed-scam reward-hacking signature), `redteam-asym-mild`, `redteam-asym-agree`.
+- `server/demo_ui.py` — added `🔴 Red-team it yourself` tab between v1↔v2 toggle and Leaderboard; ground-truth radio (none / scam / benign); side-by-side cards with per-leaf rubric breakdown table; full CSS + mobile-responsive `@media (max-width: 768px)` rules.
+- `tests/test_redteam_tab.py` (new, 8 tests).
+
+**Batch 4 — DEMO POLISH**
+- `server/demo_ui.py` — Live Q&A empty/error states (`live-empty`, `live-error`, `live-followup` CSS); benign-detection nudge; Replay tab banner pointing at the new red-team tab; mobile breakpoints for hero strip + agent cards + panel headings.
+
+**Batch 5 — COLD-START MITIGATIONS**
+- `.github/workflows/keepwarm.yml` (new) — every 12 min, cURLs `/`, `/health`, `/demo/`, `/eval`. Treats 2xx/3xx/405 as healthy. Best-effort soft-fail.
+- `server/app.py` — new `GET /demo/preview` route serving instant static HTML with the SHA-pinned per-difficulty chart, v1/v2 metric cards, and a JS poll that auto-redirects to `/demo/` once Gradio boots.
+
+**Batch 6 — NARRATIVE + ARTIFACTS**
+- `README.md` — failure-first hero rewrite ("We trained an LLM... and got 100 % detection. We celebrated for four minutes. Then we noticed: 36 % FPR.").
+- `README.md` — methodological-contribution paragraph ("Beyond UPI fraud — Chakravyuh is also a worked example of catching reward hacking in GRPO post-training...") + license/citation footer.
+- `docs/architecture.md` (new) + `docs/architecture.mmd` (new) — GitHub-rendered Mermaid flowchart with green=trained / orange=scripted / blue=reward color coding; reading order for the codebase.
+- `notebooks/env_exploration.ipynb` (new) — 4-cell tutorial (reset, score, step, 100-episode rollout) — runs on CPU, no GPU/LoRA/Colab needed. Verified end-to-end.
+- `docs/LIVE_PITCH.md:84-95` — replaced exact-match expected outputs with tolerance bands ([0.85, 1.00] score band; `at least 2 of 3` signals; explanation contains keyword).
+- `docs/fallbacks/FALLBACK_A_per_difficulty_chart.md`, `FALLBACK_B_v1_v2_toggle.md` (new) — pre-staged 1-page fallbacks with one-sentence scripts.
+
+**Batch 7 — this dress rehearsal.**
+
+## What remains (Phase H — user-action only)
+
+| Item | Owner | Effort |
+|---|---|---|
+| Push to GitHub `main` | User | 1 min |
+| Orphan-deploy to HF Space (`hf-deploy` branch pattern from round 2) | User | 5 min |
+| Verify all 12 endpoints return 200 in production after redeploy | User | 5 min |
+| Render slide PDF: `npx -y @marp-team/marp-cli docs/chakravyuh_slides.md -o docs/chakravyuh_slides.pdf` | User | 5 min |
+| Record 90-second demo video (script in AUDIT_V2.md §8.5) | User | 4–6h |
+| Publish blog post on HF Hub Posts + Medium | User | 60 min |
+| Live pitch rehearsal (3 min, 2 takes) | User | 60 min |
+| Pre-stage FALLBACK_A and FALLBACK_B on phone for judging | User | 10 min |
+

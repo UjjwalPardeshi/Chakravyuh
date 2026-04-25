@@ -10,7 +10,7 @@ tags: [openenv, peft, lora, grpo, trl, india, fraud, multi-agent]
 
 > A Meta PyTorch OpenEnv Hackathon 2026 (Bangalore) submission. Repo: <https://github.com/UjjwalPardeshi/Chakravyuh>. Adapter: [`ujjwalpardeshi/chakravyuh-analyzer-lora-v2`](https://huggingface.co/ujjwalpardeshi/chakravyuh-analyzer-lora-v2). Bench: [`ujjwalpardeshi/chakravyuh-bench-v0`](https://huggingface.co/datasets/ujjwalpardeshi/chakravyuh-bench-v0). Live env: [`ujjwalpardeshi/chakravyuh`](https://huggingface.co/spaces/ujjwalpardeshi/chakravyuh).
 
-India loses **₹13,000+ crore per year** to UPI fraud. 60 crore Indians use UPI every month. Rule-based detectors catch ~80% of pre-2024 attack patterns but only ~50% of post-2024 ones — matrimonial-crypto grooming, deepfake CEO IPO pitches, "digital arrest" calls, Aadhaar reverification scams. **No public RL environment exists for multi-agent fraud-detection research.** So we built one.
+India loses **₹13,000+ crore per year** to UPI fraud. 60 crore Indians use UPI every month. Rule-based detectors degrade meaningfully on post-2024 attack patterns — we measured **scripted analyzer detection = 50% on our 34-scenario novel split** (matrimonial-crypto grooming, deepfake CEO IPO pitches, "digital arrest" calls, Aadhaar reverification scams; from `data/chakravyuh-bench-v0/scenarios.jsonl`). **No public RL environment exists for multi-agent fraud-detection research.** So we built one.
 
 This post walks through:
 
@@ -112,7 +112,7 @@ We refuse to publish numbers without bands. From [`logs/bootstrap_v2.json`](http
 
 Three honest things to take away:
 
-- **The 5× FPR reduction is statistically real.** v1's CI ([1.5 %, 70.5 % Wilson]) does not overlap v2's CI on FPR. The direction is robust.
+- **The 5× FPR reduction is statistically real.** v1's percentile-bootstrap FPR band sits well above v2's `[0%, 16.7%]` band (`logs/bootstrap_v2.json`); the directional gap is robust to bootstrap resampling.
 - **The exact 6.7 % is not a tight estimate.** n = 30 benign. A single additional misclassified benign moves the point estimate from 6.7 % to 10 %. We say so in the bench card and in `docs/POSTMORTEM_FUTURE.md`.
 - **The bench is a proxy.** 174 hand-curated scenarios do not span real-world fraud diversity. Production performance will be lower — these are comparative numbers, not absolute.
 
@@ -121,7 +121,7 @@ Three honest things to take away:
 **Proud of:**
 
 - The v1 → v2 reward-hacking incident is a *measured*, *reproducible* artifact. The fix is documented in [`docs/DESIGN_DECISIONS.md`](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/docs/DESIGN_DECISIONS.md) §8 and the diagnostic plot is in [`plots/chakravyuh_plots/reward_hacking_diagnostic.png`](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/plots/chakravyuh_plots/reward_hacking_diagnostic.png). This is exactly the artifact the hackathon guide asks for.
-- A **public bench dataset** ([`chakravyuh-bench-v0`](https://huggingface.co/datasets/ujjwalpardeshi/chakravyuh-bench-v0)) sourced from RBI / NPCI / I4C / news — 175 scenarios, hand-labelled, with a published rule-vs-expert κ = 0.277 (fair) so you can verify the bench isn't just a keyword game.
+- A **public bench dataset** ([`chakravyuh-bench-v0`](https://huggingface.co/datasets/ujjwalpardeshi/chakravyuh-bench-v0)) sourced from RBI / NPCI / I4C / news — 175 scenarios, hand-labelled, with a non-trivial rule-vs-truth gap (the scripted analyzer scores below 70% F1; raw confusion-matrix counts are in `logs/eval_v2.json`) so you can verify the bench isn't just a keyword game.
 - A **soft-leakage filter** ([`training/grpo_analyzer.py:_filter_soft_leakage`](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/training/grpo_analyzer.py)) that strips training examples too similar to bench scenarios — *before* training. Open code, checkable claim.
 - An **on-device deployment story** that's structural, not branding. The Analyzer never sees transaction metadata; the Bank Monitor never sees chat. This isn't a tagline — it's the architecture, and it's why the two-tier oversight cannot be hacked from one side.
 
@@ -131,7 +131,7 @@ Three honest things to take away:
 - **Frontier baseline.** GPT-4o / Claude / Gemini / Llama-3.3-70B comparison. Script wired up, not run — API budget deferred.
 - **Per-language eval.** Multi-language detection on Hindi, Tamil, Telugu, Bengali, Marathi is a capability claim until measured per-language.
 - **Calibration analysis.** ECE / Brier / reliability diagrams.
-- **Adversarial Scammer Phase-2 retrain.** The headline self-improvement loop the env was designed for. Compute-gated, planned onsite during the hackathon.
+- **Adversarial Scammer Phase-2 retrain.** The architectural step that would convert the env from "1 trained, 4 scripted" to a co-evolutionary 2-trained system. Compute-gated, planned onsite during the hackathon.
 
 Full v3 roadmap with priority ordering at [`docs/POSTMORTEM_FUTURE.md`](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/docs/POSTMORTEM_FUTURE.md).
 

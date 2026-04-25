@@ -13,7 +13,7 @@ Each beat below has the spoken script (read aloud), the slide visible, and the o
 **Slide 1:** Title — "Chakravyuh: A Multi-Agent RL Environment for Indian UPI Fraud Detection." Sub-line: Meta PyTorch OpenEnv Hackathon 2026, Bangalore.
 
 **Spoken (90 words):**
-> India loses thirteen thousand crore rupees a year to UPI fraud. Sixty crore users are exposed. Rule-based detectors catch 80 % of pre-2024 scams, but only 50 % of post-2024 ones — matrimonial crypto, deepfake CEO, digital arrest. There's no public RL environment for multi-agent fraud-detection research, so we built one. Five agents. Five-rubric reward. We trained an Analyzer on Qwen 2.5-7B with GRPO. We caught a reward-hacking failure in v1 and measurably fixed it in v2. The whole thing fits on a phone.
+> India loses thirteen thousand crore rupees a year to UPI fraud. Sixty crore users are exposed. Rule-based detectors degrade on post-2024 attacks — we measured 50 percent detection on our 34-scenario novel split: matrimonial crypto, deepfake CEO, digital arrest. There's no public RL environment for multi-agent fraud-detection research, so we built one. Five agents. Five-rubric reward. We trained an Analyzer on Qwen 2.5-7B with GRPO. We caught a reward-hacking failure in v1 and measurably fixed it in v2. The whole thing fits on a phone.
 
 **Action:** No clicker move. Hands at sides. Look at one judge per sentence.
 
@@ -81,20 +81,27 @@ Below the table, in small text: *Bootstrap 95 % CI from `logs/bootstrap_v2.json`
 **Scam input:**
 > Urgent! Your bank account will be frozen. Share OTP to verify identity.
 
-**Expected output (from v2 LoRA):**
-```json
-{ "score": 0.95, "signals": ["urgency", "info_request", "impersonation"], "explanation": "Asks for OTP with urgency pressure from a self-claimed bank agent; matches OTP-theft scam pattern." }
-```
+**Expected output (tolerance band — robust to seed variance):**
+
+- `score` in **[0.85, 1.00]** (any value in this band lands the point)
+- at least **2 of {urgency, info_request, impersonation}** in `signals`
+- `explanation` mentions at least one of: `OTP`, `share`, `urgent`, `bank`
+
+If anything falls outside this band: pivot — *"the model's confidence varied this run; here's why"* — and pull up `FALLBACK_A`.
 
 **Benign input:**
 > Your HDFC EMI of Rs. 2,400 is due tomorrow. Maintain sufficient balance to avoid charges.
 
-**Expected output:**
-```json
-{ "score": 0.08, "signals": [], "explanation": "Routine EMI reminder from a known bank with specific amount and due date; no urgency pressure or info request." }
-```
+**Expected output (tolerance band):**
 
-**Fallback if demo crashes:** Switch to the screenshot at `plots/chakravyuh_plots/v2_per_difficulty_check.png`. Say: "Live demo is timing out — here's the per-difficulty result on 174 scenarios." Carry on with closing beat.
+- `score` in **[0.00, 0.30]** (clearly below 0.5 flag threshold)
+- 0 or 1 signals (occasional `unknown_sender` is acceptable noise)
+- `explanation` does NOT mention `urgent`, `OTP`, or `share`
+
+**Fallback if anything goes wrong:**
+
+- **`FALLBACK_A`** ([`docs/fallbacks/FALLBACK_A_per_difficulty_chart.md`](fallbacks/FALLBACK_A_per_difficulty_chart.md)) — the per-difficulty bar chart. One sentence: *"Live demo's timing out — here's the actual measured result on 174 scenarios. Scripted catches 50 % of novel post-2024 scams; v2 catches 97 %. That's the gap closure."* Carry on with closing beat.
+- **`FALLBACK_B`** ([`docs/fallbacks/FALLBACK_B_v1_v2_toggle.md`](fallbacks/FALLBACK_B_v1_v2_toggle.md)) — the v1↔v2 archived toggle. One sentence: *"Here's the reward-hacking story in one click. Same scenario, two reward profiles, asymmetric outcome — that's the v1→v2 fix."*
 
 ---
 
