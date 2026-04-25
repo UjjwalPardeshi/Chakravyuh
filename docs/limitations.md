@@ -18,6 +18,49 @@ Last verified: 2026-04-25.
 | Time-to-detection (scripted env, n = 100 episodes) | [`logs/time_to_detection.json`](../logs/time_to_detection.json) | ✅ shipped |
 | Red-team robustness against rule-based Analyzer | [`logs/analyzer_robustness.json`](../logs/analyzer_robustness.json) | ✅ shipped |
 | Scripted-baseline error analysis (per-scenario FPs + missed scams) | [`docs/v2_error_analysis.md`](v2_error_analysis.md) | ✅ shipped |
+| **Semantic leakage audit (training corpus ↔ bench-v0)** | [`logs/semantic_leakage_audit.json`](../logs/semantic_leakage_audit.json) + [`plots/chakravyuh_plots/semantic_leakage_histogram.png`](../plots/chakravyuh_plots/semantic_leakage_histogram.png) | ✅ shipped |
+
+---
+
+## ⚠️ Semantic leakage between training and bench (critical disclosure)
+
+**Method.** MiniLM-L6 cosine similarity between every bench scenario and its nearest neighbor in the 1,177-record training corpus (canonical + augmented + paraphrase + regional + multi-turn + scam_novel + benign templates). Reproducible with [`eval/semantic_leakage_audit.py`](../eval/semantic_leakage_audit.py).
+
+**Findings (n = 174 bench scenarios):**
+
+| Statistic | Value |
+|---|---|
+| Mean cosine similarity to nearest training text | **0.80** |
+| Median cosine similarity | 0.82 |
+| % bench items with cosine > 0.95 (near-duplicates after substring filter) | **18.4 %** |
+| % bench items with cosine > 0.85 (highly similar) | **44.8 %** |
+| % bench items with cosine > 0.70 (recognisably similar) | **71.3 %** |
+| % bench items with cosine < 0.50 (genuinely OOD) | 1.7 % |
+
+**Interpretation.** Our existing `_filter_soft_leakage` removes substring duplicates only. It does NOT remove paraphrases, translations, or semantically-equivalent variants. The bench-v0 was authored from the same template families as the training corpus, so the LoRA has effectively seen paraphrased versions of most bench scenarios. **The 100 % detection on easy / medium / hard difficulty buckets is partially memorization-driven.**
+
+**The honest claim.**
+
+1. The **leakage-clean subset** of bench (cosine < 0.70): 38 scams + 12 benigns = 50 scenarios. Re-evaluating v2 specifically on this subset is v3 work (requires GPU re-inference; flagged below).
+2. The **novel post-2024 split** (n = 34): mean cosine to training = 0.79, the same as overall. v2 detects 33/34 = **97.1 %** here. This is in-distribution per the leakage audit, so even the novel-split number is partly memorization. Real OOD performance is likely lower.
+3. The **scripted baseline gap** (80 % known → 50 % novel) demonstrates pre-training distribution-shift. v2's lift is real but smaller than the headline implies.
+
+**What this does NOT invalidate.**
+
+- The **v1 → v2 fix narrative** (FPR 36 % → 6.7 %, 5×) — both v1 and v2 evaluated on the same bench, so the relative improvement is unaffected by leakage. This is a valid demonstration of principled reward-engineering.
+- The **scripted baseline collapse on novel** (50 %) — measures rule fragility against new attack vectors, independent of LoRA training distribution.
+- The **environment design** itself (5-agent, composable rubric, two-tier oversight). Leakage is a bench-construction issue, not an environment issue.
+
+**v3 plan to fix.**
+
+1. Build a **held-out template-family split**: select template *families* (e.g., entire OTP-theft-v3 family) and exclude all variants from training, evaluate only on those families.
+2. **External held-out benchmark**: source 50 real WhatsApp / SMS scam screenshots from public reports, hand-label, evaluate v2 with no chance of overlap.
+3. **Multi-seed retrain** on the cleaner split to bound the seed variance.
+4. **Per-scenario v2 logits** logged during eval, sliced by leakage-clean subset for honest reporting.
+
+**One-line answer for Q&A.** *"Yes, we audited semantic leakage with MiniLM-L6 cosine similarity. 44.8 % of bench has cosine > 0.85 to training. The 100 % on easy/medium/hard is partly memorization; the v1→v2 FPR fix and the scripted-baseline novel collapse are unaffected. v3 builds a held-out template-family split."*
+
+---
 
 ## What is **not** measured (do not cite as a number)
 

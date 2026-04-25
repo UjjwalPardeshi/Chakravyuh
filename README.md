@@ -257,10 +257,10 @@ print(obs.reward, obs.reward_breakdown)
 
 ```bash
 pytest tests/ -v
-# 289 collected · 286 passed · 2 skipped (LLM-judge tests skip without GROQ_API_KEY)
+# 300 collected · 298 passed · 2 skipped (LLM-judge tests skip without GROQ_API_KEY)
 # Coverage: openenv contract, rubrics, scripted env, demo, explanation judge,
 # GRPO reward, MCP compliance, mode-C bench, negotiation, leaderboard, training data,
-# benign augmentation, known/novel split, red-team robustness.
+# benign augmentation, known/novel split, red-team robustness, input sanitizer.
 # Tests require '.[llm,eval]' extras:
 #   pip install -e '.[llm,eval]'
 ```
@@ -404,10 +404,11 @@ v1 hit detection=100% but FPR=36%. That combination — *everything* gets flagge
 
 #### Limitations — be honest about what the bench can and can't tell you
 
-1. **Small benign sample (n=31).** FPR=6.7% has a wide Wilson 95% CI of **[1.8%, 20.7%]**. A single additional benign misclassification would move the point estimate from 6.7% to 10.0%. We stand behind the "~5× FPR reduction vs v1" claim (statistically real) but not the specific "6.7%" number as a precise estimate.
-2. **Bench is a proxy.** 175 curated scenarios do not span real-world fraud diversity. Production performance will be lower.
-3. **1 epoch over 619 training examples.** The trainer hit the dataset natural endpoint at step 619 (not 700). More epochs + larger training corpus would sharpen the signal.
-4. **Per-scenario false-positive audit pending.** We have not yet manually inspected *which* 2 benigns were misclassified. Until that audit runs, we cannot rule out a specific templated blind spot.
+1. **Semantic leakage between training and bench (we audited this ourselves).** Our `_filter_soft_leakage` removes substring duplicates only. We re-audited with a MiniLM-L6 cosine-similarity nearest-neighbor scan: **mean cosine = 0.80, 44.8 % of bench has cosine > 0.85, 18.4 % > 0.95** ([`logs/semantic_leakage_audit.json`](logs/semantic_leakage_audit.json), [`plots/chakravyuh_plots/semantic_leakage_histogram.png`](plots/chakravyuh_plots/semantic_leakage_histogram.png)). Implication: the 100 % detection on easy / medium / hard is partially memorization. The v1→v2 FPR fix and the scripted-baseline novel collapse are unaffected (relative comparisons within the same bench). Full disclosure and v3 plan: [`docs/limitations.md`](docs/limitations.md). Reproduce: `python eval/semantic_leakage_audit.py`.
+2. **Small benign sample (n=31).** FPR=6.7% has a wide Wilson 95% CI of **[1.8%, 20.7%]**. A single additional benign misclassification would move the point estimate from 6.7% to 10.0%. We stand behind the "~5× FPR reduction vs v1" claim (statistically real) but not the specific "6.7%" number as a precise estimate.
+3. **Bench is a proxy.** 175 curated scenarios do not span real-world fraud diversity. Production performance will be lower.
+4. **1 epoch over 619 training examples.** The trainer hit the dataset natural endpoint at step 619 (not 700). More epochs + larger training corpus would sharpen the signal.
+5. **Per-scenario false-positive audit pending.** We have not yet manually inspected *which* 2 benigns were misclassified. Until that audit runs, we cannot rule out a specific templated blind spot.
 
 #### What we plan next (v3 — rigorous validation)
 
