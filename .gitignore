@@ -78,3 +78,9 @@ Thumbs.db
 HACKATHON_AUDIT.md
 HACKATHON_AUDIT_DETAILED.md
 PROJECT_JOURNEY.md
+
+# Plot artifacts (hosted on GitHub raw, not in repo — HF Space rejects binaries)
+plots/*.png
+plots/*.zip
+plots/**/*.png
+plots/**/*.zip

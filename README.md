@@ -18,7 +18,7 @@ short_description: Multi-agent RL env for Indian UPI fraud detection
 
 A multi-agent RL environment for Indian UPI fraud detection — built for the **Meta PyTorch OpenEnv Hackathon 2026 (Bangalore)**.
 
-![Per-difficulty detection: scripted vs Chakravyuh v2](plots/chakravyuh_plots/v2_per_difficulty_check.png)
+![Per-difficulty detection: scripted vs Chakravyuh v2](https://raw.githubusercontent.com/UjjwalPardeshi/Chakravyuh/main/plots/chakravyuh_plots/v2_per_difficulty_check.png)
 
 > *Per-difficulty detection on the 174-scenario bench — scripted rules vs the Chakravyuh v2 LoRA. The scripted baseline collapses on `hard` and `novel` post-2024 attacks; v2 closes the gap to **100%** on hard and **97%** on novel. Backing artifact: [`logs/eval_v2.json`](logs/eval_v2.json).*
 
@@ -390,7 +390,7 @@ v2 was trained with three anti-collapse reward changes: FP penalty tightened fro
 | **Hard** | **43%** | **100%** | **+57 pp** |
 | **Novel** | **50%** | **97%** | **+47 pp** |
 
-The largest lifts appear exactly where the scripted rule-based baseline fails most — hard and novel scenarios. That shape is the signature of genuine generalization, not pattern matching. The full per-difficulty chart will be published at [`plots/chakravyuh_plots/v2_per_difficulty_check.png`](plots/chakravyuh_plots/v2_per_difficulty_check.png) (synced from the v2 training run); for now, see [`plots/chakravyuh_plots/temporal_gap_closure.png`](plots/chakravyuh_plots/temporal_gap_closure.png) for the analogous scripted-baseline gap.
+The largest lifts appear exactly where the scripted rule-based baseline fails most — hard and novel scenarios. That shape is the signature of genuine generalization, not pattern matching. The full per-difficulty chart will be published at [`plots/chakravyuh_plots/v2_per_difficulty_check.png`](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/plots/chakravyuh_plots/v2_per_difficulty_check.png) (synced from the v2 training run); for now, see [`plots/chakravyuh_plots/temporal_gap_closure.png`](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/plots/chakravyuh_plots/temporal_gap_closure.png) for the analogous scripted-baseline gap.
 
 #### Why v1 was reward-hacked (and how we diagnosed it)
 
