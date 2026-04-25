@@ -7,7 +7,7 @@ sdk: docker
 app_port: 8000
 pinned: true
 license: mit
-short_description: Multi-agent OpenEnv environment for Indian UPI fraud detection
+short_description: Multi-agent RL env for Indian UPI fraud detection
 ---
 
 # Chakravyuh
