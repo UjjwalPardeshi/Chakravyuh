@@ -239,7 +239,7 @@ _LANDING_HTML = """<!doctype html>
   fixes hits <strong>99.3 % detection</strong> / <strong>6.7 % FPR</strong>.</p>
 
   <div class="cta-row">
-    <a class="cta primary" href="/demo">Open the interactive demo →</a>
+    <a class="cta primary" href="/demo/">Open the interactive demo →</a>
     <a class="cta secondary" href="/docs">API docs (Swagger)</a>
     <a class="cta secondary" href="/leaderboard">Leaderboard</a>
   </div>
@@ -255,8 +255,8 @@ _LANDING_HTML = """<!doctype html>
 
   <h2>Endpoints</h2>
   <div class="grid">
-    <a class="endpoint" href="/demo">
-      <code>/demo</code>
+    <a class="endpoint" href="/demo/">
+      <code>/demo/</code>
       <span>Interactive Gradio UI — replay 5 curated episodes or score your own message.</span>
     </a>
     <a class="endpoint" href="/health">
