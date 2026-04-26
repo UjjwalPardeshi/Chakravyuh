@@ -6,6 +6,8 @@ authors:
   - family-names: Pardeshi
     given-names: Ujjwal
     email: ujjwal.pardeshi@riamona.com
+  - family-names: Kadam
+    given-names: Omkar
 date-released: 2026-04-26
 url: "https://github.com/UjjwalPardeshi/Chakravyuh"
 repository-code: "https://github.com/UjjwalPardeshi/Chakravyuh"
@@ -39,5 +41,7 @@ preferred-citation:
   authors:
     - family-names: Pardeshi
       given-names: Ujjwal
+    - family-names: Kadam
+      given-names: Omkar
   year: 2026
   url: "https://github.com/UjjwalPardeshi/Chakravyuh"

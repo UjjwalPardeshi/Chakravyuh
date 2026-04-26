@@ -173,7 +173,7 @@ Expected output (JSON):
 - **Training corpus:** 619 examples (456 scam + 204 benign templates, soft-leakage filtered against the test set; see `training/grpo_analyzer.py:_filter_soft_leakage`)
 - **Algorithm:** GRPO via TRL
 - **Steps:** 619 (1 full epoch over the corpus)
-- **Reward function:** Composable 8-rubric system (detection, FP penalty, missed-scam penalty, calibration, explanation, signal-accuracy, format, length) — see [`docs/reward_design.md`](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/docs/reward_design.md)
+- **Reward function:** Composable 8-rubric system (detection, FP penalty, missed-scam penalty, calibration, explanation, signal-accuracy, format, length) — see the [Composable Rubric System](https://github.com/UjjwalPardeshi/Chakravyuh#composable-rubric-system) section in README
 - **Hardware:** Single A100-80GB (Colab Pro+)
 
 `trainer_state.json` (full training trajectory) is at [logs/v2_trainer_state.json](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/logs/v2_trainer_state.json) in the source repo.
@@ -186,16 +186,16 @@ Reproduce with `python eval/plot_training_curves.py`.
 
 ## Limitations
 
-1. **Semantic leakage between training and bench (we audited this ourselves).** A MiniLM-L6 cosine-similarity audit ([logs/semantic_leakage_audit.json](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/logs/semantic_leakage_audit.json)) shows mean cosine 0.80 between bench scenarios and the nearest training text, with **44.8 % of bench at cosine > 0.85** (highly similar) and 18.4 % at cosine > 0.95 (near-duplicates). Implication: the 100 % detection on easy / medium / hard difficulty buckets is partly memorization. The v1 → v2 relative FPR fix is unaffected by leakage (relative comparison on the same bench). v3 closes the absolute generalization gap with a held-out template-family retrain — see [docs/limitations.md](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/docs/limitations.md).
+1. **Semantic leakage between training and bench (we audited this ourselves).** A MiniLM-L6 cosine-similarity audit ([logs/semantic_leakage_audit.json](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/logs/semantic_leakage_audit.json)) shows mean cosine 0.80 between bench scenarios and the nearest training text, with **44.8 % of bench at cosine > 0.85** (highly similar) and 18.4 % at cosine > 0.95 (near-duplicates). Implication: the 100 % detection on easy / medium / hard difficulty buckets is partly memorization. The v1 → v2 relative FPR fix is unaffected by leakage (relative comparison on the same bench). v3 closes the absolute generalization gap with a held-out template-family retrain — see the [Honest Limitations](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/Blog.md#honest-limitations) section in Blog.md.
 2. **Small benign sample (n=30 evaluated, 1 of 31 in bench skipped due to empty text).** Wilson 95 % CI on FPR is approximately [1.9 %, 21.3 %]; bootstrap 95 % CI from `logs/bootstrap_v2.json` is [1.8 %, 20.7 %]. We stand behind the "5× FPR reduction vs v1" claim (statistically real, p ≈ 0.008) but not the precise "6.7 %" figure as a tight point estimate.
 3. **Single-seed training.** Multi-seed retrains are deferred to v3 and run on the cleaner template-family-held-out split.
 4. **Bench is a proxy.** 175 curated scenarios do not span real-world Indian fraud diversity. Production performance will be lower.
 5. **One epoch over 619 templates.** More data + more epochs are deferred to v3.
 6. **Language coverage is English-dominant, not 7-language production-grade.** Bench v0 distribution is en=161, hi=9, and *one sample each* of ta/te/kn/bn/mr. The HF Hub `language:` field above lists all seven (Hub convention for tag-discoverability), but the bench has placeholder coverage only for the five non-English-non-Hindi languages. Per-language detection eval is v3 work.
-7. **KL trajectory plateau.** v2's GRPO trajectory plateaued KL at 0.25–0.45 with `clip_ratio = 0` for ~600 steps. Honest read in [docs/training_diagnostics.md](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/docs/training_diagnostics.md). v3 includes a KL-early-stop guard.
+7. **KL trajectory plateau.** v2's GRPO trajectory plateaued KL at 0.25–0.45 with `clip_ratio = 0` for ~600 steps. Honest read in the [Training Curves](https://github.com/UjjwalPardeshi/Chakravyuh#training-curves) section of the README. v3 includes a KL-early-stop guard.
 8. **Threshold-sweep degeneracy.** 9 of 13 thresholds in the 0.30–0.85 sweep yield identical detection / FPR — v2 outputs near-binary scores. v3 work includes temperature-scaled logits + reliability diagrams (B.6 in WIN_PLAN).
 
-See [docs/RESPONSIBLE_USE.md](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/docs/RESPONSIBLE_USE.md) for intended use and dual-use considerations. See the **gated** companion adapter [`ujjwalpardeshi/chakravyuh-scammer-lora-phase1`](https://huggingface.co/ujjwalpardeshi/chakravyuh-scammer-lora-phase1) for the adversarial Scammer trained against the rule-based defense (B.2 Phase 1: 93.75 % best-of-8 / 100 % held-out novel bypass on n=64; **32.8 % vs this Analyzer LoRA — a 60 pp gap that quantifies co-evolution**) — the natural adversarial test case for *this* defender adapter.
+The Scammer adapter is gated behind HF Hub access controls; intended use and dual-use considerations are documented in the gated-model card. See the **gated** companion adapter [`ujjwalpardeshi/chakravyuh-scammer-lora-phase1`](https://huggingface.co/ujjwalpardeshi/chakravyuh-scammer-lora-phase1) for the adversarial Scammer trained against the rule-based defense (B.2 Phase 1: 93.75 % best-of-8 / 100 % held-out novel bypass on n=64; **32.8 % vs this Analyzer LoRA — a 60 pp gap that quantifies co-evolution**) — the natural adversarial test case for *this* defender adapter.
 
 ## Links
 
@@ -209,7 +209,7 @@ See [docs/RESPONSIBLE_USE.md](https://github.com/UjjwalPardeshi/Chakravyuh/blob/
 ```bibtex
 @software{pardeshi2026chakravyuh,
   title  = {Chakravyuh: A Multi-Agent RL Environment for Indian UPI Fraud Detection},
-  author = {Pardeshi, Ujjwal},
+  author = {Pardeshi, Ujjwal and Kadam, Omkar},
   year   = {2026},
   url    = {https://github.com/UjjwalPardeshi/Chakravyuh}
 }

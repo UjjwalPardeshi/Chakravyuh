@@ -519,6 +519,17 @@ fieldset > legend,
   background: var(--ck-plum); color: var(--ck-white);
   border-radius: 4px; margin-left: 4px;
 }
+.ck-hero-trained {
+  border: 1.5px solid var(--ck-plum);
+  background: var(--ck-cream-2);
+}
+.ck-hero-badge {
+  display: inline-block; margin-top: 4px;
+  font-size: 9px; font-weight: 800; letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--ck-white); background: var(--ck-plum);
+  padding: 2px 8px; border-radius: 999px;
+}
 @media (prefers-reduced-motion: reduce) {
   .ck-hero-agent { animation-duration: 0.01s !important; }
 }
@@ -902,10 +913,10 @@ code::before, code::after { content: none !important; }
 /* =============== Live red-team tab — reward-profile asymmetry =============== */
 .redteam-empty {
   padding: 18px;
-  background: rgba(0, 0, 0, 0.03);
-  border: 1px dashed rgba(0, 0, 0, 0.18);
+  background: var(--ck-cream-2);
+  border: 1px dashed var(--ck-plum-tint-30);
   border-radius: 10px;
-  color: #555;
+  color: rgba(0, 0, 0, 0.62);
   font-size: 14px;
   line-height: 1.6;
 }
@@ -1007,8 +1018,8 @@ code::before, code::after { content: none !important; }
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: #555;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.18);
+  color: rgba(0, 0, 0, 0.55);
+  border-bottom: 1px solid var(--ck-plum-tint-18);
 }
 .redteam-leaf-name {
   text-align: left !important;
@@ -1050,9 +1061,9 @@ code::before, code::after { content: none !important; }
   color: #6d4c41;
 }
 .redteam-asym-agree {
-  background: rgba(0, 0, 0, 0.04);
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  color: #444;
+  background: var(--ck-cream-2);
+  border: 1px solid var(--ck-plum-tint-18);
+  color: rgba(0, 0, 0, 0.72);
 }
 @media (max-width: 768px) {
   #redteam-row > * { width: 100% !important; }
@@ -1063,12 +1074,12 @@ code::before, code::after { content: none !important; }
 }
 .live-empty {
   padding: 14px 16px;
-  background: rgba(0, 0, 0, 0.04);
+  background: var(--ck-cream-2);
   border-radius: 10px;
-  border: 1px dashed rgba(0, 0, 0, 0.18);
+  border: 1px dashed var(--ck-plum-tint-30);
   font-size: 13px;
   line-height: 1.5;
-  color: #444;
+  color: rgba(0, 0, 0, 0.62);
 }
 .live-error {
   padding: 14px 16px;
@@ -1518,15 +1529,17 @@ def build_app() -> gr.Blocks:
                 # 5-agent CSS hero strip — pure animation, no interaction.
                 '<div class="ck-hero-strip" role="img" '
                 'aria-label="Five Chakravyuh agents: Scammer, Victim, Analyzer, Bank Monitor, Regulator">'
-                '<div class="ck-hero-agent">'
-                '<span class="ck-hero-emoji" aria-hidden="true">🪤</span>'
-                'Scammer<span class="ck-hero-letter">S</span></div>'
+                '<div class="ck-hero-agent ck-hero-trained">'
+                '<span class="ck-hero-emoji" aria-hidden="true">🎭</span>'
+                'Scammer<span class="ck-hero-letter">S</span>'
+                '<span class="ck-hero-badge">LoRA</span></div>'
                 '<div class="ck-hero-agent">'
                 '<span class="ck-hero-emoji" aria-hidden="true">📱</span>'
                 'Victim<span class="ck-hero-letter">V</span></div>'
-                '<div class="ck-hero-agent">'
+                '<div class="ck-hero-agent ck-hero-trained">'
                 '<span class="ck-hero-emoji" aria-hidden="true">🛡️</span>'
-                'Analyzer<span class="ck-hero-letter">A</span></div>'
+                'Analyzer<span class="ck-hero-letter">A</span>'
+                '<span class="ck-hero-badge">LoRA</span></div>'
                 '<div class="ck-hero-agent">'
                 '<span class="ck-hero-emoji" aria-hidden="true">🏦</span>'
                 'Bank Monitor<span class="ck-hero-letter">B</span></div>'
@@ -1566,9 +1579,9 @@ def build_app() -> gr.Blocks:
             )
 
             gr.Markdown(
-                "> **Judges:** read [`docs/judge_quickstart.md`](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/docs/judge_quickstart.md) "
-                "for the 3-minute guided tour · headline numbers in [`README.md`](https://github.com/UjjwalPardeshi/Chakravyuh#readme) · "
-                "ask anything → [Q&A rehearsal](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/docs/Q_AND_A_REHEARSAL.md)."
+                "> **Judges:** headline numbers + full story in [`README.md`](https://github.com/UjjwalPardeshi/Chakravyuh#readme) · "
+                "detailed writeup in [`Blog.md`](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/Blog.md) · "
+                "common questions answered in [`FAQ.md`](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/FAQ.md)."
             )
 
             gr.HTML(
@@ -1578,12 +1591,14 @@ def build_app() -> gr.Blocks:
                 '</summary>'
                 '<div class="ck-howto-body" style="padding:0.75rem 0 0.25rem 0;">'
                 '<ol class="ck-howto-list" style="margin:0;padding-left:1.25rem;">'
-                '<li><strong>Tab 1 — Replay</strong>: pick a curated episode and watch the 5-agent fraud arena play out turn-by-turn. Suspicion bars climb; the bank either freezes or releases.</li>'
-                '<li><strong>Tab 3 — You vs Analyzer</strong>: paste any UPI message and get a live verdict (or click one of the 3 quick-test buttons: OTP-Hindi, matrimonial-crypto, deepfake-CEO).</li>'
-                '<li><strong>Tab 4 — 🎭 Trained Scammer</strong>: our second trained model — a 0.5B Scammer LoRA that beats 70B frontier LLMs at detector evasion. Frontier comparison table, OOD generalization stats, and the 60 pp co-evolution gap.</li>'
-                '<li><strong>Tab 5 — Adversary Lab</strong>: browse all 64 outputs from the trained Scammer LoRA. Side-by-side, scripted defender misses 60 pp more than the v2 LoRA — co-evolution made visible.</li>'
-                '<li><strong>Tab 6 — v1 vs v2</strong>: see the reward-hacking fix that took FPR from 36% → 6.7%.</li>'
-                '<li><strong>Tab 7 — Red-team it yourself</strong>: try to bypass v2 (good luck — best-of-8 caps at 32.8%).</li>'
+                '<li><strong>Replay</strong>: pick a curated episode and watch the 5-agent fraud arena play out turn-by-turn. Suspicion bars climb; the bank either freezes or releases.</li>'
+                '<li><strong>Live</strong>: paste any SMS or chat snippet — the rule-based Analyzer returns a suspicion score and natural-language explanation instantly.</li>'
+                '<li><strong>You vs Analyzer</strong>: try to craft a scam that bypasses the Analyzer (3 quick-test buttons: OTP-Hindi, matrimonial-crypto, deepfake-CEO).</li>'
+                '<li><strong>🎭 Trained Scammer</strong>: our second trained model — a 0.5B Scammer LoRA that beats 70B frontier LLMs at detector evasion. Frontier comparison table, OOD generalization stats, and the 60 pp co-evolution gap.</li>'
+                '<li><strong>Adversary Lab</strong>: browse all 64 outputs from the trained Scammer LoRA. Side-by-side, scripted defender misses 60 pp more than the v2 LoRA — co-evolution made visible.</li>'
+                '<li><strong>v1 vs v2</strong>: see the reward-hacking fix that took FPR from 36% → 6.7%.</li>'
+                '<li><strong>🔴 Red-team it yourself</strong>: score any input against both reward profiles — see the asymmetry that shaped v1\'s 36% FPR.</li>'
+                '<li><strong>Leaderboard</strong>: ranked F1 scores on chakravyuh-bench-v0 (n=175). Submit your own model via <code>POST /submit</code>.</li>'
                 '</ol>'
                 '<p style="margin-top:0.5rem;font-size:0.92rem;color:rgba(0,0,0,0.72);">'
                 '<strong>Two trained adapters:</strong> '
@@ -1793,7 +1808,7 @@ def build_app() -> gr.Blocks:
                     gr.HTML(
                         '<div class="panel-heading">Try the Analyzer</div>'
                         '<p style="margin:0 0 18px;font-size:14px;line-height:1.6;'
-                        'color:var(--ck-slate);opacity:0.8;max-width:760px;">'
+                        'color:rgba(0,0,0,0.72);max-width:760px;">'
                         "Paste any SMS or chat snippet — the rule-based "
                         "Analyzer returns a suspicion score, declared signals, and a "
                         "natural-language explanation in one round-trip. The trained "
@@ -1850,7 +1865,7 @@ def build_app() -> gr.Blocks:
                     gr.HTML(
                         '<div class="panel-heading">Try to bypass the Analyzer</div>'
                         '<p style="margin:0 0 18px;font-size:14px;line-height:1.6;'
-                        'color:var(--ck-slate);opacity:0.85;max-width:760px;">'
+                        'color:rgba(0,0,0,0.72);max-width:760px;">'
                         "<strong>Note:</strong> this tab runs the rule-based <em>scripted</em> "
                         "Analyzer. Score ≥ 0.50 means caught; below means bypassed. The trained "
                         "<code>Qwen2.5-7B-LoRA-v2</code> adapter scores tighter — see the "
@@ -2155,14 +2170,14 @@ def build_app() -> gr.Blocks:
                     gr.HTML(
                         '<div class="panel-heading">chakravyuh-bench-v0 leaderboard</div>'
                         '<p style="margin:0 0 18px;font-size:14px;line-height:1.6;'
-                        'color:var(--ck-slate);opacity:0.85;max-width:760px;">'
+                        'color:rgba(0,0,0,0.72);max-width:760px;">'
                         "Methods ranked by F1 on the 175-scenario bench. "
                         "v1 (reward-hacked) is kept on the board to motivate v2's principled retrain. "
                         "Submit your model: <code>POST /submit</code> with the schema in "
                         "<code>server/leaderboard.py</code>."
                         "</p>"
                         '<p style="margin:0 0 18px;font-size:13px;line-height:1.55;'
-                        'color:var(--ck-slate);opacity:0.78;max-width:760px;">'
+                        'color:rgba(0,0,0,0.62);max-width:760px;">'
                         "<strong>Why F1?</strong> F1 balances detection (recall) and false-positive "
                         "avoidance — a model that flags everything has high recall but low F1. The "
                         "asymmetric v1→v2 lift (recall ≈ unchanged, FPR ↓5×) is exactly the kind "
@@ -2189,6 +2204,7 @@ def build_app() -> gr.Blocks:
                 "Chakravyuh is an open-source benchmark for Indian UPI fraud detection — "
                 'an entry to the Meta PyTorch <abbr title="Open Reinforcement Learning Environment">OpenEnv</abbr> '
                 "Hackathon 2026, Bangalore. "
+                "Built by <strong>Ujjwal Pardeshi</strong> &amp; <strong>Omkar Kadam</strong>. "
                 "Bench <code>chakravyuh-bench-v0</code> (n=175 scenarios) · "
                 "Analyzer <code>ujjwalpardeshi/chakravyuh-analyzer-lora-v2</code> · "
                 "Scammer <code>ujjwalpardeshi/chakravyuh-scammer-lora-phase1</code> · "

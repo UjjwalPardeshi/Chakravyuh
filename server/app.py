@@ -547,6 +547,7 @@ _LANDING_HTML = """<!doctype html>
       <div class="footer-copy">
         Open-source benchmark for Indian UPI fraud detection &middot;
         Entry to the Meta PyTorch OpenEnv Hackathon 2026, Bangalore.<br>
+        Built by <strong>Ujjwal Pardeshi</strong> &amp; <strong>Omkar Kadam</strong> &middot;
         MIT (code) &middot; CC-BY-4.0 (dataset)
       </div>
     </div>
@@ -592,21 +593,33 @@ _DEMO_PREVIEW_HTML = """<!DOCTYPE html>
 <title>Chakravyuh — warming up</title>
 <style>
   body { font-family: -apple-system, system-ui, Segoe UI, sans-serif;
-         margin: 0; padding: 48px 24px; background: #faf9f6; color: #1a1a1a; }
+         margin: 0; padding: 48px 24px; background: #FFF3E6; color: #000; }
   main { max-width: 720px; margin: 0 auto; }
   h1 { font-size: 26px; margin: 0 0 6px; }
-  .sub { color: #666; margin: 0 0 24px; font-size: 14px; }
+  .sub { color: rgba(0,0,0,0.62); margin: 0 0 24px; font-size: 14px; }
   figure { margin: 0 0 24px; }
   img { max-width: 100%; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-  figcaption { font-size: 12px; color: #777; margin-top: 6px; }
+  figcaption { font-size: 12px; color: rgba(0,0,0,0.55); margin-top: 6px; }
   .pill { display: inline-block; padding: 4px 10px; border-radius: 999px;
           background: rgba(46,125,50,0.10); color: #1b5e20; font-size: 12px;
           letter-spacing: 0.04em; text-transform: uppercase; }
-  a { color: #1565c0; }
+  a { color: #381932; font-weight: 600; }
   .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 16px 0 24px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; margin: 16px 0 24px; }
   .card { padding: 14px; background: #fff; border-radius: 10px;
           box-shadow: 0 1px 4px rgba(0,0,0,0.06); font-size: 13px; line-height: 1.5; }
-  .card strong { color: #b71c1c; }
+  .card.v1 { border-left: 3px solid #9C1B1B; }
+  .card.v2 { border-left: 3px solid #381932; }
+  .card.scammer { border-left: 3px solid #e8c97a; background: #381932; color: #fff; }
+  .card .label { font-weight: 700; font-size: 12px; letter-spacing: 0.6px; text-transform: uppercase; }
+  .card.v1 .label { color: #9C1B1B; }
+  .card.v2 .label { color: #381932; }
+  .card.scammer .label { color: #e8c97a; }
+  .card .stat { font-weight: 700; }
+  .card.v1 .stat { color: #9C1B1B; }
+  .card.v2 .stat { color: #381932; }
+  .card.scammer .stat { color: #e8c97a; }
+  @media (max-width: 900px) { .grid-3 { grid-template-columns: 1fr; } }
   @media (max-width: 600px) { .grid { grid-template-columns: 1fr; } }
 </style>
 </head><body><main>
@@ -618,17 +631,24 @@ _DEMO_PREVIEW_HTML = """<!DOCTYPE html>
          alt="Per-difficulty detection: scripted analyzer vs Chakravyuh v2 LoRA — scripted catches 50% on novel post-2024 scams; v2 catches 97%.">
     <figcaption>Per-difficulty detection — scripted vs Chakravyuh v2 (n = 175 bench scenarios).</figcaption>
   </figure>
-  <div class="grid">
-    <div class="card">
-      <strong>v1 (reward-hacked)</strong><br>
-      detection 100 % · FPR <strong>36 %</strong> · F1 0.96 · the model learned to flag everything.
+  <div class="grid-3">
+    <div class="card v1">
+      <div class="label">v1 · Analyzer (reward-hacked)</div>
+      detection 100 % · FPR <span class="stat">36 %</span> · F1 0.96<br>
+      the model learned to flag everything.
     </div>
-    <div class="card">
-      <strong>v2 (principled retrain)</strong><br>
-      detection 99.3 % · FPR <strong>6.7 %</strong> · F1 0.99 · same detection, FPR collapsed 5×.
+    <div class="card v2">
+      <div class="label">v2 · Analyzer (principled retrain)</div>
+      detection 99.3 % · FPR <span class="stat">6.7 %</span> · F1 0.99<br>
+      same detection, FPR collapsed 5&times;.
+    </div>
+    <div class="card scammer">
+      <div class="label">Scammer LoRA (0.5B + GRPO)</div>
+      best-of-8 bypass <span class="stat">93.75 %</span> vs rules<br>
+      beats 70B+ frontier LLMs at evasion.
     </div>
   </div>
-  <p style="font-size:13px;color:#444">Once the demo is live, you'll see eight tabs: Replay, Live Q&amp;A, You vs Analyzer, 🎭 Trained Scammer, Adversary Lab, v1↔v2 toggle, <strong>🔴 Red-team it yourself</strong>, and Leaderboard.</p>
+  <p style="font-size:13px;color:rgba(0,0,0,0.72)">Once the demo is live, you'll see eight tabs: Replay, Live Q&amp;A, You vs Analyzer, 🎭 Trained Scammer, Adversary Lab, v1↔v2 toggle, <strong>🔴 Red-team it yourself</strong>, and Leaderboard.</p>
   <p><a href="/">← back to landing</a> · <a href="/demo/" id="live-link">try the live demo</a></p>
 <script>
   // Poll /demo/ every 2s; redirect when 200.

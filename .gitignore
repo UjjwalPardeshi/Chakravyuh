@@ -117,6 +117,8 @@ docs/assets/plots/*.png
 !plots/chakravyuh_plots/ablation_per_rubric.png
 !plots/chakravyuh_plots/leakage_clean_slice.png
 !plots/chakravyuh_plots/v1_vs_v2_fingerprint.png
+!plots/chakravyuh_plots/frontier_comparison_bar.png
+!plots/chakravyuh_plots/scammer_frontier_bar.png
 
 # LoRA / checkpoint zips at repo root — these belong on HF Hub, not git.
 *.zip

@@ -123,19 +123,25 @@ def render_frontier_table() -> str:
         "ci": bo8.get("wilson_95ci", [0.85, 0.975]),
         "held_out": bo8.get("held_out_rate", 1.0),
         "highlight": True,
+        "caveat": False,
     })
 
     for f in sorted(frontier, key=lambda x: -x.get("bypass_rate", 0)):
         model_id = f.get("model_id", "")
         short = model_id.split("/")[-1] if "/" in model_id else model_id
         params = _model_params(short)
+        is_safety_refusal = "gpt-oss" in short.lower()
+        display_name = f"{short} (untrained)"
+        if is_safety_refusal:
+            display_name += " *"
         rows_data.append({
-            "name": f"{short} (untrained)",
+            "name": display_name,
             "params": params,
             "bypass": f.get("bypass_rate", 0),
             "ci": f.get("wilson_95ci", [0, 0]),
             "held_out": f.get("held_out", {}).get("rate", 0),
             "highlight": False,
+            "caveat": is_safety_refusal,
         })
 
     rows_data.append({
@@ -145,10 +151,17 @@ def render_frontier_table() -> str:
         "ci": ss.get("wilson_95ci", [0.471, 0.705]),
         "held_out": ss.get("held_out_rate", 0.5625),
         "highlight": True,
+        "caveat": False,
     })
 
     def _row(d: dict) -> str:
-        bg = "background:#381932;color:#fff;" if d["highlight"] else "color:#000;"
+        is_caveat = d.get("caveat", False)
+        if d["highlight"]:
+            bg = "background:#381932;color:#fff;"
+        elif is_caveat:
+            bg = "background:#FFF3E6;color:rgba(0,0,0,0.55);font-style:italic;"
+        else:
+            bg = "color:#000;"
         name_style = "font-weight:800;" if d["highlight"] else "font-weight:600;"
         ci_lo, ci_hi = d["ci"]
         return (
@@ -187,9 +200,10 @@ def render_frontier_table() -> str:
   </div>
   <div style="margin-top:10px;font-size:12px;color:rgba(0,0,0,0.60);line-height:1.5;">
     All frontier models used the same 16 attack-category prompts (8 train + 8 held-out).
-    gpt-oss-120b "bypasses" at 87.5% mostly via safety refusals (the model refuses to generate scam text,
-    which the analyzer scores as benign). The trained 0.5B Scammer generates <em>actual</em> scam
-    text that evades keyword rules.
+    <strong>*</strong> gpt-oss-120b "bypasses" at 87.5% mostly via <em>safety refusals</em>
+    &mdash; the model refuses to generate scam text, which the analyzer scores as benign.
+    The trained 0.5B Scammer generates <strong>actual</strong> scam text that evades keyword
+    rules &mdash; a fundamentally different (and harder) capability.
   </div>
 </div>
 """

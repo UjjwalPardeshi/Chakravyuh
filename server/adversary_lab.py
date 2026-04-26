@@ -232,7 +232,7 @@ def render_sample(index: int) -> str:
         for sig in s.v2_signals
     )
     if not signals_html:
-        signals_html = '<span style="color:#666;font-size:12px;">(no signals declared)</span>'
+        signals_html = '<span style="color:rgba(0,0,0,0.55);font-size:12px;">(no signals declared)</span>'
 
     asymmetry_note = ""
     if (not s.scripted_caught) and s.v2_caught:
@@ -258,7 +258,7 @@ def render_sample(index: int) -> str:
 
     return f"""
 <div style="background:#fff;border:1px solid #381932;border-radius:8px;padding:16px 18px;">
-  <div style="font-size:11px;color:#666;margin-bottom:6px;">
+  <div style="font-size:11px;color:rgba(0,0,0,0.55);margin-bottom:6px;">
     Sample #{s.index} · split = <strong>{s.split}</strong> · {s.length_chars} chars
     {' · <strong style="color:#b71c1c;">REFUSAL</strong>' if s.is_refusal else ''}
   </div>
@@ -292,10 +292,10 @@ def render_sample(index: int) -> str:
       <div style="font-size:13px;color:#000;margin-bottom:6px;">
         Score: <strong>{s.v2_score:.2f}</strong> · {_verdict_pill(s.v2_caught)}
       </div>
-      <div style="font-size:11px;color:#666;margin-bottom:4px;">Signals declared:</div>
+      <div style="font-size:11px;color:rgba(0,0,0,0.55);margin-bottom:4px;">Signals declared:</div>
       <div style="margin-bottom:8px;">{signals_html}</div>
-      <div style="font-size:11px;color:#666;margin-bottom:2px;">Explanation:</div>
-      <div style="font-size:12px;line-height:1.5;color:#000;">{explanation_html or '<em style="color:#666;">(no parseable explanation)</em>'}</div>
+      <div style="font-size:11px;color:rgba(0,0,0,0.55);margin-bottom:2px;">Explanation:</div>
+      <div style="font-size:12px;line-height:1.5;color:#000;">{explanation_html or '<em style="color:rgba(0,0,0,0.55);">(no parseable explanation)</em>'}</div>
     </div>
   </div>
 

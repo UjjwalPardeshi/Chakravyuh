@@ -16,11 +16,24 @@ short_description: Multi-agent RL env for Indian UPI fraud detection
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.10–3.12](https://img.shields.io/badge/python-3.10--3.12-blue.svg)](https://www.python.org/downloads/)
 
-A multi-agent RL environment for Indian UPI fraud detection — built for the **Meta PyTorch OpenEnv Hackathon 2026 (Bangalore)**.
+A multi-agent RL environment for Indian UPI fraud detection — built by **Ujjwal Pardeshi** & **Omkar Kadam** for the **Meta PyTorch OpenEnv Hackathon 2026 (Bangalore)**.
 
-> **We trained an LLM to detect UPI fraud and got 100 % detection.** We celebrated for four minutes. Then we noticed: **36 % false-positive rate.** The model wasn't catching scams — it was flagging everything. This README walks through the diagnosis, the three-line reward fix, and the v2 recovery: detection holds at 99.3 %, FPR collapses 5× to 6.7 % on n = 174 real Indian fraud scenarios. The asymmetric improvement — detection unchanged, FPR down — is the signal that the model learned the task instead of gaming the reward.
->
-> **TL;DR for judges** — *Chakravyuh is a 5-agent OpenEnv environment for Indian UPI fraud detection, plus a worked example of catching reward hacking in GRPO post-training. We trained **two LoRA adapters with GRPO**: a Qwen2.5-7B Analyzer (defender) and a Qwen2.5-0.5B Scammer (adversary) — both on opposite sides of the fraud loop. We **caught ourselves reward-hacking** (v1: detection=100% / FPR=36%), diagnosed and fixed it (v2: 99.3% / 6.7%, F1=0.99 on n=174). Themes: **#1 Multi-Agent** (primary) · **#4 Self-Improvement** (the v1→v2 reward-hacking-fix loop is self-improvement of the *training pipeline*; we deliberately do not claim recursive skill amplification). Live demo: [`/demo`](https://ujjwalpardeshi-chakravyuh.hf.space/demo/) · Analyzer adapter: [`chakravyuh-analyzer-lora-v2`](https://huggingface.co/ujjwalpardeshi/chakravyuh-analyzer-lora-v2) · Scammer adapter: [`chakravyuh-scammer-lora-phase1`](https://huggingface.co/ujjwalpardeshi/chakravyuh-scammer-lora-phase1) · bench: [`chakravyuh-bench-v0`](https://huggingface.co/datasets/ujjwalpardeshi/chakravyuh-bench-v0).*
+> **We trained an LLM to detect UPI fraud and got 100 % detection.** We celebrated for four minutes. Then we noticed: **36 % false-positive rate.** The model wasn't catching scams — it was flagging everything. Three reward-weight changes later, v2 holds 99.3 % detection with FPR down 5× to 6.7 %.
+
+### Judges: Start Here
+
+| | Link |
+|---|---|
+| **Live demo** | [ujjwalpardeshi-chakravyuh.hf.space/demo/](https://ujjwalpardeshi-chakravyuh.hf.space/demo/) |
+| **Blog writeup** | [`Blog.md`](Blog.md) — 5-minute narrative (separate from this README, per organisers) |
+| **Analyzer LoRA v2** (defender, 7B) | [`chakravyuh-analyzer-lora-v2`](https://huggingface.co/ujjwalpardeshi/chakravyuh-analyzer-lora-v2) |
+| **Scammer LoRA Phase 1** (adversary, 0.5B, gated) | [`chakravyuh-scammer-lora-phase1`](https://huggingface.co/ujjwalpardeshi/chakravyuh-scammer-lora-phase1) |
+| **Bench dataset** (175 scenarios) | [`chakravyuh-bench-v0`](https://huggingface.co/datasets/ujjwalpardeshi/chakravyuh-bench-v0) |
+| **Training notebooks** | [Analyzer v2](notebooks/v2_retrain_safe.ipynb) · [Scammer Phase 1](notebooks/T4_or_A100_b2_phase1_scammer.ipynb) |
+
+**Headline (v2, n = 174):** Detection **99.3 %** · FPR **6.7 %** (5× better than v1) · F1 **0.99** · ties Llama-3.3-70B at 10× fewer params (p = 0.61, Fisher's exact).
+
+**Themes:** **#1 Multi-Agent** (primary) · **#4 Self-Improvement** (v1→v2 reward-hacking diagnosis-and-fix loop)
 
 ![Per-difficulty detection: scripted vs Chakravyuh v2](https://raw.githubusercontent.com/UjjwalPardeshi/Chakravyuh/a9e723bf495182724845dbf1f69f8968434a9e02/docs/assets/plots/v2_per_difficulty_check.png)
 
@@ -122,26 +135,17 @@ The pan-India AePS case is the single sharpest illustration of why **two-tier ov
 
 ---
 
-## Before / after — one novel-2025 scam, scripted vs Chakravyuh v2
+## Before / after — one novel-2025 scam
 
 A single scenario from the bench (`modec_106`, source: `Novel post-2024 — AI deepfake CEO`, date: 2025-Q4):
 
 > "[Deepfake voice of Infosys CEO]: Exclusive employee IPO allocation. Invest Rs 1 lakh via company portal. HR calling now for UPI transfer. Limited to first 100 employees."
 
-| | Score | Flagged? | Signals | Source |
-|---|---|---|---|---|
-| **Scripted baseline** | **0.05** | ❌ missed | `unknown_sender` only | `eval/single_scenario_eval.py --scenario-id modec_106` |
-| **Chakravyuh v2** | n/a (single-scenario re-run pending GPU) | — | — | aggregate detection on `novel` split: **33/34 = 97.1 %** ([`logs/eval_v2.json`](logs/eval_v2.json)) |
+The scripted analyzer scores this **0.05** (threshold 0.50) — it flags only `unknown_sender`. Its word-list rules find no urgency token, no impersonation phrase ("CEO" isn't in the list), no info-request, no link. **Scam slips through.**
 
-The scripted analyzer's word-list rules find no urgency token, no impersonation phrase ("CEO" isn't in the list), no info-request, no link — score 0.05, threshold 0.50, **scam slips through**. Across the 34 post-2024 novel scenarios in the bench, the v2 LoRA caught **33** of them. We do not yet re-score this exact scenario with v2 because the live HF Space runs the env (not a GPU-hot LoRA); that single-scenario number is on the v3 task list.
+The v2 LoRA closes this class of gap at the aggregate level: across the 34 post-2024 novel scenarios in the bench (matrimonial crypto, deepfake CEO, digital arrest, AePS fraud), v2 catches **33 of 34 (97.1 %)** vs the scripted baseline's 26 of 34 (76.5 %) — a **20.6 pp lift** on exactly the attacks where keyword rules are blind. Source: [`logs/eval_v2.json`](logs/eval_v2.json).
 
-Reproducible via:
-
-```bash
-python eval/single_scenario_eval.py \
-    --scenario-id modec_106 \
-    --output docs/before_after_example.json
-```
+Reproducible: `python eval/single_scenario_eval.py --scenario-id modec_106 --output docs/before_after_example.json`
 
 ---
 
@@ -168,7 +172,6 @@ The composable rubric system ([chakravyuh_env/rubrics.py](chakravyuh_env/rubrics
 |---|---|
 | **Hugging Face Space (live env — submission URL)** | [`ujjwalpardeshi/chakravyuh`](https://huggingface.co/spaces/ujjwalpardeshi/chakravyuh) · live at [`https://ujjwalpardeshi-chakravyuh.hf.space/demo/`](https://ujjwalpardeshi-chakravyuh.hf.space/demo/) |
 | **Writeup blog (Blog.md, in HF Space)** | [`Blog.md`](Blog.md) — 5-minute story, separate from README, pushed into the HF Space per organisers' clarification |
-| **YouTube demo video (90 sec)** | *to be added — see HF Space README once recorded* |
 | **Analyzer LoRA v2** (defender, HF Hub) | [`ujjwalpardeshi/chakravyuh-analyzer-lora-v2`](https://huggingface.co/ujjwalpardeshi/chakravyuh-analyzer-lora-v2) — Qwen2.5-7B-Instruct + LoRA r=64 + GRPO. 99.3 % detection · 6.7 % FPR · F1 = 0.99 |
 | **Scammer LoRA Phase 1** (adversary, HF Hub — gated) | [`ujjwalpardeshi/chakravyuh-scammer-lora-phase1`](https://huggingface.co/ujjwalpardeshi/chakravyuh-scammer-lora-phase1) — Qwen2.5-0.5B-Instruct + LoRA r=16 + GRPO. **n=64 best-of-8 bypass: 93.75 % vs scripted defense (100 % on held-out novel categories), 32.8 % vs v2 LoRA defender.** Per-sample artifacts: [`logs/b2_phase1_scammer_eval_n64_bestof8.json`](logs/b2_phase1_scammer_eval_n64_bestof8.json) · [`logs/scammer_significance.json`](logs/scammer_significance.json) |
 | Training notebooks (TRL + GRPO) | Analyzer v2: [`notebooks/v2_retrain_safe.ipynb`](notebooks/v2_retrain_safe.ipynb) · Scammer Phase 1: [`notebooks/T4_or_A100_b2_phase1_scammer.ipynb`](notebooks/T4_or_A100_b2_phase1_scammer.ipynb) |
@@ -613,7 +616,7 @@ The Gradio UI provides two tabs:
 | Anti-reward-hacking design | ✅ [Anti-Reward-Hacking Design](#anti-reward-hacking-design) + [`logs/analyzer_robustness.json`](logs/analyzer_robustness.json) |
 | Real training evidence (reward/loss plots) | ✅ [v2 GRPO training curves (reward / loss / KL / grad-norm, 615 steps)](plots/chakravyuh_plots/training_curves_v2.png) · [training reward (v1)](https://raw.githubusercontent.com/UjjwalPardeshi/Chakravyuh/a9e723bf495182724845dbf1f69f8968434a9e02/docs/assets/plots/training_reward_curve.png) · [reward-hacking diagnostic](https://raw.githubusercontent.com/UjjwalPardeshi/Chakravyuh/a9e723bf495182724845dbf1f69f8968434a9e02/docs/assets/plots/reward_hacking_diagnostic.png) · [per-difficulty](https://raw.githubusercontent.com/UjjwalPardeshi/Chakravyuh/a9e723bf495182724845dbf1f69f8968434a9e02/docs/assets/plots/v2_per_difficulty_check.png) |
 | HF Space deployed | ✅ [LIVE](https://huggingface.co/spaces/ujjwalpardeshi/chakravyuh) |
-| Mini-blog OR <2-min video (writeup) | ✅ [`Blog.md`](Blog.md) (HF-Space-side writeup, MD separate from README per organisers) · 90-sec YouTube video pending |
+| Mini-blog OR <2-min video (writeup) | ✅ [`Blog.md`](Blog.md) (HF-Space-side writeup, MD separate from README per organisers) |
 | README links to all materials | ✅ (see Submission Materials) |
 
 ---

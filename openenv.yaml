@@ -13,7 +13,7 @@ description: >
   Multi-agent Indian UPI fraud-detection environment.
   A scripted Scammer + Victim + Bank Monitor drive a 2-decision
   episode; the Analyzer LLM is the agent being trained.
-author: Chakravyuh Team
+author: Ujjwal Pardeshi, Omkar Kadam
 version: 0.1.0
 license: MIT
 tags:

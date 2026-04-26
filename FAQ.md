@@ -36,11 +36,11 @@ No, **two agents are now trained**: the Analyzer (v2 LoRA on Qwen2.5-7B) and the
 
 ## How do you know v2 is not also reward-hacked?
 
-The asymmetric improvement: v1 scored detection 100 % / FPR 36 % — textbook reward-hacking signature. v2 scored detection **99.3 %** / FPR **6.7 %**. Detection essentially unchanged while FPR collapsed 5× — that is what *learning the task* looks like, vs *gaming the proxy* which would have moved both metrics together. The full diagnosis is in [`docs/training_diagnostics.md`](docs/training_diagnostics.md).
+The asymmetric improvement: v1 scored detection 100 % / FPR 36 % — textbook reward-hacking signature. v2 scored detection **99.3 %** / FPR **6.7 %**. Detection essentially unchanged while FPR collapsed 5× — that is what *learning the task* looks like, vs *gaming the proxy* which would have moved both metrics together. The full diagnosis is in the [Reward-Hacking Incident and Fix](Blog.md#reward-hacking-incident-and-fix-main-contribution) section of Blog.md.
 
 ## How is your bench different from your training data?
 
-We audited this with MiniLM-L6 cosine similarity ([`eval/semantic_leakage_audit.py`](eval/semantic_leakage_audit.py)). 44.8 % of bench items have cosine > 0.85 to the nearest training text. The 100 % detection on easy/medium/hard buckets is **partly memorization**. The v1 → v2 relative FPR fix and the scripted-baseline novel-collapse are **unaffected by leakage** (relative comparison on the same bench). v3 closes the absolute gap with a held-out template-family retrain — see [`docs/limitations.md`](docs/limitations.md).
+We audited this with MiniLM-L6 cosine similarity ([`eval/semantic_leakage_audit.py`](eval/semantic_leakage_audit.py)). 44.8 % of bench items have cosine > 0.85 to the nearest training text. The 100 % detection on easy/medium/hard buckets is **partly memorization**. The v1 → v2 relative FPR fix and the scripted-baseline novel-collapse are **unaffected by leakage** (relative comparison on the same bench). v3 closes the absolute gap with a held-out template-family retrain — see the Honest Limitations section in [`Blog.md`](Blog.md#honest-limitations).
 
 ## If 44.8 % of bench is high-similarity, what's your real generalization number?
 
@@ -68,7 +68,7 @@ Full walk-through with expected output snippets at [`REPRODUCE.md`](REPRODUCE.md
 
 ## Production-ready?
 
-No. Chakravyuh is a research environment, not a deployable Indian-bank fraud module. Domain adaptation, regulatory compliance (DPDPA, RBI rules), live-data evaluation, and adversary-resistant deployment are out of scope. See [`docs/RESPONSIBLE_USE.md`](docs/RESPONSIBLE_USE.md).
+No. Chakravyuh is a research environment, not a deployable Indian-bank fraud module. Domain adaptation, regulatory compliance (DPDPA, RBI rules), live-data evaluation, and adversary-resistant deployment are out of scope. See the Responsible Use section in the [MODEL_CARD.md](MODEL_CARD.md#limitations).
 
 ## What's the most surprising finding?
 
@@ -76,7 +76,7 @@ The semantic-leakage audit. We assumed our substring-filter was sufficient to en
 
 ## How does this compare to GPT-4o / Claude / Gemini?
 
-We ran an open-weight frontier comparison via HuggingFace Inference Providers (paid from our HF compute credits, ~$2 total across 7 models). Numbers from [`logs/frontier_comparison.csv`](logs/frontier_comparison.csv) — frontier rows are n = 175 (full bench file); v2 LoRA row is n = 174 (one row dropped on inference, see [`docs/limitations.md`](docs/limitations.md)):
+We ran an open-weight frontier comparison via HuggingFace Inference Providers (paid from our HF compute credits, ~$2 total across 7 models). Numbers from [`logs/frontier_comparison.csv`](logs/frontier_comparison.csv) — frontier rows are n = 175 (full bench file); v2 LoRA row is n = 174 (one row dropped on inference — see [`Blog.md`](Blog.md#honest-limitations)):
 
 | Model | Params | Detection | FPR | F1 |
 |---|---|---|---|---|
@@ -124,4 +124,4 @@ Same parameter-efficiency story as the defender side: reward-engineered training
 
 ## What's still open?
 
-See [`docs/limitations.md`](docs/limitations.md) for the comprehensive list. Top three: (1) per-row v2 logits + leakage-clean slice (B.12), (2) held-out template-family retrain (B.7), (3) B.2 Phase 2 LoRA-vs-LoRA co-evolution.
+See the Honest Limitations section in [`Blog.md`](Blog.md#honest-limitations) for the comprehensive list. Top three: (1) per-row v2 logits + leakage-clean slice (B.12), (2) held-out template-family retrain (B.7), (3) B.2 Phase 2 LoRA-vs-LoRA co-evolution.

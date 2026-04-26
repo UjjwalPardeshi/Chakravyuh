@@ -105,7 +105,7 @@ The 60.9-pp gap is the bench-derived measurement of the v2 LoRA's
 defensive lift over rule-based detection in an adversarial setting.
 The Scammer adapter (`ujjwalpardeshi/chakravyuh-scammer-lora-phase1`) is
 published behind an HF Hub gated-access flag with the misuse statement
-at [`docs/misuse_dual_use.md`](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/docs/misuse_dual_use.md).
+on its [HF Hub model card](https://huggingface.co/ujjwalpardeshi/chakravyuh-scammer-lora-phase1).
 
 ## Economic-loss aggregator
 
@@ -144,7 +144,7 @@ CC-BY-4.0. Use freely with attribution.
 ```bibtex
 @misc{chakravyuh-bench-v0,
   title  = {Chakravyuh-Bench-v0: A benchmark for Indian UPI fraud detection},
-  author = {Pardeshi, Ujjwal},
+  author = {Pardeshi, Ujjwal and Kadam, Omkar},
   year   = {2026},
   howpublished = {Meta PyTorch OpenEnv Hackathon, Bangalore, April 2026},
   url    = {https://huggingface.co/datasets/ujjwalpardeshi/chakravyuh-bench-v0},
