@@ -53,10 +53,10 @@ pytest tests/ -v --tb=short
 Expected last line:
 
 ```
-============= 335 passed, 2 skipped in N.Ns =============
+============= 338 passed, 3 skipped in N.Ns =============
 ```
 
-(Counts may shift slightly as the suite grows; the floor is **335 passed, 2 skipped** (337 collected) for the canonical hackathon-submission state. The skips are GROQ-gated tests in `tests/test_explanation_judge.py` that skip cleanly if `GROQ_API_KEY` is not in the environment — that is correct behaviour.)
+(Counts may shift slightly as the suite grows; the floor is **338 passed, 3 skipped** (341 collected) for the canonical hackathon-submission state. The skips are GROQ-gated tests in `tests/test_explanation_judge.py` and `tests/test_explanation_rubric.py` that skip cleanly if `GROQ_API_KEY` is not in the environment — that is correct behaviour.)
 
 If any test fails, please attach the full pytest output to the issue.
 

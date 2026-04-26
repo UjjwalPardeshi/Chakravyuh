@@ -57,6 +57,45 @@ def test_parse_frontier_score_empty_returns_zero():
 
 
 @pytest.mark.unit
+def test_parse_frontier_score_strips_reasoning_block():
+    """DeepSeek-R1 / o1-class models emit <think>...</think> before the answer."""
+    raw = (
+        "<think>\n"
+        "This message is asking for an OTP. OTP requests are a UPI fraud signal.\n"
+        "I would estimate {\"score\": 0.0} is wrong; this is clearly a scam.\n"
+        "</think>\n"
+        '{"score": 0.95, "reason": "OTP request"}'
+    )
+    assert parse_frontier_score(raw) == 0.95
+
+
+@pytest.mark.unit
+def test_parse_frontier_score_handles_unclosed_think_block():
+    """If the model hits the token cap mid-thought, no closing </think> arrives."""
+    raw = (
+        "<think>\n"
+        "Let me reason about whether this is a scam. The message asks for an OTP\n"
+        "which is suspicious. I would say {\"score\": 0.05} but actually...\n"
+    )
+    # No closing </think> and no JSON after — should fall through to 0.0,
+    # not pick up the misleading 0.05 inside the thinking block.
+    assert parse_frontier_score(raw) == 0.0
+
+
+@pytest.mark.unit
+def test_parse_frontier_score_fenced_json():
+    """Some models wrap their JSON in markdown code fences."""
+    raw = '```json\n{"score": 0.82, "reason": "trust grooming"}\n```'
+    assert parse_frontier_score(raw) == 0.82
+
+
+@pytest.mark.unit
+def test_parse_frontier_score_fenced_json_no_lang():
+    raw = '```\n{"score": 0.42}\n```'
+    assert parse_frontier_score(raw) == 0.42
+
+
+@pytest.mark.unit
 def test_openai_provider_unavailable_without_key(monkeypatch):
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     p = OpenAIProvider()

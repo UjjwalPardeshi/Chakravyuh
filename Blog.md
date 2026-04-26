@@ -97,6 +97,20 @@ Plus a side-channel `RupeeWeightedRubric` aggregator that scales
 detection / miss credit by `loss_amount_inr` to produce the bench-level
 **₹77.95 lakh at risk** headline (130 scams with labelled losses).
 
+## 2.1. Training curves (real run, not a screenshot of a Jupyter cell)
+
+![v2 GRPO training curves over 615 steps](plots/chakravyuh_plots/training_curves_v2.png)
+
+> *v2 Analyzer GRPO trajectory rendered from
+> [`logs/v2_trainer_state.json`](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/logs/v2_trainer_state.json)
+> (123 logged points at logging_steps=5, total 615 GRPO steps over 1
+> epoch on Qwen2.5-7B-Instruct + LoRA r=64, single A100). Reward
+> climbs from 1.29 → ~1.97 with shrinking variance — the 8-rubric
+> weighted sum is being learned. Loss stays bounded around zero, no
+> divergence. KL plateaus at 0.25–0.45 (honestly disclosed, v3 plan
+> adds a 0.20 early-stop guard). Grad norm well-behaved. Reproduce:
+> `python eval/plot_training_curves.py`.*
+
 ## 3. The reward-hacking failure (caught and fixed)
 
 v1 trained on the same env hit:
@@ -222,7 +236,7 @@ Three readouts:
 git clone https://github.com/UjjwalPardeshi/Chakravyuh && cd Chakravyuh
 pip install -e '.[llm,eval]'
 make smoke-test               # in-process env reset+step in <5s
-pytest tests/ --tb=no -q      # 337 collected; 334 pass + 3 skip
+pytest tests/ --tb=no -q      # 341 collected; 338 pass + 3 skip
 make reproduce                # ~10 min CPU cached eval; verifies headlines within 0.5pp
 ```
 

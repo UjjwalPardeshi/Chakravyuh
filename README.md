@@ -63,14 +63,20 @@ Run via `python -m eval.frontier_baseline --providers hf --hf-models ...` (Huggi
 | DeepSeek-R1 (reasoning, open) † | 671B MoE | 0.7 % | 0.0 % | 0.014 |
 | Scripted rule-based baseline | — | 84.0 % | 9.7 % | 0.903 |
 
+![Frontier comparison: FPR + F1 across 8 models](https://raw.githubusercontent.com/UjjwalPardeshi/Chakravyuh/main/plots/chakravyuh_plots/frontier_comparison_bar.png)
+
 Four things to read out of this:
 
-1. **GRPO + LoRA contribution is the headline.** The base Qwen2.5-7B-Instruct (no LoRA) scores 99.3 % / **16.1 %** / 0.980. After our GRPO post-training: 99.3 % / **6.7 %** / 0.990. **Same model, same params: −9.4 pp FPR and +0.010 F1 attributable purely to the reward-engineered training.** That isolates what the reward design actually buys.
-2. **Parameter efficiency vs frontier.** Our 7B + LoRA ties Llama-3.3-70B on F1 (0.990 vs 0.990) at **10× fewer parameters**, and beats Qwen2.5-72B, DeepSeek-V3-671B, gpt-oss-120B, and gemma-3-27B on F1.
-3. **DeepSeek-V3 reproduces the v1 reward-hacking signature externally.** Detection 99.3 % / FPR 29 % at 671B parameters is structurally identical to our v1 (100 % / 36 %). A frontier model independently falls into the exact failure mode our reward-engineering methodology diagnoses and fixes — *external validation* that calibrated reward design beats raw capacity. gemma-3-27B-it also fails the calibration test (FPR 51.6 %); both are uncalibrated capacity, the v2 LoRA's 99.3 % / 6.7 % is the calibrated equivalent.
-4. **Open-weight frontier ≠ guaranteed scam-spotting.** Five of the seven open frontier models we tested have FPR > 6.7 % on the same bench. Calibrated reward design at 7B beats uncalibrated capacity at 671B.
+1. **GRPO + LoRA contribution is the headline.** The base Qwen2.5-7B-Instruct (no LoRA) scores 100 % / **16.1 %** / 0.983 on the cached comparison; after our GRPO post-training: 99.3 % / **6.7 %** / 0.990. **Same model, same params: −9.4 pp FPR and +0.010 F1 attributable purely to the reward-engineered training** — point estimate; Fisher's exact two-sided p = 0.42 at n_benign = 30 (*directional but not yet at α = 0.05; tightened by B.11 benign-corpus expansion*). Source: [`logs/grpo_lora_significance.json`](logs/grpo_lora_significance.json).
+2. **Parameter efficiency vs frontier — pairwise Fisher's exact** ([`logs/frontier_significance.json`](logs/frontier_significance.json)):
+    - vs **Llama-3.3-70B** (FPR 3.2 %): p = 0.61 — *statistically tied at 10× fewer params*.
+    - vs **Qwen2.5-72B** (FPR 6.5 %): p = 1.00 — *statistically tied at 10× fewer params*.
+    - vs **DeepSeek-V3-0324** (FPR 29.0 %): p = **0.043** — *significantly better*.
+    - vs **gemma-3-27b-it** (FPR 51.6 %): p = **0.0002** — *significantly better*.
+3. **DeepSeek-V3 reproduces the v1 reward-hacking signature externally.** Detection 99.3 % / FPR 29 % at 671B parameters is structurally identical to our v1 (100 % / 36 %), and the FPR gap vs the calibrated v2 LoRA is statistically significant (p = 0.043). A frontier model independently falls into the failure mode our reward-engineering methodology diagnoses and fixes — *external validation* that calibrated reward design beats raw capacity. gemma-3-27B-it (FPR 51.6 %, p = 0.0002 vs LoRA) is the same story at smaller scale.
+4. **Open-weight frontier ≠ guaranteed scam-spotting.** Five of the seven open frontier models we tested have FPR > 6.7 % on the same bench; calibration is the contested axis, not capacity.
 
-† **DeepSeek-R1 footnote.** R1 is a chain-of-thought reasoning model whose output begins with `<think>...</think>` blocks. Our scoring prompt requests JSON-only output; R1 returns reasoning tokens that don't parse as a score (defaults to 0). The 0.7 % / F1 = 0.014 number is a parser artifact, not a model-quality claim. A reasoning-aware parser would lift this; tracked as v3 work in [`docs/limitations.md`](docs/limitations.md).
+† **DeepSeek-R1 footnote.** R1 is a chain-of-thought reasoning model whose output begins with `<think>...</think>` blocks. Our scoring prompt requested JSON-only output; R1 returned reasoning tokens that don't parse as a score (defaults to 0). The 0.7 % / F1 = 0.014 number is a parser artifact, not a model-quality claim. **Fix shipped:** reasoning-aware parser (strips `<think>` blocks before JSON extraction) at [`eval/frontier_baseline.py:_strip_reasoning`](eval/frontier_baseline.py) with unit tests at [`tests/test_frontier_baseline.py`](tests/test_frontier_baseline.py). Re-running R1 with the fix is one command (`rm logs/frontier_cache/hf-deepseek-r1:*.json && python -m eval.frontier_baseline --providers hf --hf-models deepseek-ai/DeepSeek-R1`); we have not re-billed credits to do it ourselves.
 
 Proprietary frontier (GPT-4o / Claude / Gemini) deferred — the API budget is not covered by the HF compute credits we ran on. The script supports those providers with the appropriate API keys; see [`FAQ.md`](FAQ.md) and [`REPRODUCE.md`](REPRODUCE.md).
 
@@ -138,7 +144,7 @@ The composable rubric system ([chakravyuh_env/rubrics.py](chakravyuh_env/rubrics
 | **Writeup blog (Blog.md, in HF Space)** | [`Blog.md`](Blog.md) — 5-minute story, separate from README, pushed into the HF Space per organisers' clarification |
 | **YouTube demo video (90 sec)** | *to be added — see HF Space README once recorded* |
 | **Analyzer LoRA v2** (defender, HF Hub) | [`ujjwalpardeshi/chakravyuh-analyzer-lora-v2`](https://huggingface.co/ujjwalpardeshi/chakravyuh-analyzer-lora-v2) |
-| **Scammer LoRA Phase 1** (adversary, HF Hub — gated) | [`ujjwalpardeshi/chakravyuh-scammer-lora-phase1`](https://huggingface.co/ujjwalpardeshi/chakravyuh-scammer-lora-phase1) — Qwen2.5-0.5B + GRPO-trained adversary. **n=64 best-of-8 bypass: 93.75 % vs rule-based ScriptedAnalyzer (100 % on held-out novel categories), 32.8 % vs v2 LoRA defender — a 60 pp gap that quantifies co-evolution.** Per-sample artifacts: [`logs/b2_phase1_scammer_eval_n64_bestof8.json`](logs/b2_phase1_scammer_eval_n64_bestof8.json) · [`logs/b2_phase1_scammer_vs_v2_lora.json`](logs/b2_phase1_scammer_vs_v2_lora.json) |
+| **Scammer LoRA Phase 1** (adversary, HF Hub — gated) | [`ujjwalpardeshi/chakravyuh-scammer-lora-phase1`](https://huggingface.co/ujjwalpardeshi/chakravyuh-scammer-lora-phase1) — Qwen2.5-0.5B + GRPO-trained adversary. **n=64 best-of-8 bypass: 93.75 % vs rule-based ScriptedAnalyzer (100 % on held-out novel categories), 32.8 % vs v2 LoRA defender — a 60 pp gap that quantifies co-evolution.** Statistical evidence: train vs held-out parity (Fisher p = 0.80 single-shot, p = 0.11 best-of-8 — *no significant difference = OOD generalization*); best-of-8 strictly dominates single-shot (McNemar p ≈ 5e-7; zero cases where single-shot won that best-of-8 lost). Per-sample artifacts: [`logs/b2_phase1_scammer_eval_n64_bestof8.json`](logs/b2_phase1_scammer_eval_n64_bestof8.json) · [`logs/b2_phase1_scammer_vs_v2_lora.json`](logs/b2_phase1_scammer_vs_v2_lora.json) · [`logs/scammer_significance.json`](logs/scammer_significance.json) |
 | Training notebooks (TRL + GRPO) | v2 retrain: [`notebooks/v2_retrain_safe.ipynb`](notebooks/v2_retrain_safe.ipynb) · B.2 Scammer: [`notebooks/T4_or_A100_b2_phase1_scammer.ipynb`](notebooks/T4_or_A100_b2_phase1_scammer.ipynb) |
 | Long-form blog draft (repo-internal) | [`docs/blog_post.md`](docs/blog_post.md) |
 | Slide deck (Marp source) | [`docs/chakravyuh_slides.md`](docs/chakravyuh_slides.md) — render to PDF locally with `npx -y @marp-team/marp-cli docs/chakravyuh_slides.md -o slides.pdf` (PDF intentionally not committed to keep HF Space size small) |
@@ -303,7 +309,7 @@ print(obs.reward, obs.reward_breakdown)
 
 ```bash
 pytest tests/ -v
-# 337 collected · 334 passed · 3 skipped (LLM-judge tests skip without GROQ_API_KEY)
+# 341 collected · 338 passed · 3 skipped (LLM-judge tests skip without GROQ_API_KEY)
 # Coverage: openenv contract, rubrics, scripted env, demo, explanation judge,
 # GRPO reward, MCP compliance, mode-C bench, negotiation, leaderboard, training data,
 # benign augmentation, known/novel split, red-team robustness, input sanitizer,
@@ -483,7 +489,22 @@ The scripted Analyzer is intentionally a *competent-but-beatable* baseline — s
 
 ### Training curves
 
-The v1 training curve [`training_reward_curve.png`](https://raw.githubusercontent.com/UjjwalPardeshi/Chakravyuh/a9e723bf495182724845dbf1f69f8968434a9e02/docs/assets/plots/training_reward_curve.png) is published alongside the v1 reward-hacking diagnostic [`reward_hacking_diagnostic.png`](https://raw.githubusercontent.com/UjjwalPardeshi/Chakravyuh/a9e723bf495182724845dbf1f69f8968434a9e02/docs/assets/plots/reward_hacking_diagnostic.png) so readers can see what the hack looked like in reward/loss space. The v2 per-difficulty bar chart is at [`v2_per_difficulty_check.png`](https://raw.githubusercontent.com/UjjwalPardeshi/Chakravyuh/a9e723bf495182724845dbf1f69f8968434a9e02/docs/assets/plots/v2_per_difficulty_check.png). Full trainer state for v2 lives at [`logs/v2_trainer_state.json`](logs/v2_trainer_state.json).
+![v2 GRPO training curves — reward / loss / KL / grad-norm over 615 steps](plots/chakravyuh_plots/training_curves_v2.png)
+
+> *v2 Analyzer GRPO training trajectory rendered from
+> [`logs/v2_trainer_state.json`](logs/v2_trainer_state.json) (123 logged
+> points at logging_steps=5 over 615 total steps).
+> **Reward** climbs from 1.29 → ~1.97 and stabilises with shrinking variance — the
+> 8-rubric weighted sum is being learned, not gamed.
+> **Loss** stays bounded around zero (no divergence, no clipping
+> spikes).
+> **KL** plateaus at 0.25–0.45 — honestly disclosed in
+> [`docs/training_diagnostics.md`](docs/training_diagnostics.md); the
+> v3 plan adds a KL-early-stop guard at 0.20 (orange line).
+> **Grad norm** is well-behaved (no explosions).
+> Reproduce: `python eval/plot_training_curves.py`.*
+
+The v1 training curve [`training_reward_curve.png`](https://raw.githubusercontent.com/UjjwalPardeshi/Chakravyuh/a9e723bf495182724845dbf1f69f8968434a9e02/docs/assets/plots/training_reward_curve.png) is published alongside the v1 reward-hacking diagnostic [`reward_hacking_diagnostic.png`](https://raw.githubusercontent.com/UjjwalPardeshi/Chakravyuh/a9e723bf495182724845dbf1f69f8968434a9e02/docs/assets/plots/reward_hacking_diagnostic.png) so readers can see what the hack looked like in reward/loss space. The v2 per-difficulty bar chart is at [`v2_per_difficulty_check.png`](https://raw.githubusercontent.com/UjjwalPardeshi/Chakravyuh/a9e723bf495182724845dbf1f69f8968434a9e02/docs/assets/plots/v2_per_difficulty_check.png).
 
 ---
 
@@ -547,7 +568,7 @@ The Gradio UI provides two tabs:
 | Working training script (TRL / Unsloth, Colab) | ✅ [`training/train_colab.ipynb`](training/train_colab.ipynb) + [`notebooks/v2_retrain_safe.ipynb`](notebooks/v2_retrain_safe.ipynb) |
 | Multiple independent reward functions | ✅ 8 composable child rubrics |
 | Anti-reward-hacking design | ✅ [Anti-Reward-Hacking Design](#anti-reward-hacking-design) + [`logs/analyzer_robustness.json`](logs/analyzer_robustness.json) |
-| Real training evidence (reward/loss plots) | ✅ [training reward](https://raw.githubusercontent.com/UjjwalPardeshi/Chakravyuh/a9e723bf495182724845dbf1f69f8968434a9e02/docs/assets/plots/training_reward_curve.png) · [reward-hacking diagnostic](https://raw.githubusercontent.com/UjjwalPardeshi/Chakravyuh/a9e723bf495182724845dbf1f69f8968434a9e02/docs/assets/plots/reward_hacking_diagnostic.png) · [per-difficulty](https://raw.githubusercontent.com/UjjwalPardeshi/Chakravyuh/a9e723bf495182724845dbf1f69f8968434a9e02/docs/assets/plots/v2_per_difficulty_check.png) |
+| Real training evidence (reward/loss plots) | ✅ [v2 GRPO training curves (reward / loss / KL / grad-norm, 615 steps)](plots/chakravyuh_plots/training_curves_v2.png) · [training reward (v1)](https://raw.githubusercontent.com/UjjwalPardeshi/Chakravyuh/a9e723bf495182724845dbf1f69f8968434a9e02/docs/assets/plots/training_reward_curve.png) · [reward-hacking diagnostic](https://raw.githubusercontent.com/UjjwalPardeshi/Chakravyuh/a9e723bf495182724845dbf1f69f8968434a9e02/docs/assets/plots/reward_hacking_diagnostic.png) · [per-difficulty](https://raw.githubusercontent.com/UjjwalPardeshi/Chakravyuh/a9e723bf495182724845dbf1f69f8968434a9e02/docs/assets/plots/v2_per_difficulty_check.png) |
 | HF Space deployed | ✅ [LIVE](https://huggingface.co/spaces/ujjwalpardeshi/chakravyuh) |
 | Mini-blog OR <2-min video (writeup) | ✅ [`Blog.md`](Blog.md) (HF-Space-side writeup, MD separate from README per organisers) · long-form draft [`docs/blog_post.md`](docs/blog_post.md) · 90-sec YouTube video pending |
 | README links to all materials | ✅ (see Submission Materials) |

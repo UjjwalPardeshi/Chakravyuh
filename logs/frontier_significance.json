@@ -1,0 +1,188 @@
+{
+  "v2_lora_reference": {
+    "fpr": 0.06666666666666667,
+    "fpr_count": "2/30",
+    "detection": 0.9930555555555556,
+    "detection_count": "143/144",
+    "source": "logs/eval_v2.json:lora_v2"
+  },
+  "threshold": 0.5,
+  "comment": "All comparisons use Fisher's exact two-sided test on the 2x2 contingency between provider and v2 LoRA. The frontier providers use n_benign=31 (full bench file); v2 LoRA uses n_benign=30 (one row dropped on inference per logs/eval_v2.json \u2014 see docs/limitations.md). At this sample size only large FPR gaps (>~20 pp) reach alpha=0.05; smaller directional improvements call for B.11 benign-corpus expansion.",
+  "rows": [
+    {
+      "provider": "hf-deepseek-r1",
+      "n_benign": 31,
+      "n_scam": 144,
+      "fpr": 0.0,
+      "fpr_count": "0/31",
+      "fpr_wilson_95ci": [
+        0.0,
+        0.11025900073475385
+      ],
+      "detection": 0.0,
+      "detection_count": "0/144",
+      "detection_wilson_95ci": [
+        0.0,
+        0.025984567266588023
+      ],
+      "vs_v2_lora": {
+        "fpr_delta_pp": -6.666666666666667,
+        "fpr_fisher_exact_two_sided_p": 0.23770491803279267,
+        "fpr_significant_at_0.05": false,
+        "detection_delta_pp": -99.30555555555556,
+        "detection_fisher_exact_two_sided_p": 7.054559133850962e-13,
+        "detection_significant_at_0.05": true
+      }
+    },
+    {
+      "provider": "hf-deepseek-v3-0324",
+      "n_benign": 31,
+      "n_scam": 143,
+      "fpr": 0.2903225806451613,
+      "fpr_count": "9/31",
+      "fpr_wilson_95ci": [
+        0.16095620718432874,
+        0.4659265995754067
+      ],
+      "detection": 1.0,
+      "detection_count": "143/143",
+      "detection_wilson_95ci": [
+        0.9738384762900977,
+        1.0
+      ],
+      "vs_v2_lora": {
+        "fpr_delta_pp": 22.365591397849467,
+        "fpr_fisher_exact_two_sided_p": 0.042630869823987595,
+        "fpr_significant_at_0.05": true,
+        "detection_delta_pp": 0.694444444444442,
+        "detection_fisher_exact_two_sided_p": 1.0,
+        "detection_significant_at_0.05": false
+      }
+    },
+    {
+      "provider": "hf-gemma-3-27b-it",
+      "n_benign": 31,
+      "n_scam": 143,
+      "fpr": 0.5161290322580645,
+      "fpr_count": "16/31",
+      "fpr_wilson_95ci": [
+        0.3484011828697317,
+        0.6803001396872116
+      ],
+      "detection": 1.0,
+      "detection_count": "143/143",
+      "detection_wilson_95ci": [
+        0.9738384762900977,
+        1.0
+      ],
+      "vs_v2_lora": {
+        "fpr_delta_pp": 44.946236559139784,
+        "fpr_fisher_exact_two_sided_p": 0.00016027213309477493,
+        "fpr_significant_at_0.05": true,
+        "detection_delta_pp": 0.694444444444442,
+        "detection_fisher_exact_two_sided_p": 1.0,
+        "detection_significant_at_0.05": false
+      }
+    },
+    {
+      "provider": "hf-gpt-oss-120b",
+      "n_benign": 31,
+      "n_scam": 143,
+      "fpr": 0.16129032258064516,
+      "fpr_count": "5/31",
+      "fpr_wilson_95ci": [
+        0.07092519905439935,
+        0.32634702724978865
+      ],
+      "detection": 0.986013986013986,
+      "detection_count": "141/143",
+      "detection_wilson_95ci": [
+        0.9504420452891259,
+        0.9961561939019481
+      ],
+      "vs_v2_lora": {
+        "fpr_delta_pp": 9.46236559139785,
+        "fpr_fisher_exact_two_sided_p": 0.4248219534666009,
+        "fpr_significant_at_0.05": false,
+        "detection_delta_pp": -0.7041569541569537,
+        "detection_fisher_exact_two_sided_p": 0.6223730056849482,
+        "detection_significant_at_0.05": false
+      }
+    },
+    {
+      "provider": "hf-llama-3.3-70b-instruct",
+      "n_benign": 31,
+      "n_scam": 143,
+      "fpr": 0.03225806451612903,
+      "fpr_count": "1/31",
+      "fpr_wilson_95ci": [
+        0.00571707408694444,
+        0.16194457176169624
+      ],
+      "detection": 0.993006993006993,
+      "detection_count": "142/143",
+      "detection_wilson_95ci": [
+        0.9614538318329731,
+        0.998764525907613
+      ],
+      "vs_v2_lora": {
+        "fpr_delta_pp": -3.4408602150537635,
+        "fpr_fisher_exact_two_sided_p": 0.6123923312031003,
+        "fpr_significant_at_0.05": false,
+        "detection_delta_pp": -0.004856254856255848,
+        "detection_fisher_exact_two_sided_p": 0.999999999999883,
+        "detection_significant_at_0.05": false
+      }
+    },
+    {
+      "provider": "hf-qwen2.5-72b-instruct",
+      "n_benign": 31,
+      "n_scam": 143,
+      "fpr": 0.06451612903225806,
+      "fpr_count": "2/31",
+      "fpr_wilson_95ci": [
+        0.017874407775063144,
+        0.20718988318746434
+      ],
+      "detection": 0.986013986013986,
+      "detection_count": "141/143",
+      "detection_wilson_95ci": [
+        0.9504420452891259,
+        0.9961561939019481
+      ],
+      "vs_v2_lora": {
+        "fpr_delta_pp": -0.2150537634408603,
+        "fpr_fisher_exact_two_sided_p": 1.0,
+        "fpr_significant_at_0.05": false,
+        "detection_delta_pp": -0.7041569541569537,
+        "detection_fisher_exact_two_sided_p": 0.6223730056849482,
+        "detection_significant_at_0.05": false
+      }
+    },
+    {
+      "provider": "hf-qwen2.5-7b-instruct",
+      "n_benign": 31,
+      "n_scam": 143,
+      "fpr": 0.16129032258064516,
+      "fpr_count": "5/31",
+      "fpr_wilson_95ci": [
+        0.07092519905439935,
+        0.32634702724978865
+      ],
+      "detection": 1.0,
+      "detection_count": "143/143",
+      "detection_wilson_95ci": [
+        0.9738384762900977,
+        1.0
+      ],
+      "vs_v2_lora": {
+        "fpr_delta_pp": 9.46236559139785,
+        "fpr_fisher_exact_two_sided_p": 0.4248219534666009,
+        "fpr_significant_at_0.05": false,
+        "detection_delta_pp": 0.694444444444442,
+        "detection_fisher_exact_two_sided_p": 1.0,
+        "detection_significant_at_0.05": false
+      }
+    }
+  ]
+}

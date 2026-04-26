@@ -15,6 +15,10 @@ Last verified: 2026-04-25.
 | Scripted baseline temporal-gap (80 % known → 50 % novel, 30 pp) on n = 135 | [`logs/mode_c_scripted_n135.json`](../logs/mode_c_scripted_n135.json) | ✅ shipped |
 | Per-difficulty detection ramp scripted vs v2 | [`logs/eval_v2.json`](../logs/eval_v2.json) `per_difficulty` | ✅ shipped |
 | Per-rubric post-hoc ablation (sensitivity) | [`docs/ablation_study.md`](ablation_study.md) + [`logs/ablation_study.json`](../logs/ablation_study.json) | ✅ shipped |
+| **GRPO+LoRA contribution significance test** (Qwen2.5-7B base vs v2 LoRA, Fisher's exact) | [`logs/grpo_lora_significance.json`](../logs/grpo_lora_significance.json) | ✅ shipped — directional (p = 0.42 at n_benign = 30) |
+| **Pairwise frontier-vs-LoRA significance** (7 frontier models, Fisher's exact) | [`logs/frontier_significance.json`](../logs/frontier_significance.json) | ✅ shipped — significantly beats DeepSeek-V3 (p = 0.043) and gemma-3-27B (p = 0.0002) |
+| **Leakage-clean detection slice** (cosine < 0.70, n = 50) | [`logs/leakage_clean_slice.json`](../logs/leakage_clean_slice.json) | ✅ shipped — scripted + every cached frontier model; v2 LoRA per-row deferred to B.12 |
+| **Scammer LoRA significance** (Phase 1) — train-vs-held-out parity (Fisher's exact) + best-of-8 vs single-shot (McNemar exact) | [`logs/scammer_significance.json`](../logs/scammer_significance.json) | ✅ shipped — OOD parity p = 0.80 SS / 0.11 BO8 (generalization holds); best-of-8 strictly dominant p ≈ 5e-7 (no cherry-picking) |
 | Time-to-detection (scripted env, n = 100 episodes) | [`logs/time_to_detection.json`](../logs/time_to_detection.json) | ✅ shipped |
 | Red-team robustness against rule-based Analyzer | [`logs/analyzer_robustness.json`](../logs/analyzer_robustness.json) | ✅ shipped |
 | Scripted-baseline error analysis (per-scenario FPs + missed scams) | [`docs/v2_error_analysis.md`](v2_error_analysis.md) | ✅ shipped |
@@ -71,7 +75,7 @@ Last verified: 2026-04-25.
 | Reasoning-aware score parser for chain-of-thought models (DeepSeek-R1, future o1-class) | DeepSeek-R1's `<think>...</think>` output isn't recognized by our JSON-only score parser, so it defaulted to 0 (F1 = 0.014 in [`logs/frontier_comparison.csv`](../logs/frontier_comparison.csv)). The model itself is fine; the eval harness needs to strip thinking tokens before parsing. | v3 — small parser change in [`eval/frontier_baseline.py`](../eval/frontier_baseline.py) `parse_frontier_score` |
 | Adversarial Scammer co-evolves with Analyzer | Needs HF GPU credits, ~5 hours A100 | v3 — onsite hackathon work |
 | SFT vs RL controlled experiment | Needs ~1.5 hours A100 | v3 — onsite hackathon work |
-| Per-scenario v2 LoRA error analysis (which 2 FPs, which 1 missed scam) | Eval is aggregate-only; per-scenario audit needs GPU re-inference | v3 — re-run inference, log per-row |
+| Per-scenario v2 LoRA error analysis + leakage-clean v2 slice | Eval is aggregate-only; per-scenario audit needs GPU re-inference. **Partial cover shipped:** [`logs/leakage_clean_slice.json`](../logs/leakage_clean_slice.json) gives leakage-clean detection / FPR for scripted + every cached frontier model. The v2 LoRA row is the missing piece. | v3 — B.12, re-run v2 inference and log per-row |
 | Per-language detection breakdown (Hindi, Tamil, Telugu, Kannada, Bengali, Marathi) | Needs GPU re-inference on per-language slices | v3 — `eval/per_language_eval.py` (not yet implemented) |
 | Calibration ECE + reliability diagram | Trained for via `CalibrationRubric`; not yet reported because per-scenario v2 logits needed | v3 |
 | Token saliency / interpretability heatmap | Needs running v2 model + captum integrated-gradients | v3 |
@@ -123,7 +127,7 @@ KL divergence reached 0.36 by step 15 and stayed in the [0.25, 0.45] band for th
 
 ```bash
 make reproduce        # eval-v2 + bootstrap, ~10 min CPU cached
-pytest tests/ -v      # 337 collected · 335 pass · 2 skipped
+pytest tests/ -v      # 341 collected · 338 pass · 3 skipped
 make smoke-test       # in-process env contract
 make link-check       # README references resolve
 ```

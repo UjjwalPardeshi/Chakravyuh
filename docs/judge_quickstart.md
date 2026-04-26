@@ -66,7 +66,7 @@ Five terminal commands (60 seconds total on a clean machine with the venv instal
 ```bash
 pip install -e '.[llm,eval]'
 make smoke-test               # in-process env reset+step in <5s
-pytest tests/ --tb=no -q      # 337 collected; 334 pass + 3 skip
+pytest tests/ --tb=no -q      # 341 collected; 338 pass + 3 skip
 make link-check               # every README link resolves
 make reproduce                # ~10 min CPU cached eval; verifies headline numbers within 0.5pp
 ```

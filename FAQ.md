@@ -17,6 +17,8 @@ A multi-agent OpenEnv-compliant reinforcement-learning environment for Indian UP
 | B.2 Scammer LoRA bypass (n=64, single-shot) | 59.4 % | [`logs/b2_phase1_scammer_eval_n64.json`](logs/b2_phase1_scammer_eval_n64.json) |
 | B.2 Scammer LoRA bypass (n=64, best-of-8) | 93.75 % | [`logs/b2_phase1_scammer_eval_n64_bestof8.json`](logs/b2_phase1_scammer_eval_n64_bestof8.json) |
 | B.2 held-out novel category bypass (best-of-8) | 100 % | same file, `aggregate.held_out_seeds` |
+| B.2 Scammer train-vs-held-out parity (Fisher's exact, OOD generalization) | p = 0.80 (single-shot), p = 0.11 (best-of-8) | [`logs/scammer_significance.json`](logs/scammer_significance.json) |
+| B.2 Scammer best-of-8 vs single-shot (McNemar exact, paired) | p ≈ 5e-7 (strictly dominant) | [`logs/scammer_significance.json`](logs/scammer_significance.json) |
 | Semantic-leakage audit (cosine > 0.85 to training) | 44.8 % of bench | [`logs/semantic_leakage_audit.json`](logs/semantic_leakage_audit.json) |
 | Live HF Space cold-start | 2.7 s | manual probe; reproducible from any laptop |
 
@@ -57,7 +59,7 @@ The merged 7B + LoRA quantized to q4_k_m runs at ~10 tok/s on a Pixel 8 (8 GB RA
 ```bash
 git clone https://github.com/UjjwalPardeshi/Chakravyuh && cd Chakravyuh
 uv pip sync uv.lock          # pinned reproducible install
-pytest tests/ -v             # 337 collected, 335 pass, 2 GROQ-gated skip
+pytest tests/ -v             # 341 collected, 338 pass, 3 GROQ-gated skip
 make smoke-test              # in-process env reset+step
 make reproduce               # CHAKRAVYUH_SKIP_INFERENCE=1 for cached scores (~10 min CPU)
 ```
@@ -90,12 +92,12 @@ We ran an open-weight frontier comparison via HuggingFace Inference Providers (p
 
 Four readouts:
 
-1. **GRPO + LoRA contribution is now isolated.** Same Qwen2.5-7B base, no LoRA → FPR 16.1 % / F1 0.980. After our GRPO training → FPR **6.7 %** / F1 **0.990**. **−9.4 pp FPR, +0.010 F1 from the reward-engineered training alone.**
-2. **Parameter efficiency.** 7B + LoRA ties Llama-3.3-70B on F1 (0.990 vs 0.990) at 10× fewer parameters and beats every other model in the table on F1.
-3. **DeepSeek-V3 (671B) reproduces the v1 reward-hacking signature externally** — its 99.3 % / 29 % FPR profile is structurally identical to our v1's 100 % / 36 %. A frontier-class model independently lands in the failure mode our reward-engineering methodology diagnoses and fixes — external validation of the diagnostic itself. gemma-3-27B-it (FPR 51.6 %) is the same story at smaller scale.
+1. **GRPO + LoRA contribution is now isolated.** Same Qwen2.5-7B base, no LoRA → FPR 16.1 % / F1 0.980. After our GRPO training → FPR **6.7 %** / F1 **0.990**. **−9.4 pp FPR, +0.010 F1 from the reward-engineered training alone** (point estimate; Fisher's exact p = 0.42 at n_benign = 30 — directional, not yet at α = 0.05; B.11 benign-corpus expansion fixes that). Source: [`logs/grpo_lora_significance.json`](logs/grpo_lora_significance.json).
+2. **Parameter efficiency — pairwise Fisher's exact vs v2 LoRA** ([`logs/frontier_significance.json`](logs/frontier_significance.json)): tied with Llama-3.3-70B (p = 0.61) and Qwen2.5-72B (p = 1.00) at 10× fewer parameters; **significantly beats DeepSeek-V3 (p = 0.043) and gemma-3-27B (p = 0.0002).**
+3. **DeepSeek-V3 (671B) reproduces the v1 reward-hacking signature externally** — its 99.3 % / 29 % FPR profile is structurally identical to our v1's 100 % / 36 %, and the FPR gap vs the calibrated LoRA is statistically significant. A frontier-class model independently lands in the failure mode our reward-engineering methodology diagnoses and fixes — external validation of the diagnostic itself. gemma-3-27B-it (FPR 51.6 %, p = 0.0002 vs LoRA) is the same story at smaller scale.
 4. **Open-weight frontier ≠ guaranteed scam-spotting.** Five of seven open frontier models we tested have FPR > 6.7 % on the same bench. The calibration channel — not raw capacity — is what's actually contested.
 
-† **DeepSeek-R1** is a chain-of-thought reasoning model: its output starts with `<think>` blocks instead of the JSON we ask for, so the score parser defaults to 0. The 0.7 % is a parsing artifact, not a model claim. A reasoning-aware parser would lift this; tracked as v3 work.
+† **DeepSeek-R1** is a chain-of-thought reasoning model: its output starts with `<think>` blocks instead of the JSON we asked for, so the original parser defaulted to 0. Reasoning-aware parser fix shipped at [`eval/frontier_baseline.py:_strip_reasoning`](eval/frontier_baseline.py) with unit tests; re-running R1 with the fix is one command (`rm logs/frontier_cache/hf-deepseek-r1:*.json && python -m eval.frontier_baseline --providers hf --hf-models deepseek-ai/DeepSeek-R1`).
 
 **Proprietary frontier (GPT-4o / Claude / Gemini) deferred** — those APIs are not covered by HF compute credits and we did not authorize the ~$40–80 separate spend. The script supports them with the appropriate API keys (`OPENAI_API_KEY` / `ANTHROPIC_API_KEY` / `GEMINI_API_KEY`); reproducing instructions in [`REPRODUCE.md`](REPRODUCE.md) Step 6b.
 

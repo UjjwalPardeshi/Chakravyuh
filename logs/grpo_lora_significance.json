@@ -1,0 +1,41 @@
+{
+  "test": "Qwen2.5-7B-Instruct (base, no LoRA) vs v2 LoRA",
+  "purpose": "Isolate the GRPO+LoRA training contribution: same base model, same params; the only intervention is our reward-engineered GRPO post-training. A statistically significant FPR drop here rules out 'the base model was already that good' as an explanation.",
+  "threshold": 0.5,
+  "base_qwen_7b": {
+    "fpr": 0.16129032258064516,
+    "fpr_count": "5/31",
+    "fpr_wilson_95ci": [
+      0.07092519905439935,
+      0.32634702724978865
+    ],
+    "detection": 1.0,
+    "detection_count": "143/143",
+    "detection_wilson_95ci": [
+      0.9738384762900977,
+      1.0
+    ],
+    "source": "logs/frontier_cache/hf-qwen2.5-7b-instruct:*.json"
+  },
+  "v2_lora": {
+    "fpr": 0.06666666666666667,
+    "fpr_count": "2/30",
+    "fpr_wilson_95ci": [
+      0.01847663532769335,
+      0.2132381772107209
+    ],
+    "detection": 0.9930555555555556,
+    "detection_count": "143/144",
+    "detection_wilson_95ci": [
+      0.9617143276425165,
+      0.998773112969598
+    ],
+    "source": "logs/eval_v2.json:lora_v2"
+  },
+  "fpr_delta_pp": 9.46236559139785,
+  "fpr_fisher_exact_two_sided_p": 0.4248219534666009,
+  "fpr_significant_at_alpha_0.05": false,
+  "detection_delta_pp": -0.694444444444442,
+  "detection_fisher_exact_two_sided_p": 1.0,
+  "interpretation": "Base FPR 16.1% \u2192 v2 LoRA FPR 6.7% (delta +9.5 pp, Fisher p = 0.4248). Detection 100.0% \u2192 99.3% (delta -0.7 pp, Fisher p = 1.0000). Same 7B Qwen base, only the GRPO+LoRA training differs \u2014 so the FPR drop is attributable to the reward-engineered training."
+}

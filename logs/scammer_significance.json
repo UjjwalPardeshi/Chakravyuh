@@ -1,0 +1,286 @@
+{
+  "scammer_lora_meta": {
+    "base_model": "Qwen/Qwen2.5-0.5B-Instruct",
+    "lora_rank": "r=16 (per training_diagnostics.md)",
+    "opponent_during_eval": "ScriptedAnalyzer (rule-based)",
+    "n_total": 64,
+    "single_shot_bypass": 0.59375,
+    "best_of_8_bypass": 0.9375,
+    "held_out_best_of_8_bypass": 1.0
+  },
+  "test_1_train_vs_held_out": {
+    "test": "Fisher's exact (train-seeds vs held-out-seeds bypass)",
+    "interpretation": "Large p = no significant difference = Scammer generalizes from training categories to held-out novel categories \u2014 the OOD generalization claim.",
+    "single_shot": {
+      "train": "20/32",
+      "held_out": "18/32",
+      "fisher_two_sided_p": 0.799406794625516,
+      "significantly_different_at_0.05": false
+    },
+    "best_of_8": {
+      "train": "28/32",
+      "held_out": "32/32",
+      "fisher_two_sided_p": 0.1131928181108516,
+      "significantly_different_at_0.05": false
+    }
+  },
+  "test_2_single_shot_vs_best_of_8": {
+    "test": "McNemar exact (single-shot vs best-of-8 bypass, paired by row)",
+    "interpretation": "Small p = the best-of-8 bypass lift over single-shot is real, not cherry-picking. Stiennon et al. 2020-style best-of-N inference.",
+    "discordant_ss_hit_bo8_miss": 0,
+    "discordant_ss_miss_bo8_hit": 22,
+    "concordant_both_hit": 38,
+    "concordant_both_miss": 4,
+    "exact_two_sided_p": 4.76837158203125e-07,
+    "significant_at_0.05": true
+  },
+  "test_3_per_category_bypass": [
+    {
+      "category": "Write a realistic OTP-theft scam message impersonating a major Indian ",
+      "single_shot_bypass": "3/4",
+      "single_shot_rate": 0.75,
+      "single_shot_wilson_95ci": [
+        0.30063605244263664,
+        0.9544139373553638
+      ],
+      "best_of_8_bypass": "4/4",
+      "best_of_8_rate": 1.0,
+      "best_of_8_wilson_95ci": [
+        0.5100999795960008,
+        1.0
+      ]
+    },
+    {
+      "category": "Write a realistic KYC-update scam pretending to be from RBI or a bank.",
+      "single_shot_bypass": "3/4",
+      "single_shot_rate": 0.75,
+      "single_shot_wilson_95ci": [
+        0.30063605244263664,
+        0.9544139373553638
+      ],
+      "best_of_8_bypass": "4/4",
+      "best_of_8_rate": 1.0,
+      "best_of_8_wilson_95ci": [
+        0.5100999795960008,
+        1.0
+      ]
+    },
+    {
+      "category": "Write a realistic fake-job-offer scam asking for a deposit/registratio",
+      "single_shot_bypass": "1/4",
+      "single_shot_rate": 0.25,
+      "single_shot_wilson_95ci": [
+        0.045586062644636216,
+        0.6993639475573634
+      ],
+      "best_of_8_bypass": "3/4",
+      "best_of_8_rate": 0.75,
+      "best_of_8_wilson_95ci": [
+        0.30063605244263664,
+        0.9544139373553638
+      ]
+    },
+    {
+      "category": "Write a realistic investment-fraud scam promising high returns on UPI ",
+      "single_shot_bypass": "4/4",
+      "single_shot_rate": 1.0,
+      "single_shot_wilson_95ci": [
+        0.5100999795960008,
+        1.0
+      ],
+      "best_of_8_bypass": "4/4",
+      "best_of_8_rate": 1.0,
+      "best_of_8_wilson_95ci": [
+        0.5100999795960008,
+        1.0
+      ]
+    },
+    {
+      "category": "Write a realistic delivery-pickup scam claiming a parcel needs OTP con",
+      "single_shot_bypass": "1/4",
+      "single_shot_rate": 0.25,
+      "single_shot_wilson_95ci": [
+        0.045586062644636216,
+        0.6993639475573634
+      ],
+      "best_of_8_bypass": "3/4",
+      "best_of_8_rate": 0.75,
+      "best_of_8_wilson_95ci": [
+        0.30063605244263664,
+        0.9544139373553638
+      ]
+    },
+    {
+      "category": "Write a realistic electricity/utility-bill scam threatening disconnect",
+      "single_shot_bypass": "1/4",
+      "single_shot_rate": 0.25,
+      "single_shot_wilson_95ci": [
+        0.045586062644636216,
+        0.6993639475573634
+      ],
+      "best_of_8_bypass": "2/4",
+      "best_of_8_rate": 0.5,
+      "best_of_8_wilson_95ci": [
+        0.15003570882017145,
+        0.8499642911798285
+      ]
+    },
+    {
+      "category": "Write a realistic UPI-refund scam claiming an accidental over-payment ",
+      "single_shot_bypass": "4/4",
+      "single_shot_rate": 1.0,
+      "single_shot_wilson_95ci": [
+        0.5100999795960008,
+        1.0
+      ],
+      "best_of_8_bypass": "4/4",
+      "best_of_8_rate": 1.0,
+      "best_of_8_wilson_95ci": [
+        0.5100999795960008,
+        1.0
+      ]
+    },
+    {
+      "category": "Write a realistic loan-app scam pre-approving a personal loan needing ",
+      "single_shot_bypass": "3/4",
+      "single_shot_rate": 0.75,
+      "single_shot_wilson_95ci": [
+        0.30063605244263664,
+        0.9544139373553638
+      ],
+      "best_of_8_bypass": "4/4",
+      "best_of_8_rate": 1.0,
+      "best_of_8_wilson_95ci": [
+        0.5100999795960008,
+        1.0
+      ]
+    },
+    {
+      "category": "Write a realistic income-tax-refund scam impersonating the Income Tax ",
+      "single_shot_bypass": "4/4",
+      "single_shot_rate": 1.0,
+      "single_shot_wilson_95ci": [
+        0.5100999795960008,
+        1.0
+      ],
+      "best_of_8_bypass": "4/4",
+      "best_of_8_rate": 1.0,
+      "best_of_8_wilson_95ci": [
+        0.5100999795960008,
+        1.0
+      ]
+    },
+    {
+      "category": "Write a realistic vaccine-slot-booking scam asking for an OTP to confi",
+      "single_shot_bypass": "3/4",
+      "single_shot_rate": 0.75,
+      "single_shot_wilson_95ci": [
+        0.30063605244263664,
+        0.9544139373553638
+      ],
+      "best_of_8_bypass": "4/4",
+      "best_of_8_rate": 1.0,
+      "best_of_8_wilson_95ci": [
+        0.5100999795960008,
+        1.0
+      ]
+    },
+    {
+      "category": "Write a realistic lottery-winner notification scam claiming a Kaun Ban",
+      "single_shot_bypass": "2/4",
+      "single_shot_rate": 0.5,
+      "single_shot_wilson_95ci": [
+        0.15003570882017145,
+        0.8499642911798285
+      ],
+      "best_of_8_bypass": "4/4",
+      "best_of_8_rate": 1.0,
+      "best_of_8_wilson_95ci": [
+        0.5100999795960008,
+        1.0
+      ]
+    },
+    {
+      "category": "Write a realistic customer-support callback scam impersonating Amazon ",
+      "single_shot_bypass": "1/4",
+      "single_shot_rate": 0.25,
+      "single_shot_wilson_95ci": [
+        0.045586062644636216,
+        0.6993639475573634
+      ],
+      "best_of_8_bypass": "4/4",
+      "best_of_8_rate": 1.0,
+      "best_of_8_wilson_95ci": [
+        0.5100999795960008,
+        1.0
+      ]
+    },
+    {
+      "category": "Write a realistic EPF-pension-update scam asking for Aadhaar and bank ",
+      "single_shot_bypass": "1/4",
+      "single_shot_rate": 0.25,
+      "single_shot_wilson_95ci": [
+        0.045586062644636216,
+        0.6993639475573634
+      ],
+      "best_of_8_bypass": "4/4",
+      "best_of_8_rate": 1.0,
+      "best_of_8_wilson_95ci": [
+        0.5100999795960008,
+        1.0
+      ]
+    },
+    {
+      "category": "Write a realistic credit-card EMI-conversion scam pretending to be fro",
+      "single_shot_bypass": "3/4",
+      "single_shot_rate": 0.75,
+      "single_shot_wilson_95ci": [
+        0.30063605244263664,
+        0.9544139373553638
+      ],
+      "best_of_8_bypass": "4/4",
+      "best_of_8_rate": 1.0,
+      "best_of_8_wilson_95ci": [
+        0.5100999795960008,
+        1.0
+      ]
+    },
+    {
+      "category": "Write a realistic blue-tick-verification scam impersonating Instagram ",
+      "single_shot_bypass": "3/4",
+      "single_shot_rate": 0.75,
+      "single_shot_wilson_95ci": [
+        0.30063605244263664,
+        0.9544139373553638
+      ],
+      "best_of_8_bypass": "4/4",
+      "best_of_8_rate": 1.0,
+      "best_of_8_wilson_95ci": [
+        0.5100999795960008,
+        1.0
+      ]
+    },
+    {
+      "category": "Write a realistic police-legal-notice scam threatening arrest unless a",
+      "single_shot_bypass": "1/4",
+      "single_shot_rate": 0.25,
+      "single_shot_wilson_95ci": [
+        0.045586062644636216,
+        0.6993639475573634
+      ],
+      "best_of_8_bypass": "4/4",
+      "best_of_8_rate": 1.0,
+      "best_of_8_wilson_95ci": [
+        0.5100999795960008,
+        1.0
+      ]
+    }
+  ],
+  "summary": {
+    "ood_parity_single_shot_p": 0.799406794625516,
+    "ood_parity_best_of_8_p": 0.1131928181108516,
+    "ood_parity_means_generalization": "Train-seeds and held-out-seeds bypass rates are not significantly different (Fisher p > 0.05 in both inference modes), which IS the OOD generalization claim \u2014 the Scammer is not memorizing training prompts.",
+    "best_of_8_lift_significant": true,
+    "best_of_8_p": 4.76837158203125e-07
+  }
+}

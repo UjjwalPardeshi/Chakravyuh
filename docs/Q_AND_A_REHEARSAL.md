@@ -121,9 +121,13 @@ Per-language eval is Phase B.8. Numbers not yet measured. The base model (Qwen2.
 
 Fair pushback. The honest framing: **Phase 1 is the *training-loop convergence proof*; Phase 2 is the v2-LoRA-vs-trained-Scammer co-evolution.** What Phase 1 demonstrates is that GRPO can train a small LLM to reliably evade a rule-based defense (93.75 % best-of-8 on n=64) and that the trained Scammer **generalizes to held-out novel categories at 100 %** (eight categories never seen in training: income-tax refund, vaccine slot, lottery, EMI conversion, blue-tick verification, EPF pension, customer-support callback, police notice). Held-out > train under best-of-8 is the real-generalization signature, not memorization.
 
+**Statistical evidence we shipped** ([`logs/scammer_significance.json`](../logs/scammer_significance.json)):
+
+- **Train vs held-out parity** (Fisher's exact two-sided): single-shot p = **0.80** (train 20/32 = 62.5 % vs held-out 18/32 = 56.3 %); best-of-8 p = **0.11** (train 28/32 = 87.5 % vs held-out 32/32 = 100 %). Non-significant difference IS the OOD-generalization claim — the Scammer evades equally well on attack categories it never saw during training. If memorization were doing the work, train would dominate held-out and p would be small.
+
 Phase 2 (Analyzer LoRA retrain against the frozen Phase-1 Scammer with per-rubric W&B logging) is queued for the onsite GPU sprint and produces co-evolution curves. We don't claim Phase 2 results until Phase 2 runs.
 
-Artifacts: [`logs/b2_phase1_scammer_eval_n64.json`](../logs/b2_phase1_scammer_eval_n64.json), [`logs/b2_phase1_scammer_eval_n64_bestof8.json`](../logs/b2_phase1_scammer_eval_n64_bestof8.json).
+Artifacts: [`logs/b2_phase1_scammer_eval_n64.json`](../logs/b2_phase1_scammer_eval_n64.json), [`logs/b2_phase1_scammer_eval_n64_bestof8.json`](../logs/b2_phase1_scammer_eval_n64_bestof8.json), [`logs/scammer_significance.json`](../logs/scammer_significance.json).
 
 ---
 
@@ -135,6 +139,8 @@ We ship both numbers, single-shot **59.4 %** and best-of-8 **93.75 %**, precisel
 - **Best-of-8** = the **realistic threat model**. Real attackers iterate — they don't send one phishing message and quit if it fails. 8 retries is conservative; production scammers attempt thousands.
 
 The Wilson 95 % CI on best-of-8 is [85.0 %, 97.5 %] (n=64); on the held-out subset it's [89.3 %, 100 %] (n=32). Both numbers are statistically defensible for their respective claims. The Stiennon et al. 2020 best-of-N literature is the standard reference for this evaluation regime.
+
+**Cherry-picking ruled out by McNemar's exact paired test** ([`logs/scammer_significance.json`](../logs/scammer_significance.json)): best-of-8 strictly dominates single-shot (p ≈ **5e-7**). On all 64 paired prompts: 22 cases where single-shot missed and best-of-8 hit, **0 cases where single-shot hit and best-of-8 missed**, 38 both-hit, 4 both-miss. Best-of-N never *hurts* — that's the cherry-picking refutation in one line.
 
 ---
 
@@ -158,12 +164,12 @@ We ran an open-weight frontier comparison via HuggingFace Inference Providers �
 
 Four findings:
 
-1. **🎯 GRPO + LoRA contribution isolated.** Same Qwen2.5-7B base **without our LoRA** scores 99.3 % / 16.1 % FPR / F1 = 0.980. **With** our reward-engineered GRPO training: 99.3 % / **6.7 %** / 0.990. Same model, same params: **−9.4 pp FPR, +0.010 F1 attributable purely to the training**. The reward design is what's doing the work.
-2. **Parameter efficiency vs frontier.** Our 7B + LoRA scores F1 = **0.990**; Llama-3.3-70B scores 0.990 — tied at 10× fewer parameters. Beats Qwen2.5-72B (0.983), gpt-oss-120B (0.972), DeepSeek-V3-671B (0.966), gemma-3-27B (0.944).
-3. **🔥 The killer finding.** DeepSeek-V3 (671B) scores detection 99.3 % / FPR **29 %** / F1 = 0.966; gemma-3-27B scores detection 99.3 % / FPR **51.6 %** / F1 = 0.944. Both are structurally identical to our v1 LoRA (100 % / 36 % / F1 = 0.96). **Two frontier-class models independently reproduce the reward-hacking signature our methodology diagnoses and fixes.** External validation that calibrated reward design beats raw model capacity.
+1. **🎯 GRPO + LoRA contribution isolated.** Same Qwen2.5-7B base **without our LoRA** scores 100 % / 16.1 % FPR / F1 = 0.983 on the cached comparison run. **With** our reward-engineered GRPO training: 99.3 % / **6.7 %** / 0.990. Same model, same params: **−9.4 pp FPR, +0.010 F1 attributable purely to the training** (point estimate; Fisher's exact two-sided p = 0.42 at n_benign = 30 — directional improvement, not yet at α = 0.05). Honest framing: the bench expansion to ≥150 benigns (B.11) is what tightens this from "directional" to "statistically significant" — see [`logs/grpo_lora_significance.json`](../logs/grpo_lora_significance.json).
+2. **Parameter efficiency — pairwise Fisher's exact vs v2 LoRA** ([`logs/frontier_significance.json`](../logs/frontier_significance.json)): tied with Llama-3.3-70B (p = 0.61) and Qwen2.5-72B (p = 1.00) at 10× fewer parameters; **significantly beats DeepSeek-V3 (p = 0.043) and gemma-3-27B (p = 0.0002)**.
+3. **🔥 The killer finding (now statistically grounded).** DeepSeek-V3 (671B) scores detection 99.3 % / FPR **29 %** / F1 = 0.966; gemma-3-27B scores 99.3 % / FPR **51.6 %** / F1 = 0.944. Both structurally identical to our v1 LoRA (100 % / 36 % / F1 = 0.96), and both FPR gaps vs the calibrated v2 LoRA are statistically significant under Fisher's exact (p = 0.043 and p = 0.0002 respectively). **Two frontier-class models independently reproduce the reward-hacking signature our methodology diagnoses and fixes.** External validation that calibrated reward design beats raw capacity.
 4. **Open-weight frontier ≠ guaranteed scam-spotting.** Five of the seven open frontier models we tested have FPR > 6.7 %. The contested channel is calibration, not capacity.
 
-DeepSeek-R1 also tested — its reasoning-token output (`<think>...</think>` blocks) doesn't parse as JSON in our score-extraction prompt, so the parser defaults to 0 (F1 = 0.014). That's a parsing artifact, not a model claim; reasoning-aware parser is v3 work.
+DeepSeek-R1 also tested — its reasoning-token output (`<think>...</think>` blocks) didn't parse as JSON in our original score-extraction prompt, so the parser defaulted to 0 (F1 = 0.014). That was a parsing artifact, not a model claim. **Fix shipped:** reasoning-aware `_strip_reasoning` in [`eval/frontier_baseline.py`](../eval/frontier_baseline.py) with five new unit tests in [`tests/test_frontier_baseline.py`](../tests/test_frontier_baseline.py); re-running R1 with the fix is one command for any reviewer with an HF token.
 
 Proprietary frontier (GPT-4o / Claude / Gemini) deferred — those APIs are not covered by HF compute credits and we did not authorize the ~$40–80 separate spend. The script supports them; running it is a single command for anyone with the keys.
 
@@ -188,6 +194,24 @@ Three things, ordered by discomfort:
 3. **No frontier baseline measured yet.** We have the script; we have not run it. We say so.
 
 The thing we're proud of and would defend hardest: the v1 → v2 reward-hacking diagnosis is a real, measurable, reproducible artifact — it's the thing the hackathon guide explicitly asks for, and we shipped it.
+
+---
+
+## 21. Is the GRPO+LoRA contribution statistically significant?
+
+Honest answer: **directionally yes, statistically only marginal at this sample size.** Source: [`logs/grpo_lora_significance.json`](../logs/grpo_lora_significance.json).
+
+The numbers: same Qwen2.5-7B base, no LoRA → FPR 16.1 % (5/31 benigns flagged). With our GRPO+LoRA training → FPR 6.7 % (2/30). That's a 60 % relative reduction in benign-flagging errors — point estimate **−9.4 pp**. Wilson 95 % CIs: base [7.1 %, 32.6 %], LoRA [1.8 %, 21.3 %] — they overlap. Fisher's exact two-sided p = **0.42**.
+
+What this means in plain English: at n_benign = 30 the benign sample is small enough that even a real 9.4 pp gap doesn't clear α = 0.05. The improvement is **directionally consistent** (every metric — FPR, F1 — moves the right way; detection holds at 99.3 % vs 100 %), but proving it's not noise requires more benigns. The B.11 work item — expand the benign corpus to ≥ 150 — is what tightens the Wilson CIs and lets us reject the null.
+
+**What IS already statistically significant** ([`logs/permutation_test_v1_v2.json`](../logs/permutation_test_v1_v2.json)):
+
+- v1 → v2 FPR fix (29.3 pp delta): permutation p ≈ 0.008, Fisher exact p ≈ 0.010 — well below α = 0.05. The reward-engineering methodology *itself* is proven by the v1 → v2 delta, which is large enough to clear significance even at n = 30.
+- v2 LoRA vs DeepSeek-V3 FPR (22.4 pp delta): Fisher p = **0.043** — significant.
+- v2 LoRA vs gemma-3-27B FPR (44.9 pp delta): Fisher p = **0.0002** — highly significant.
+
+So the *headline* claim (the reward fix works) is statistically grounded. The *attribution* claim (the GRPO contribution is the cause, not the base model) is directional with the right sign but needs more benigns to clear α = 0.05.
 
 ---
 

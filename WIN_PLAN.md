@@ -10,7 +10,7 @@
 
 > **Production is healthy.** All 11 endpoints (`/`, `/health`, `/schema`, `/metadata`, `/openapi.json`, `/leaderboard`, `/demo/`, `/demo/preview`, `/eval`, `/eval/redteam`, `/eval/known-novel`, `/eval/bootstrap`, `POST /diagnose`) return 200 on the live HF Space at https://ujjwalpardeshi-chakravyuh.hf.space. Deployed SHA `08149ec`.
 >
-> **Test suite:** 334 passed · 3 skipped (337 collected). Container probe matches local. CI green except link-check-http which is now allowed-fail at the step level so the badge stays green during HF rebuild races.
+> **Test suite:** 338 passed · 3 skipped (341 collected). Container probe matches local. CI green except link-check-http which is now allowed-fail at the step level so the badge stays green during HF rebuild races.
 >
 > **What four shipping rounds resolved:**
 >
@@ -775,9 +775,9 @@ Standard files. Use [contributor-covenant](https://www.contributor-covenant.org)
    # Step 2: install (pin via lockfile if shipped — D.1)
    uv pip sync requirements.lock   # OR: pip install -e '.[llm,eval]'
 
-   # Step 3: tests (expected: 334 passed, 3 skipped)
+   # Step 3: tests (expected: 338 passed, 3 skipped)
    pytest tests/ -v --tb=short
-   # Expected last line: ============= 334 passed, 3 skipped in N.NNs =============
+   # Expected last line: ============= 338 passed, 3 skipped in N.NNs =============
 
    # Step 4: smoke test (expected: env reset+step in <5s, no GPU)
    make smoke-test

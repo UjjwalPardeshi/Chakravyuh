@@ -178,6 +178,12 @@ Expected output (JSON):
 
 `trainer_state.json` (full training trajectory) is at [logs/v2_trainer_state.json](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/logs/v2_trainer_state.json) in the source repo.
 
+**Training curves** (rendered from the trainer state — reward, loss, KL divergence, gradient norm over 615 steps):
+
+![v2 GRPO training curves](https://raw.githubusercontent.com/UjjwalPardeshi/Chakravyuh/main/plots/chakravyuh_plots/training_curves_v2.png)
+
+Reproduce with `python eval/plot_training_curves.py`.
+
 ## Limitations
 
 1. **Semantic leakage between training and bench (we audited this ourselves).** A MiniLM-L6 cosine-similarity audit ([logs/semantic_leakage_audit.json](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/logs/semantic_leakage_audit.json)) shows mean cosine 0.80 between bench scenarios and the nearest training text, with **44.8 % of bench at cosine > 0.85** (highly similar) and 18.4 % at cosine > 0.95 (near-duplicates). Implication: the 100 % detection on easy / medium / hard difficulty buckets is partly memorization. The v1 → v2 relative FPR fix is unaffected by leakage (relative comparison on the same bench). v3 closes the absolute generalization gap with a held-out template-family retrain — see [docs/limitations.md](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/docs/limitations.md).
