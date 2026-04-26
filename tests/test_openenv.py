@@ -419,8 +419,11 @@ def test_websocket_full_episode_round_trip() -> None:
             assert r.observation.reward_breakdown is not None
             assert r.observation.outcome.get("analyzer_flagged") is True
     finally:
-        proc.send_signal(signal.SIGTERM)
         try:
+            proc.send_signal(signal.SIGTERM)
             proc.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            proc.kill()
+        except (PermissionError, OSError, subprocess.TimeoutExpired):
+            try:
+                proc.kill()
+            except (PermissionError, OSError):
+                pass

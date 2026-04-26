@@ -177,7 +177,6 @@ The composable rubric system ([chakravyuh_env/rubrics.py](chakravyuh_env/rubrics
 | Training notebooks (TRL + GRPO) | Analyzer v2: [`notebooks/v2_retrain_safe.ipynb`](notebooks/v2_retrain_safe.ipynb) · Scammer Phase 1: [`notebooks/T4_or_A100_b2_phase1_scammer.ipynb`](notebooks/T4_or_A100_b2_phase1_scammer.ipynb) |
 | Public benchmark dataset | [`ujjwalpardeshi/chakravyuh-bench-v0`](https://huggingface.co/datasets/ujjwalpardeshi/chakravyuh-bench-v0) on HF Hub · local copy: [`data/chakravyuh-bench-v0/`](data/chakravyuh-bench-v0/) (175 scenarios) |
 | FAQ for judges | [`FAQ.md`](FAQ.md) |
-| Official hackathon guidelines | [`guidelines/`](guidelines/) |
 
 ---
 
@@ -602,7 +601,7 @@ The Gradio UI provides two tabs:
 
 ---
 
-## Hackathon Checklist (from `guidelines/`)
+## Hackathon Checklist
 
 | Requirement | Status |
 |---|---|

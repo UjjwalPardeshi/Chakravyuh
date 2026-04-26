@@ -64,7 +64,7 @@ make smoke-test              # in-process env reset+step
 make reproduce               # CHAKRAVYUH_SKIP_INFERENCE=1 for cached scores (~10 min CPU)
 ```
 
-Full walk-through with expected output snippets at [`REPRODUCE.md`](REPRODUCE.md).
+Full walk-through with expected output snippets is in the [FAQ](#how-do-i-reproduce-the-headline-numbers) and [README](README.md#quickstart).
 
 ## Production-ready?
 
@@ -99,7 +99,7 @@ Four readouts:
 
 **Reasoning-model parser fix.** DeepSeek-R1 is a chain-of-thought model that wraps its answer in `<think>...</think>` blocks. Our original parser asked for JSON-only output; R1's reasoning-token output didn't parse and defaulted to 0. Reasoning-aware fix shipped at [`eval/frontier_baseline.py:_strip_reasoning`](eval/frontier_baseline.py) plus an `max_tokens=4096` budget for reasoning models, with 5 unit tests at [`tests/test_frontier_baseline.py`](tests/test_frontier_baseline.py). After the fix, R1 scores **100 % / 12.9 % / F1 = 0.986** — the table above shows the corrected number.
 
-**Proprietary frontier (GPT-4o / Claude / Gemini) deferred** — those APIs are not covered by HF compute credits and we did not authorize the ~$40–80 separate spend. The script supports them with the appropriate API keys (`OPENAI_API_KEY` / `ANTHROPIC_API_KEY` / `GEMINI_API_KEY`); reproducing instructions in [`REPRODUCE.md`](REPRODUCE.md) Step 6b.
+**Proprietary frontier (GPT-4o / Claude / Gemini) deferred** — those APIs are not covered by HF compute credits and we did not authorize the ~$40–80 separate spend. The script supports them with the appropriate API keys (`OPENAI_API_KEY` / `ANTHROPIC_API_KEY` / `GEMINI_API_KEY`); reproducing instructions are in the [frontier eval README section](README.md#frontier-llm-baselines).
 
 ## How does your trained Scammer compare to frontier LLMs as attackers?
 
