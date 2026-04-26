@@ -234,7 +234,7 @@ _LANDING_HTML = """<!doctype html>
   <h1>A self-improving benchmark for Indian UPI fraud detection.</h1>
   <p class="lede">Five agents — Scammer, Victim, on-device Analyzer LLM, Bank Monitor, Regulator —
   run multi-turn fraud episodes under structural information asymmetry. The Analyzer is a
-  Qwen2.5-7B LoRA post-trained with TRL's GRPO on a composable 5-rubric reward.
+  Qwen2.5-7B LoRA post-trained with TRL's GRPO on a composable 8-rubric reward.
   v1 hit detection 100 % / FPR 36 % (textbook reward-hack); v2 retrained with three principled
   fixes hits <strong>99.3 % detection</strong> / <strong>6.7 % FPR</strong>.</p>
 
@@ -249,7 +249,7 @@ _LANDING_HTML = """<!doctype html>
     <span class="stat"><span class="stat-label">Detection</span><span class="stat-value">99.3 %</span></span>
     <span class="stat"><span class="stat-label">FPR</span><span class="stat-value">6.7 %</span></span>
     <span class="stat"><span class="stat-label">F1</span><span class="stat-value">0.99</span></span>
-    <span class="stat"><span class="stat-label">Bench</span><span class="stat-value">n = 174</span></span>
+    <span class="stat"><span class="stat-label">Bench</span><span class="stat-value">n = 175</span></span>
     <span class="stat"><span class="stat-label">Novel det.</span><span class="stat-value">97.1 %</span></span>
   </div>
 
@@ -312,6 +312,21 @@ def landing() -> HTMLResponse:
     return HTMLResponse(_LANDING_HTML)
 
 
+@app.get("/manifest.json", include_in_schema=False)
+def manifest() -> dict:
+    """Minimal web-app manifest — eliminates the 404 that browser DevTools reports."""
+    return {
+        "name": "Chakravyuh",
+        "short_name": "Chakravyuh",
+        "description": "Multi-Agent UPI Fraud Detection Arena",
+        "start_url": "/",
+        "display": "browser",
+        "background_color": "#FFF3E6",
+        "theme_color": "#381932",
+        "icons": [],
+    }
+
+
 _DEMO_PREVIEW_HTML = """<!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="utf-8">
@@ -343,7 +358,7 @@ _DEMO_PREVIEW_HTML = """<!DOCTYPE html>
   <figure>
     <img src="https://raw.githubusercontent.com/UjjwalPardeshi/Chakravyuh/a9e723bf495182724845dbf1f69f8968434a9e02/docs/assets/plots/v2_per_difficulty_check.png"
          alt="Per-difficulty detection: scripted analyzer vs Chakravyuh v2 LoRA — scripted catches 50% on novel post-2024 scams; v2 catches 97%.">
-    <figcaption>Per-difficulty detection — scripted vs Chakravyuh v2 (n = 174 bench scenarios).</figcaption>
+    <figcaption>Per-difficulty detection — scripted vs Chakravyuh v2 (n = 175 bench scenarios).</figcaption>
   </figure>
   <div class="grid">
     <div class="card">

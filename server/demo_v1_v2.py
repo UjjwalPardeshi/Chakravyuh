@@ -25,6 +25,8 @@ CREAM_2 = "#FFFBF5"
 
 @lru_cache(maxsize=1)
 def load_archived_data() -> dict[str, Any]:
+    if not DATA_PATH.exists():
+        return {"scenarios": [], "summary": {}, "_provenance": {"honest_note": ""}}
     return json.loads(DATA_PATH.read_text())
 
 
@@ -125,7 +127,11 @@ def _render_panel(version: str, response: dict[str, Any], ground_truth: str) -> 
 
 def render_toggle_view(scenario_id: str) -> tuple[str, str, str, str]:
     """Return ``(prompt_html, v1_html, v2_html, asymmetry_html)``."""
-    data = load_archived_data()
+    try:
+        data = load_archived_data()
+    except Exception as exc:  # noqa: BLE001
+        err = f'<div style="color:#b71c1c;padding:12px;">Data load error: {exc!s}</div>'
+        return err, err, err, err
     matches = [s for s in data["scenarios"] if s["id"] == scenario_id]
     if not matches:
         empty = "<em>scenario not found</em>"
@@ -168,7 +174,12 @@ def render_toggle_view(scenario_id: str) -> tuple[str, str, str, str]:
 
 def render_summary_banner() -> str:
     """The persistent "archived not live" + headline-numbers banner."""
-    data = load_archived_data()
+    try:
+        data = load_archived_data()
+    except Exception as exc:  # noqa: BLE001
+        return f'<div style="color:#b71c1c;padding:12px;">Data load error: {exc!s}</div>'
+    if not data.get("summary"):
+        return '<div style="color:#b71c1c;padding:12px;">v1 vs v2 data not available.</div>'
     summary = data["summary"]
     note = data["_provenance"]["honest_note"]
     return f"""

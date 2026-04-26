@@ -1438,13 +1438,22 @@ def on_adversarial_attempt(user_text: str) -> tuple[float, str, dict, str, str]:
         )
         return 0.0, "", {}, "", empty_banner
 
-    analyzer = ScriptedAnalyzer()
-    obs = Observation(
-        agent_role="analyzer",
-        turn=1,
-        chat_history=[ChatMessage(sender="scammer", turn=1, text=user_text)],
-    )
-    action = analyzer.act(obs)
+    try:
+        analyzer = ScriptedAnalyzer()
+        obs = Observation(
+            agent_role="analyzer",
+            turn=1,
+            chat_history=[ChatMessage(sender="scammer", turn=1, text=user_text)],
+        )
+        action = analyzer.act(obs)
+    except Exception as exc:  # noqa: BLE001
+        err_html = (
+            '<div style="padding:12px 16px;background:#FFE8D2;border:1px solid #381932;'
+            'border-radius:10px;color:#000000;font-size:13px;">'
+            f"Analyzer error: {exc!s}"
+            "</div>"
+        )
+        return 0.0, "Error", {}, str(exc), err_html
 
     if not isinstance(action, AnalyzerScore):
         return 0.0, "Analyzer error", {}, "", (
@@ -2077,7 +2086,15 @@ def build_app() -> gr.Blocks:
                             else False if truth == "scam"
                             else None
                         )
-                        return render_redteam_view(message, is_benign_truth=is_benign)
+                        try:
+                            return render_redteam_view(message, is_benign_truth=is_benign)
+                        except Exception as exc:  # noqa: BLE001
+                            err = (
+                                '<div style="padding:12px 16px;background:#FFE8D2;'
+                                'border:1px solid #381932;border-radius:10px;'
+                                f'color:#000000;font-size:13px;">Error: {exc!s}</div>'
+                            )
+                            return err, err, ""
 
                     rt_btn.click(
                         _rt_handler,
@@ -2093,7 +2110,7 @@ def build_app() -> gr.Blocks:
                         '<div class="panel-heading">chakravyuh-bench-v0 leaderboard</div>'
                         '<p style="margin:0 0 18px;font-size:14px;line-height:1.6;'
                         'color:var(--ck-slate);opacity:0.85;max-width:760px;">'
-                        "Methods ranked by F1 on the 174-scenario bench. "
+                        "Methods ranked by F1 on the 175-scenario bench. "
                         "v1 (reward-hacked) is kept on the board to motivate v2's principled retrain. "
                         "Submit your model: <code>POST /submit</code> with the schema in "
                         "<code>server/leaderboard.py</code>."

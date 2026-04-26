@@ -130,17 +130,32 @@ def render_redteam_view(
         )
         return empty, empty, ""
 
-    score, signals, explanation = _score_message(message)
+    try:
+        score, signals, explanation = _score_message(message)
+    except Exception as exc:  # noqa: BLE001
+        err = (
+            f'<div style="padding:12px 16px;background:#FFE8D2;border:1px solid #381932;'
+            f'border-radius:10px;color:#000000;font-size:13px;">Analyzer error: {exc!s}</div>'
+        )
+        return err, err, ""
+
     flagged = score >= 0.5
 
-    v1_breakdown, v1_total = _profile_breakdown(
-        AnalyzerRubric, DEFAULT_WEIGHTS, score, signals, explanation,
-        is_benign_truth=is_benign_truth,
-    )
-    v2_breakdown, v2_total = _profile_breakdown(
-        AnalyzerRubricV2, V2_WEIGHTS, score, signals, explanation,
-        is_benign_truth=is_benign_truth,
-    )
+    try:
+        v1_breakdown, v1_total = _profile_breakdown(
+            AnalyzerRubric, DEFAULT_WEIGHTS, score, signals, explanation,
+            is_benign_truth=is_benign_truth,
+        )
+        v2_breakdown, v2_total = _profile_breakdown(
+            AnalyzerRubricV2, V2_WEIGHTS, score, signals, explanation,
+            is_benign_truth=is_benign_truth,
+        )
+    except Exception as exc:  # noqa: BLE001
+        err = (
+            f'<div style="padding:12px 16px;background:#FFE8D2;border:1px solid #381932;'
+            f'border-radius:10px;color:#000000;font-size:13px;">Reward profile error: {exc!s}</div>'
+        )
+        return err, err, ""
 
     v1_html = _render_card(
         title="v1 reward profile",
