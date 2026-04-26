@@ -63,6 +63,7 @@ _LANDING_HTML = """<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light only">
 <title>Chakravyuh — Multi-Agent Fraud Arena</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='15' fill='%23381932'/><circle cx='16' cy='16' r='6' fill='none' stroke='%23e8c97a' stroke-width='2'/><line x1='16' y1='2' x2='16' y2='10' stroke='%23e8c97a' stroke-width='2'/><line x1='16' y1='22' x2='16' y2='30' stroke='%23e8c97a' stroke-width='2'/><line x1='2' y1='16' x2='10' y2='16' stroke='%23e8c97a' stroke-width='2'/><line x1='22' y1='16' x2='30' y2='16' stroke='%23e8c97a' stroke-width='2'/><line x1='6.1' y1='6.1' x2='11.8' y2='11.8' stroke='%23e8c97a' stroke-width='2'/><line x1='20.2' y1='20.2' x2='25.9' y2='25.9' stroke='%23e8c97a' stroke-width='2'/><line x1='25.9' y1='6.1' x2='20.2' y2='11.8' stroke='%23e8c97a' stroke-width='2'/><line x1='11.8' y1='20.2' x2='6.1' y2='25.9' stroke='%23e8c97a' stroke-width='2'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
