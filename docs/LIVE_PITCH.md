@@ -102,7 +102,7 @@ If anything falls outside this band: pivot — *"the model's confidence varied t
 
 **Fallback if anything goes wrong:**
 
-- **`FALLBACK_A`** ([`docs/fallbacks/FALLBACK_A_per_difficulty_chart.md`](fallbacks/FALLBACK_A_per_difficulty_chart.md)) — the per-difficulty bar chart. One sentence: *"Live demo's timing out — here's the actual measured result on 174 scenarios. Scripted catches 50 % of novel post-2024 scams; v2 catches 97 %. That's the gap closure."* Carry on with closing beat.
+- **`FALLBACK_A`** ([`docs/fallbacks/FALLBACK_A_per_difficulty_chart.md`](fallbacks/FALLBACK_A_per_difficulty_chart.md)) — the per-difficulty bar chart. One sentence: *"Live demo's timing out — here's the actual measured result on 174 scenarios. Scripted catches 76.5 % of novel post-2024 scams; v2 catches 97.1 % — a 20.6 pp lift on exactly the high-loss patterns rules miss."* Carry on with closing beat.
 - **`FALLBACK_B`** ([`docs/fallbacks/FALLBACK_B_v1_v2_toggle.md`](fallbacks/FALLBACK_B_v1_v2_toggle.md)) — the v1↔v2 archived toggle. One sentence: *"Here's the reward-hacking story in one click. Same scenario, two reward profiles, asymmetric outcome — that's the v1→v2 fix."*
 
 ---

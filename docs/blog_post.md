@@ -10,7 +10,7 @@ tags: [openenv, peft, lora, grpo, trl, india, fraud, multi-agent]
 
 > A Meta PyTorch OpenEnv Hackathon 2026 (Bangalore) submission. Repo: <https://github.com/UjjwalPardeshi/Chakravyuh>. Adapter: [`ujjwalpardeshi/chakravyuh-analyzer-lora-v2`](https://huggingface.co/ujjwalpardeshi/chakravyuh-analyzer-lora-v2). Bench: [`ujjwalpardeshi/chakravyuh-bench-v0`](https://huggingface.co/datasets/ujjwalpardeshi/chakravyuh-bench-v0). Live env: [`ujjwalpardeshi/chakravyuh`](https://huggingface.co/spaces/ujjwalpardeshi/chakravyuh).
 
-India loses **₹13,000+ crore per year** to UPI fraud. 60 crore Indians use UPI every month. Rule-based detectors degrade meaningfully on post-2024 attack patterns — we measured **scripted analyzer detection = 50% on our 34-scenario novel split** (matrimonial-crypto grooming, deepfake CEO IPO pitches, "digital arrest" calls, Aadhaar reverification scams; from `data/chakravyuh-bench-v0/scenarios.jsonl`). **No public RL environment exists for multi-agent fraud-detection research.** So we built one.
+India loses **₹13,000+ crore per year** to UPI fraud. 60 crore Indians use UPI every month. Rule-based detectors degrade meaningfully on post-2024 attack patterns — we measured **scripted analyzer detection = 76.5 % (26/34) on our 34-scenario novel split** (matrimonial-crypto grooming, deepfake CEO IPO pitches, "digital arrest" calls, Aadhaar reverification scams; from `data/chakravyuh-bench-v0/scenarios.jsonl`), and the v2 LoRA closes that to **97.1 %** — a 20.6 pp lift on exactly the high-loss patterns rules miss. **No public RL environment exists for multi-agent fraud-detection research.** So we built one.
 
 This post walks through:
 

@@ -326,6 +326,14 @@ class HuggingFaceProvider(FrontierProvider):
 
     def _complete(self, user_msg: str) -> str:
         self._ensure()
+        # Reasoning models (R1, o1-class) need a much larger budget because
+        # the thinking block alone can be 1500+ tokens; otherwise the response
+        # gets truncated mid-think and never produces JSON.
+        is_reasoning = any(
+            tag in self._model.lower()
+            for tag in ("r1", "deepseek-r", "qwq", "o1-", "o1", "reasoning")
+        )
+        max_toks = 4096 if is_reasoning else 150
         r = self._client.chat.completions.create(
             model=self._model,
             messages=[
@@ -333,7 +341,7 @@ class HuggingFaceProvider(FrontierProvider):
                 {"role": "user", "content": user_msg},
             ],
             temperature=0.0,
-            max_tokens=150,
+            max_tokens=max_toks,
         )
         return r.choices[0].message.content or ""
 

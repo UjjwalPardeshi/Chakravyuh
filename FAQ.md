@@ -81,13 +81,13 @@ We ran an open-weight frontier comparison via HuggingFace Inference Providers (p
 | Model | Params | Detection | FPR | F1 |
 |---|---|---|---|---|
 | **Chakravyuh v2 LoRA (this work)** | **7B + LoRA** | **99.3 %** | **6.7 %** | **0.990** |
-| Qwen2.5-7B-Instruct (base, no LoRA) | 7B | 99.3 % | 16.1 % | 0.980 |
-| Llama-3.3-70B-Instruct | 70B | 98.6 % | 3.2 % | 0.990 |
-| Qwen2.5-72B-Instruct | 72B | 97.9 % | 6.5 % | 0.983 |
-| DeepSeek-V3-0324 | 671B MoE | 99.3 % | **29.0 %** | 0.966 |
-| gpt-oss-120b | 120B | 97.9 % | 16.1 % | 0.972 |
-| gemma-3-27b-it | 27B | 99.3 % | **51.6 %** | 0.944 |
-| DeepSeek-R1 † | 671B MoE | 0.7 % | 0.0 % | 0.014 |
+| Qwen2.5-7B-Instruct (base, no LoRA) | 7B | 100 % | 16.1 % | 0.983 |
+| Llama-3.3-70B-Instruct | 70B | 99.3 % | 3.2 % | 0.993 |
+| Qwen2.5-72B-Instruct | 72B | 98.6 % | 6.5 % | 0.986 |
+| DeepSeek-V3-0324 | 671B MoE | 100 % | **29.0 %** | 0.970 |
+| gpt-oss-120b | 120B | 98.6 % | 16.1 % | 0.976 |
+| gemma-3-27b-it | 27B | 100 % | **51.6 %** | 0.947 |
+| DeepSeek-R1 (reasoning, parser-fix applied) | 671B MoE | 100 % | 12.9 % | 0.986 |
 | Scripted baseline | — | 84.0 % | 9.7 % | 0.903 |
 
 Four readouts:
@@ -97,9 +97,26 @@ Four readouts:
 3. **DeepSeek-V3 (671B) reproduces the v1 reward-hacking signature externally** — its 99.3 % / 29 % FPR profile is structurally identical to our v1's 100 % / 36 %, and the FPR gap vs the calibrated LoRA is statistically significant. A frontier-class model independently lands in the failure mode our reward-engineering methodology diagnoses and fixes — external validation of the diagnostic itself. gemma-3-27B-it (FPR 51.6 %, p = 0.0002 vs LoRA) is the same story at smaller scale.
 4. **Open-weight frontier ≠ guaranteed scam-spotting.** Five of seven open frontier models we tested have FPR > 6.7 % on the same bench. The calibration channel — not raw capacity — is what's actually contested.
 
-† **DeepSeek-R1** is a chain-of-thought reasoning model: its output starts with `<think>` blocks instead of the JSON we asked for, so the original parser defaulted to 0. Reasoning-aware parser fix shipped at [`eval/frontier_baseline.py:_strip_reasoning`](eval/frontier_baseline.py) with unit tests; re-running R1 with the fix is one command (`rm logs/frontier_cache/hf-deepseek-r1:*.json && python -m eval.frontier_baseline --providers hf --hf-models deepseek-ai/DeepSeek-R1`).
+**Reasoning-model parser fix.** DeepSeek-R1 is a chain-of-thought model that wraps its answer in `<think>...</think>` blocks. Our original parser asked for JSON-only output; R1's reasoning-token output didn't parse and defaulted to 0. Reasoning-aware fix shipped at [`eval/frontier_baseline.py:_strip_reasoning`](eval/frontier_baseline.py) plus an `max_tokens=4096` budget for reasoning models, with 5 unit tests at [`tests/test_frontier_baseline.py`](tests/test_frontier_baseline.py). After the fix, R1 scores **100 % / 12.9 % / F1 = 0.986** — the table above shows the corrected number.
 
 **Proprietary frontier (GPT-4o / Claude / Gemini) deferred** — those APIs are not covered by HF compute credits and we did not authorize the ~$40–80 separate spend. The script supports them with the appropriate API keys (`OPENAI_API_KEY` / `ANTHROPIC_API_KEY` / `GEMINI_API_KEY`); reproducing instructions in [`REPRODUCE.md`](REPRODUCE.md) Step 6b.
+
+## How does your trained Scammer compare to frontier LLMs as attackers?
+
+**Our 0.5B trained Scammer beats every untrained frontier model — including 671B DeepSeek-V3 — at evading the same scripted defense.** Source: [`logs/scammer_frontier_comparison.csv`](logs/scammer_frontier_comparison.csv).
+
+| Scammer | Params | Bypass rate (vs ScriptedAnalyzer) |
+|---|---|---|
+| **Chakravyuh Scammer LoRA Phase 1 (best-of-8)** | **0.5B + LoRA** | **93.75 %** |
+| gpt-oss-120b (untrained) | 120B | 87.5 % |
+| Llama-3.3-70B (untrained) | 70B | 68.8 % |
+| Qwen2.5-7B base (untrained) | 7B | 62.5 % |
+| **Chakravyuh Scammer LoRA Phase 1 (single-shot)** | **0.5B + LoRA** | **59.4 %** |
+| Qwen2.5-72B (untrained) | 72B | 56.2 % |
+| gemma-3-27b-it (untrained) | 27B | 43.8 % |
+| DeepSeek-V3-0324 (untrained) | 671B MoE | 31.2 % |
+
+Same parameter-efficiency story as the defender side: reward-engineered training at 0.5B beats raw capacity at 240×–1340× the parameter count. Two trained agents, both parameter-efficient against frontier baselines, on opposite sides of the fraud loop. DeepSeek-V3's low score is partly safety-training refusing scam roleplay — even adjusting for that, the trained 0.5B is on top.
 
 ## Where can I see the live demo?
 

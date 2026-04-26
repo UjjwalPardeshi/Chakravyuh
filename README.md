@@ -83,6 +83,8 @@ Proprietary frontier (GPT-4o / Claude / Gemini) deferred — the API budget is n
 
 ### Frontier-LLMs-as-Scammer comparison (parameter efficiency on the *attacker* side)
 
+![Frontier-LLMs-as-Scammer bypass rates](https://raw.githubusercontent.com/UjjwalPardeshi/Chakravyuh/main/plots/chakravyuh_plots/scammer_frontier_bar.png)
+
 The frontier table above asks "which model is the best *defender*?" The natural symmetric question: **which model is the best *attacker*?** We asked each frontier LLM to write the same 16 attack-category scam messages the Scammer LoRA Phase 1 was evaluated on (8 train + 8 held-out categories), and scored every output through the same `ScriptedAnalyzer` defender. Source: [`logs/scammer_frontier_comparison.csv`](logs/scammer_frontier_comparison.csv) + [`logs/scammer_frontier_comparison.json`](logs/scammer_frontier_comparison.json).
 
 | Scammer model | Params | Bypass rate | 95 % CI | Held-out categories |

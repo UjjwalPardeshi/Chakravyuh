@@ -1,278 +1,202 @@
 ---
-title: "Chakravyuh — Catching Reward Hacking on the Way to a 7B Indian-UPI Fraud Detector"
+title: "Chakravyuh: A Multi-Agent OpenEnv for UPI Fraud, with a Measured Reward-Hacking Fix"
 authors:
   - user: ujjwalpardeshi
 tags:
   - openenv
-  - peft
-  - lora
   - grpo
   - trl
-  - india
-  - fraud
+  - lora
   - multi-agent
+  - fraud-detection
   - reward-hacking
   - safety
 ---
 
-# Chakravyuh — Catching Reward Hacking on the Way to a 7B Indian-UPI Fraud Detector
+# Chakravyuh: A Multi-Agent OpenEnv for UPI Fraud, with a Measured Reward-Hacking Fix
 
-> **Submission writeup for the Meta PyTorch OpenEnv Hackathon 2026 (Bangalore).**
-> This file lives inside the HF Space so judges can read it next to the
-> running environment. The repository README is the technical deep-dive;
-> this `Blog.md` is the 5-minute story.
->
-> - **Live env:** [`ujjwalpardeshi/chakravyuh`](https://huggingface.co/spaces/ujjwalpardeshi/chakravyuh) — `/demo/`
-> - **Adapter (defender):** [`ujjwalpardeshi/chakravyuh-analyzer-lora-v2`](https://huggingface.co/ujjwalpardeshi/chakravyuh-analyzer-lora-v2)
-> - **Adapter (adversary, gated):** [`ujjwalpardeshi/chakravyuh-scammer-lora-phase1`](https://huggingface.co/ujjwalpardeshi/chakravyuh-scammer-lora-phase1)
-> - **Bench dataset:** [`ujjwalpardeshi/chakravyuh-bench-v0`](https://huggingface.co/datasets/ujjwalpardeshi/chakravyuh-bench-v0)
-> - **Source code:** <https://github.com/UjjwalPardeshi/Chakravyuh>
-> - **Theme:** #1 Multi-Agent Interactions *(primary)* · #4 Self-Improvement *(honest demote — see "Theme coverage" below)*
+This is our official written submission artifact for the Meta PyTorch OpenEnv Hackathon 2026.
+
+- Live environment: [`ujjwalpardeshi/chakravyuh`](https://huggingface.co/spaces/ujjwalpardeshi/chakravyuh)
+- Defender adapter: [`ujjwalpardeshi/chakravyuh-analyzer-lora-v2`](https://huggingface.co/ujjwalpardeshi/chakravyuh-analyzer-lora-v2)
+- Adversary adapter (gated): [`ujjwalpardeshi/chakravyuh-scammer-lora-phase1`](https://huggingface.co/ujjwalpardeshi/chakravyuh-scammer-lora-phase1)
+- Benchmark dataset: [`ujjwalpardeshi/chakravyuh-bench-v0`](https://huggingface.co/datasets/ujjwalpardeshi/chakravyuh-bench-v0)
+- Source code: <https://github.com/UjjwalPardeshi/Chakravyuh>
 
 ## TL;DR
 
-We trained an LLM to detect Indian UPI fraud and got **100 % detection.**
-We celebrated for four minutes. Then we noticed: **36 % false-positive
-rate.** The model wasn't catching scams — it was flagging everything.
+We trained an LLM for Indian UPI fraud detection and initially got **100% detection**.
+Then we found the failure: **36% false-positive rate**. The model was over-flagging.
 
-This post walks through the diagnosis, the three-line reward fix, and
-the v2 recovery: detection holds at **99.3 %**, FPR collapses 5× to
-**6.7 %** on n = 174 real Indian fraud scenarios. The asymmetric
-improvement — *detection unchanged, FPR down* — is the signal that the
-model learned the task instead of gaming the reward.
+We treated that as a reward-hacking incident, changed the reward profile, retrained, and shipped v2:
 
-We then ship the missing piece: a **trained adversarial Scammer**
-(Qwen2.5-0.5B + LoRA, GRPO with adversarial reward) that evades the
-rule-based defender at **93.75 %** best-of-8 (n = 64) and **100 %** on
-8 held-out novel attack categories. Same Scammer outputs vs the v2
-Analyzer LoRA: **32.8 %** bypass — a **60 pp gap** that quantifies what
-co-evolution actually buys.
+- Detection: **99.3%**
+- False positive rate: **6.7%** (about **5x lower** than v1)
+- F1: **0.99**
+- Bench size: **n = 174**
 
-## 1. Why this environment
+The core artifact is not "one big number"; it is a measured v1 -> v2 diagnosis and fix.
 
-India loses **₹13,000+ crore per year** to UPI fraud across **60 crore
-users**. Rule-based detectors degrade meaningfully on post-2024 attack
-patterns — we measured **scripted analyzer detection = 50 % on a
-34-scenario novel split** (matrimonial-crypto grooming, deepfake CEO
-IPO pitches, "digital arrest" calls, Aadhaar reverification scams).
-**No public RL environment exists for multi-agent fraud-detection
-research.** So we built one — Chakravyuh, a five-agent OpenEnv
-environment with asymmetric information and partial observability.
+---
 
-## 2. The environment
+## Why This Problem
 
-```
-        REGULATOR (meta) ── adapts rule weights from outcomes
-                │
-ON-DEVICE  → BEHAVIORAL ANALYZER ←  Qwen2.5-7B + LoRA-v2 (GRPO)   [TRAINED]
-            │  sees chat only
-   SCAMMER ─┴─ chat ── VICTIM ── attempts transaction
-   ▲
-   └─ Qwen2.5-0.5B + LoRA-Phase1 (GRPO, adversarial reward)        [TRAINED, B.2]
-                                 │
-            BANK MONITOR ── sees transaction metadata only
-```
+India loses ₹13,000+ crore/year to UPI fraud and 60 crore users are exposed.
+Rule-based systems degrade on novel attacks; in our bench, the scripted baseline catches **76.5 % (26/34)** of the post-2024 novel split — the v2 LoRA closes that to **97.1 %**, a 20.6 pp lift on exactly the high-loss patterns (matrimonial crypto, deepfake CEO, digital arrest) where keyword rules are weakest.
 
-The Analyzer (the LLM under training) sees only chat. The Bank Monitor
-sees only transaction metadata. The Regulator sees only aggregate
-outcomes across episodes. Neither single oversight tier can be hacked
-into single-handedly suppressing the "money extracted" outcome — they
-have to agree. **Two trained adapters, not one.**
+Chakravyuh is built as a research environment for this gap: trainable, reproducible, and adversarial by design.
 
-The reward (`AnalyzerRubricV2`) decomposes into **eight orthogonal
-child rubrics** (composable, introspectable, swappable):
+---
 
-| Rubric | Weight (v2) | What it rewards |
-|---|---|---|
-| `DetectionRubric` | +1.0 | Early flag of a real scam (turn ≤ 5) |
-| `MissedScamRubric` | −0.5 | Missed scam where money was extracted |
-| `FalsePositiveRubric` | **−0.8** *(v1: −0.3)* | Benign incorrectly flagged |
-| `CalibrationRubric` | **+0.5** *(v1: +0.3)* | Score-vs-truth calibration in both directions |
-| `ExplanationRubric` | +0.4 | Natural-language explanation references declared signals |
-| `SignalAccuracyRubric` | +0.2 | Fraction of expected signals correctly named |
-| `FormatRubric` | +0.15 | Strict JSON output — **denied when flagging benign as scam** |
-| `LengthRubric` | ±0.15 | Peak at ~45 tokens, penalty above 70 |
+## Environment Design (Theme #1: Multi-Agent)
 
-Plus a side-channel `RupeeWeightedRubric` aggregator that scales
-detection / miss credit by `loss_amount_inr` to produce the bench-level
-**₹77.95 lakh at risk** headline (130 scams with labelled losses).
+Chakravyuh has 5 agents with asymmetric information:
 
-## 2.1. Training curves (real run, not a screenshot of a Jupyter cell)
+- Scammer
+- Victim
+- Analyzer (trained oversight LLM)
+- Bank Monitor (metadata-only oversight)
+- Regulator (aggregate-feedback meta-agent)
 
-![v2 GRPO training curves over 615 steps](plots/chakravyuh_plots/training_curves_v2.png)
+The Analyzer sees chat content. The Bank Monitor sees transaction metadata. These channels are intentionally separated, so one weak signal cannot dominate the final decision pathway.
 
-> *v2 Analyzer GRPO trajectory rendered from
-> [`logs/v2_trainer_state.json`](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/logs/v2_trainer_state.json)
-> (123 logged points at logging_steps=5, total 615 GRPO steps over 1
-> epoch on Qwen2.5-7B-Instruct + LoRA r=64, single A100). Reward
-> climbs from 1.29 → ~1.97 with shrinking variance — the 8-rubric
-> weighted sum is being learned. Loss stays bounded around zero, no
-> divergence. KL plateaus at 0.25–0.45 (honestly disclosed, v3 plan
-> adds a 0.20 early-stop guard). Grad norm well-behaved. Reproduce:
-> `python eval/plot_training_curves.py`.*
+The trained Analyzer reward is composable (`AnalyzerRubricV2`) with eight child rubrics, including detection, false positives, calibration, explanation quality, and strict output formatting.
 
-## 3. The reward-hacking failure (caught and fixed)
+---
 
-v1 trained on the same env hit:
+## Training Pipeline (OpenEnv + TRL/GRPO)
 
-- **Detection: 100 %** ← suspicious
-- **FPR: 36 %** ← textbook fingerprint
+We use OpenEnv for environment interaction and TRL GRPO for post-training:
 
-That combination — detection saturated, FPR catastrophic, **uniform
-across difficulty buckets** — is what reward hacking *looks like*. The
-model learned "always output a high score." It correctly flags every
-scam, and over-flags every benign too. Calibration collapsed.
+- Base model: Qwen2.5-7B-Instruct
+- Method: LoRA + GRPO
+- Output target: calibrated scam probability + grounded explanation
+- Training notebooks are included and linked from README:
+  - `training/train_colab.ipynb`
+  - `notebooks/v2_retrain_safe.ipynb`
 
-We diagnosed the reward profile and made three principled changes for v2:
+This satisfies the "working training script with evidence of real training" requirement in the submission guidelines.
 
-1. **FP penalty −0.3 → −0.8.** Flagging benigns is now expensive enough
-   that "always flag" is a dominated strategy.
-2. **Format reward denied on benign-flagged-as-scam.** v1 paid the
-   format-correctness bonus regardless of whether the prediction was
-   right. Removing it specifically on benign-flagged-scam outputs kills
-   the "lazy over-flag still gets credit" loophole.
-3. **Benign calibration weight +0.3 → +0.5.** Stronger gradient toward
-   `score ≤ 0.2` on benign cases.
+---
 
-Plus the KL anchor was tightened (`β = 0.08 → 0.15`) so the model can't
-drift far from the base distribution under the new reward shape.
+## Reward-Hacking Incident and Fix (Main Contribution)
 
-The result:
+### What failed in v1
 
-| Metric | v1 (reward-hacked) | **v2 (fixed)** | 95 % CI (v2) |
-|---|---|---|---|
-| Detection | 100.0 % | **99.3 %** | [97.9 %, 100 %] |
-| FPR | 36.0 % | **6.7 %** | [0.0 %, 16.7 %] |
-| F1 | 0.96 | **0.99** | [0.976, 1.000] |
-| Novel-detection (post-2024) | 100 % | 97.1 % | [91.2 %, 100 %] |
+- Detection: 100%
+- FPR: 36%
 
-Detection moved 100 % → 99.3 % — barely. FPR dropped **5×**. That
-asymmetric improvement is the signature of a model that's actually
-learning the task. A model still gaming the reward improves both
-numbers in lockstep, or fails on novel attacks.
+That pattern strongly indicates reward hacking: the model learns to over-flag to maximize reward components tied to scam detection.
 
-## 4. The trained adversarial Scammer (Theme #1 evidence)
+### What we changed in v2
 
-Most submissions train *one* agent. We trained a **second** —
-`chakravyuh-scammer-lora-phase1`. Recipe: Qwen2.5-0.5B-Instruct + LoRA,
-TRL 0.14 GRPO, adversarial reward `1 − ScriptedAnalyzer.score`. After
-200 episodes the adapter learned to generate plausible
-Indian-context UPI-fraud openings.
+1. Increased false-positive penalty (**-0.3 -> -0.8**)
+2. Removed format-reward payout when benign content is wrongly flagged
+3. Increased benign calibration weight (**0.3 -> 0.5**)
+4. Tightened KL anchor (**0.08 -> 0.15**)
 
-| Defender | Best-of-8 bypass (n=64) | Held-out novel (n=32) |
-|---|---|---|
-| Rule-based ScriptedAnalyzer | **93.75 %** | **100 %** |
-| v2 Analyzer LoRA (this submission) | **32.8 %** | **37.5 %** |
-| **Co-evolution gap** | **+60.9 pp** | **+62.5 pp** |
+### Result
 
-Cross-tab: **62.5 % (40/64)** of scams that fool the rule-based
-defender get caught by the v2 LoRA; only **1.6 % (1/64)** go the other
-way. v2 strictly dominates the rule baseline — pure co-evolution
-evidence.
+| Metric | v1 | v2 |
+|---|---:|---:|
+| Detection | 100.0% | **99.3%** |
+| False Positive Rate | 36.0% | **6.7%** |
+| F1 | 0.96 | **0.99** |
 
-**Where v2 is honestly weak:** vaccine slot, customer-support
-callback, credit-card EMI, income-tax refund — all non-bank categories
-outside v2's training distribution. Exact targets for the Phase 2
-retrain (LoRA-vs-LoRA, queued for the next compute window).
+The asymmetric shift (recall stable, FPR sharply down) is the key evidence that v2 learned better behavior instead of exploiting reward shortcuts.
 
-## 5. Open-weight frontier comparison (7 models, same bench, same prompt)
+---
 
-We ran the same n = 174 bench through 6 open-weight frontier models via
-HuggingFace Inference Providers (paid from HF compute credits, ~$2
-total).
+## Evidence of Improvement (Judging 20%)
 
-| Model | Params | F1 | FPR |
-|---|---|---|---|
-| **v2 LoRA (this work)** | **7B + LoRA r=64** | **0.990** | **6.7 %** |
-| Qwen2.5-7B-Instruct (base, no LoRA) | 7B | 0.980 | 16.1 % |
-| Llama-3.3-70B-Instruct | 70B | 0.990 | 3.2 % |
-| Qwen2.5-72B-Instruct | 72B | 0.983 | 6.5 % |
-| DeepSeek-V3-0324 | 671B MoE | 0.966 | **29 %** |
-| gpt-oss-120b | 120B | 0.972 | 16.1 % |
-| gemma-3-27b-it | 27B | 0.944 | **51.6 %** |
+We publish:
 
-Three readouts:
+- Eval artifacts (`logs/eval_v2.json`)
+- Bootstrap confidence intervals (`logs/bootstrap_v2.json`)
+- Training traces (`logs/v2_trainer_state.json`)
+- Public benchmark dataset on HF (`chakravyuh-bench-v0`)
 
-1. **GRPO + LoRA contribution is isolated.** Same Qwen2.5-7B base, no
-   LoRA → FPR **16.1 %**. After our reward-engineered GRPO training →
-   FPR **6.7 %**. **−9.4 pp FPR, +0.010 F1 attributable purely to the
-   training.**
-2. **Parameter efficiency.** 7B + LoRA ties Llama-3.3-70B on F1 at
-   **10× fewer parameters**, beats every other model in the table.
-3. **DeepSeek-V3 (671B) reproduces our v1 reward-hacking signature
-   externally.** Detection 99.3 % / FPR 29 % is structurally identical
-   to v1's 100 % / 36 %. A frontier-class model independently falls
-   into the failure mode our methodology diagnoses and fixes — external
-   validation that calibrated reward design beats raw capacity.
+Plus four CPU-runnable diagnostics that go past the headline F1:
 
-## 6. Honest limitations
+**Training curves** — reward + loss + KL + grad-norm over 615 GRPO steps, rendered from the trainer state.
 
-- **Single seed** — bootstrap CIs are the substitute; multi-seed is v3.
-- **n = 30 benigns** — the 5× FPR reduction is statistically real
-  (permutation test p ≈ 0.008), the precise 6.7 % is not tight.
-- **Semantic leakage** — 44.8 % of bench items have cosine > 0.85 to
-  training. We disclose this *as a feature*; the v1→v2 FPR fix and the
-  scripted-baseline novel collapse are unaffected (relative comparisons
-  on the same bench).
-- **Phase 2 (LoRA-vs-LoRA co-evolution)** — Phase 1 is shipped; Phase 2
-  retrains the Analyzer against the frozen Scammer. Compute-gated.
-- **Per-language eval, calibration ECE, multi-seed retrain, frontier
-  proprietary-tier comparison** — all named in
-  [`docs/limitations.md`](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/docs/limitations.md).
+![v2 GRPO training curves](https://raw.githubusercontent.com/UjjwalPardeshi/Chakravyuh/main/plots/chakravyuh_plots/training_curves_v2.png)
 
-## 7. Theme coverage
+**Calibration** — SFT baseline ECE = 0.039 across n=175. The model is not just accurate, its confidence is meaningful.
 
-- **Theme #1 — Multi-Agent Interactions (primary).** Five agents,
-  asymmetric information, two-tier oversight, partial observability,
-  **two trained adapters** with measured co-evolution gap.
-- **Theme #4 — Self-Improvement (honestly demoted).** The v1 → v2
-  reward-hacking-fix loop is self-improvement of the *training
-  pipeline*, not recursive skill amplification. We frame this honestly
-  in `docs/limitations.md` rather than over-claim.
+![SFT calibration reliability diagram](https://raw.githubusercontent.com/UjjwalPardeshi/Chakravyuh/main/plots/chakravyuh_plots/ece_reliability.png)
 
-## 8. Reproduce in 60 seconds
+**Per-rubric ablation** — zero each child rubric in turn. Detection (-0.61) and calibration (-0.13) carry the eval-time signal. False-positive rubric does not show up in average reward but does show up in the FPR — which is the whole point of v1 → v2.
+
+![Per-rubric ablation](https://raw.githubusercontent.com/UjjwalPardeshi/Chakravyuh/main/plots/chakravyuh_plots/ablation_per_rubric.png)
+
+**Leakage-clean slice** — re-evaluate every provider on the n=50 subset where nearest training text has cosine < 0.7. Scripted holds within 2.4 pp. Frontier LLMs do not improve on the clean slice — their failure is structural (no Indian-fraud priors), not memorisation.
+
+![Leakage-clean slice](https://raw.githubusercontent.com/UjjwalPardeshi/Chakravyuh/main/plots/chakravyuh_plots/leakage_clean_slice.png)
+
+**SFT vs v2-GRPO fingerprint** — same base, same LoRA, same corpus; only the algorithm differs. GRPO buys +5.6 pp on hard at the cost of +3.4 pp FPR — a real trade-off, not noise.
+
+![SFT vs v2 GRPO fingerprint](https://raw.githubusercontent.com/UjjwalPardeshi/Chakravyuh/main/plots/chakravyuh_plots/v1_vs_v2_fingerprint.png)
+
+This keeps claims auditable and rerunnable.
+
+---
+
+## Adversarial Co-Evolution Signal
+
+We also trained a Scammer adapter (`Qwen2.5-0.5B + LoRA + GRPO`) to pressure-test defenses:
+
+- Best-of-8 bypass vs scripted rule baseline: **93.75%** (n=64)
+- Same outputs bypass vs v2 Analyzer LoRA: **32.8%**
+- Gap: about **60 percentage points**
+
+This gives concrete multi-agent evidence that the trained Analyzer materially outperforms scripted detection under adaptive attack pressure.
+
+---
+
+## Honest Limitations
+
+We explicitly disclose where this version is not complete:
+
+- Single-seed training (multi-seed pending)
+- Small benign sample for FPR calibration uncertainty
+- Semantic leakage risks are documented and measured
+- Phase-2 LoRA-vs-LoRA co-evolution retraining is compute-gated
+- Per-row v2 LoRA scores (for v2 ECE + per-language calibration) need GPU re-inference (B.12); the SFT-baseline ECE is shipped as-is
+
+All are documented in `docs/limitations.md` and planned as next milestones.
+
+---
+
+## Submission Checklist Mapping
+
+How this project aligns with official guidance:
+
+- **OpenEnv usage:** Yes (`openenv-core`, environment API, Space deployment)
+- **Working training script (TRL/Unsloth style requirement):** Yes (TRL GRPO notebooks included)
+- **Evidence of real training:** Yes (curves, trainer state, eval artifacts)
+- **Short writeup:** Yes (this blog)
+- **HF Space deployment:** Yes (official submission URL above)
+- **README with links to materials:** Yes (models, dataset, notebooks, docs)
+
+---
+
+## Reproduce Quickly
 
 ```bash
 git clone https://github.com/UjjwalPardeshi/Chakravyuh && cd Chakravyuh
 pip install -e '.[llm,eval]'
-make smoke-test               # in-process env reset+step in <5s
-pytest tests/ --tb=no -q      # 341 collected; 338 pass + 3 skip
-make reproduce                # ~10 min CPU cached eval; verifies headlines within 0.5pp
+make smoke-test
+pytest tests/ --tb=no -q
+make reproduce
 ```
 
-Full reproduction walkthrough (5 steps with expected outputs):
-[`REPRODUCE.md`](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/REPRODUCE.md).
+Full walkthrough: [`REPRODUCE.md`](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/REPRODUCE.md)
 
-## 9. Submission materials (linked from the HF Space README)
+---
 
-| Asset | Link |
-|---|---|
-| Live env (this Space) | [`ujjwalpardeshi/chakravyuh`](https://huggingface.co/spaces/ujjwalpardeshi/chakravyuh) |
-| Defender adapter | [`chakravyuh-analyzer-lora-v2`](https://huggingface.co/ujjwalpardeshi/chakravyuh-analyzer-lora-v2) |
-| Adversary adapter (gated) | [`chakravyuh-scammer-lora-phase1`](https://huggingface.co/ujjwalpardeshi/chakravyuh-scammer-lora-phase1) |
-| Bench dataset | [`chakravyuh-bench-v0`](https://huggingface.co/datasets/ujjwalpardeshi/chakravyuh-bench-v0) |
-| Source code | <https://github.com/UjjwalPardeshi/Chakravyuh> |
-| Slide deck (Marp markdown source) | [`docs/chakravyuh_slides.md`](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/docs/chakravyuh_slides.md) |
-| YouTube video (90-sec demo) | *to be added — see HF Space README* |
-| Reproduction walkthrough | [`REPRODUCE.md`](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/REPRODUCE.md) |
-| Misuse / dual-use disclosure | [`docs/misuse_dual_use.md`](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/docs/misuse_dual_use.md) |
+## Final Note
 
-## License
+Chakravyuh is a practical template for reward-engineered oversight training in adversarial settings: detect failure early, quantify it, fix the reward, and publish enough artifacts for others to verify or challenge the result.
 
-MIT for code (`LICENSE`); CC-BY-4.0 for `chakravyuh-bench-v0`. The
-Scammer LoRA is gated under the responsible-use terms in
-[`docs/RESPONSIBLE_USE.md`](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/docs/RESPONSIBLE_USE.md).
-
-## Citation
-
-```bibtex
-@misc{chakravyuh2026,
-  title  = {Chakravyuh: A Multi-Agent OpenEnv Environment for Indian UPI Fraud Detection},
-  author = {Pardeshi, Ujjwal and Chakravyuh Team},
-  year   = {2026},
-  howpublished = {Meta PyTorch OpenEnv Hackathon, Bangalore, April 2026},
-  url    = {https://huggingface.co/spaces/ujjwalpardeshi/chakravyuh}
-}
-```
-
-— *Try the live demo. Break it. Then beat us on the leaderboard.*
+If you are evaluating this submission, start with the live Space, then inspect `README.md`, `logs/eval_v2.json`, and `logs/bootstrap_v2.json`.

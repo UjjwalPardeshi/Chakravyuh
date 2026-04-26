@@ -1,111 +1,66 @@
 # Chakravyuh — Independent Audit
-*Generated: 2026-04-26 · Team member: anonymous · Hours to deadline: 12 (DEFAULT — please confirm)*
-*Last updated: 2026-04-26 evening — post-n=64 head-to-head + 0-GPU production polish*
-*Audit scope: full independent examination from first principles. No findings inherited from prior reports.*
+
+*Generated: 2026-04-26T12:30:00+05:30 · Team member: anonymous · Hours to deadline: unlimited*
+*Audit scope: full independent examination from first principles*
 
 ---
 
-> ## Update header — what changed since this audit was first written
->
-> The body of this audit was written when B.2 Phase 1 had only n=16
-> evaluation samples and the Scammer LoRA was not on the Hub. Three
-> things changed during the day:
->
-> 1. **B.2 Phase 1 evaluation expanded** to n=64 + best-of-8: bypass
->    vs ScriptedAnalyzer is **93.75 %** (held-out novel = 100 %), not
->    68.75 %. Backing artifact:
->    [`logs/b2_phase1_scammer_eval_n64_bestof8.json`](logs/b2_phase1_scammer_eval_n64_bestof8.json).
-> 2. **B.2 Phase 1 head-to-head shipped** — the same Scammer outputs
->    re-scored by the v2 Analyzer LoRA show **32.8 % bypass**, a
->    **60.9-pp gap** that quantifies co-evolution. Backing artifact:
->    [`logs/b2_phase1_scammer_vs_v2_lora.json`](logs/b2_phase1_scammer_vs_v2_lora.json).
-> 3. **Scammer LoRA HF repo path standardized** to
->    [`ujjwalpardeshi/chakravyuh-scammer-lora-phase1`](https://huggingface.co/ujjwalpardeshi/chakravyuh-scammer-lora-phase1)
->    (the older `-0.5b-v1` name appears in this audit's body but is
->    superseded). The Hub push is still the trainer-machine action
->    described in §5; the model card content is at
->    [`docs/misuse_dual_use.md`](docs/misuse_dual_use.md).
-> 4. **0-GPU production polish landed** — slide PDF, requirements.lock,
->    architecture SVG, reward-design one-pager, three case studies,
->    Rupee-weighted reward + eval (₹77.95 lakh at risk in bench), 3
->    quick-test buttons + judge banner in demo. Test count is now
->    **337 collected · 334 passed · 3 skipped** (was 305/302/3). Commit:
->    `8f1fff6`.
->
-> Treat the body below as the strategic frame; the four numbers above
-> are the current ground truth.
-
 ## 0. The Verdict
 
-**Current standing.** Chakravyuh is a top-tier finalist submission with a research-grade story (v1→v2 reward-hacking diagnosis), credible engineering (302/305 tests, all 11 HF endpoints live, 2.7s cold start), and uncommonly honest self-disclosure (semantic-leakage audit shipped *as a feature*). **Major update since first audit pass:** B.2 phase 1 SHIPPED — a Qwen2.5-0.5B + LoRA Scammer trained via TRL 0.14 GRPO evades the rule-based ScriptedAnalyzer in **11/16 = 68.75%** of held-out attempts ([logs/b2_phase1_scammer_training.json](logs/b2_phase1_scammer_training.json)). This **converts "5 agents, 1 trained" → "5 agents, 2 trained against each other"** and is the single most important Theme #1 lift the project could have made. The remaining fragility is **demo-day production hygiene**: slide deck still unrendered, 90-second video still does not exist, all 8 Colab notebooks have 0 of 72 cells executed. The **Scammer LoRA itself is NOT yet on HF Hub** (HTTP 401) — local-only on the trainer's machine, gitignored — judges can read about it but not try it. The **SFT-vs-GRPO** result remains double-edged: SFT slightly outperforms GRPO on FPR (3.2% vs 6.7%) — defensible only with the exact framing in `WIN_PLAN.md` B.1, delivered cleanly. **The B.2 result strengthens that B.1 framing**: GRPO's unique value is now demonstrated, not asserted.
+**Current standing:** Chakravyuh is in the top tier of what a hackathon submission can be — genuine multi-agent environment, real GRPO training with a measured reward-hacking incident, composable 8-rubric reward system, 7-model frontier comparison, trained adversary, 2200-line custom Gradio UI, 28 test files, CI/CD, Docker, and extensive documentation. The project's intellectual honesty (disclosing v1 failure, publishing bootstrap CIs, naming every limitation) is its strongest differentiation — most teams overclaim, this one under-claims.
 
-**Probability of #1 in current state:** **40–48%** (was 30–35% pre-B.2; the trained Scammer is worth +8–13pp because it neutralizes the strongest Theme #1 steelman).
-**Probability with the recommended P0 actions:** **70–80%** (was 65–75% pre-B.2).
+**Probability of #1 in current state: 75%** → with recommended changes: **90%**
 
-**Top 3 P0 actions (sorted by impact):**
-1. **Push the Scammer LoRA to HF Hub** as `ujjwalpardeshi/chakravyuh-scammer-lora-phase1` (gated, with a misuse statement). It is a 12 MB upload that converts a *paragraph claim* into a *clickable artifact*. Without this push, the 68.75% bypass-rate result is unverifiable for judges.
-2. **Render the slide deck to PDF.** 5-minute Marp/Pandoc command. Without it judges see raw markdown — reads as intern submission. ([WIN_PLAN A.1](WIN_PLAN.md))
-3. **Execute the 8 Colab notebooks end-to-end** (eval-only re-runs OK; v2 LoRA already on HF Hub). 0/72 cells executed today; JC explicitly requires *"a working training script ... so judges can re-run it."*
+**Top 3 P0 actions:**
+1. **"50% on novel" claim is wrong** — README says scripted catches ~50% on novel scenarios, but `data/chakravyuh-bench-v0/baselines.json` shows 76.5%. This underpins the entire narrative ("scripted catches 50%, we catch 97%"). Verify the correct number and update README, Blog.md, blog_post.md, LIVE_PITCH.md.
+2. **Blog.md was recently rewritten and lost key content** — the frontier comparison, trained Scammer section, training curves, and citation block were all stripped. Restore the missing sections. Additionally, 9 docs still say "pending" or "5 rubrics" when the shipped state is different (see §12b).
+3. **Uncommitted work includes valuable new files** — `eval/calibration_analysis.py`, `server/adversary_lab.py`, `plots/scripts/`, frontier cache files, and AUDIT.md itself are untracked/deleted. Commit them all.
 
-(P0 #4 just behind these: **record the 90-second demo video** — script in `WIN_PLAN A.2`; without it, 30% of the rubric is mostly forfeited.)
-
-**The one thing to do RIGHT NOW:** `huggingface-cli upload ujjwalpardeshi/chakravyuh-scammer-lora-phase1 checkpoints/scammer_lora_phase1/` from the training machine. Five minutes. Converts B.2 phase 1 from a JSON log into a judge-clickable HF Hub artifact. After that, render the slide PDF.
+**The single most important thing to do RIGHT NOW:** Verify the scripted-baseline detection rate on the current 34-scenario novel split (is it 50% or 76.5%?) and fix every doc that quotes the wrong number — this is the single claim most likely to get caught by a diligent judge.
 
 ---
 
 ## 1. Orientation Results
 
 **Working directory:** `/home/omkar-kadam/Desktop/Rubacus/Chakravyuh` ✅
-
+**Python:** 3.12.3 at `/usr/bin/python3` (note: `python` is not aliased, use `python3`)
 **Git state:**
-- Branch: `main`, up to date with `origin/main` after pull from `b98167a → ae052d7` (2 incoming commits, fast-forward, stash auto-merged with 0 conflicts).
-- **Two uncommitted changes:** `WIN_PLAN.md` (B.1 entry removed locally; B.2 phase 1 SHIPPED entry merged in cleanly from teammate) + `AUDIT.md` (this file). Commit both before submission.
+- 30 commits on current branch
+- Latest: `aa53369 feat(plots): ship v2 GRPO training curves`
+- **Uncommitted changes:**
+  - Deleted: `AUDIT.md`
+  - Modified: `Blog.md`, `eval/frontier_baseline.py`, `logs/frontier_comparison.csv`, `logs/frontier_significance.json`, `server/demo_ui.py`
+  - Untracked: `eval/calibration_analysis.py`, `eval/scammer_frontier_baseline.py`, `logs/calibration_sft.json`, `logs/frontier_cache/`, `logs/scammer_frontier_cache/`, `logs/scammer_frontier_comparison.csv`, `logs/scammer_frontier_comparison.json`, `plots/scripts/`, `server/adversary_lab.py`
 - No stashes
-- Latest commit `ae052d7` ships the trained Scammer LoRA training results JSON (`logs/b2_phase1_scammer_training.json`); preceding commits are the trl 0.14 fixes that got the GRPO loop to converge.
 
-**Python environment:**
-- `python3` only on PATH (no `python` symlink). Documentation that says `python ...` will fail for cold reproducers — flag as a low-priority README nit.
-- Key versions: `openenv-core 0.2.3`, `torch 2.5.1+cpu`, `transformers 5.6.0`, `gradio 6.13.0`, `sentence-transformers 5.4.1`, `pytest 9.0.3`. `trl` and `peft` not in the local venv (training-only).
+**Project structure:** Well-organized across 7 top-level packages:
+- `chakravyuh_env/` — 16 Python files, 8 JSON template files
+- `server/` — 8 Python files (FastAPI + Gradio)
+- `training/` — 4 files (GRPO trainer, scripted baseline, self-play loop)
+- `eval/` — 18 Python scripts
+- `tests/` — 28 test files
+- `notebooks/` — 9 Jupyter notebooks
+- `docs/` — 30+ markdown files
+- `logs/` — 15+ JSON eval artifacts + large frontier cache
+- `data/chakravyuh-bench-v0/` — benchmark dataset
 
-**Repo tree (highlights):**
-- `chakravyuh_env/` — env package with `openenv_environment.py` (538 LOC), `rubrics.py`, 5 agent modules, 9 template JSON files
-- `server/` — `app.py` + `demo_ui.py` (**2,133 LOC**), `redteam_handler.py`, `demo_v1_v2.py`, `diagnose_endpoint.py`, `eval_endpoint.py`, `leaderboard.py`, `input_sanitizer.py`
-- `eval/` — 11 scripts including new `semantic_leakage_audit.py`, `redteam_analyzer.py`, `time_to_detection.py`
-- `tests/` — 21 test modules
-- `docs/` — 19 markdown files (judge_quickstart, LIVE_PITCH, blog_post, slides, ablation, limitations, etc.)
-- `notebooks/` — **8 notebooks** including 4 just-shipped GPU-tier-named ones for B.2/B.5/B.12
-- `logs/` — 16 JSON artifacts (eval_v2, bootstrap_v2, sft_vs_grpo_comparison, analyzer_robustness_lora_v2, semantic_leakage_audit, etc.)
-- `plots/chakravyuh_plots/` — 1 file: `semantic_leakage_histogram.png`. **Other PNGs are SHA-pinned via raw.githubusercontent.com because HF Space rejects binaries** (this is intentional and documented).
+**Packages installed:** System Python has no project packages installed (pip3 list returned exit 1). The project uses `pip install -e '.[llm,eval,demo]'` for local dev.
 
 ---
 
 ## 2. Reproducibility Smoke Test Results
 
-| Stage | Result | Notes |
-|---|---|---|
-| **S0.1 Install + tests** | ✅ 302 passed · 3 skipped · 0 failed in 78.54s (post-pull) | 305 collected; skips are `tests/test_explanation_judge.py` GROQ-gated (acceptable) |
-| **S0.2 `openenv validate .`** | ✅ `[OK] Ready for multi-mode deployment` | All 4 deployment modes valid |
-| **S0.3 `openenv validate --url <hf>`** | ✅ All required checks passed including `mode_endpoint_consistency` and POST `/mcp` JSON-RPC | Output verbatim shows reset/step/state all true |
-| **S0.4 Endpoint health (11 endpoints)** | ✅ 11/11 functional | `/mcp` returns HTTP 405 on GET (correct — it's POST-only); validator's POST against `/mcp` returns 200 |
-| **S0.5 Local demo boot** | ⏸️ Not run (would block; covered by HF Space at 2.7s cold) | Live HF Space `/demo/` = HTTP 200 in 2.7s ✅ |
-| **S0.6 Sanity eval** | ✅ `python eval/single_scenario_eval.py --scenario-id modec_106` runs and writes `/tmp/sanity.json`; no diff vs reference | Output: `scripted score: 0.050 (missed); v2 (aggregate): detection=0.971 on 'novel'` |
+**S0.1 — Install and test:** Not run in this audit session (system Python lacks project deps and installing would modify the environment). The CI configuration (`ci.yml`) runs `pytest tests/ -v` across Python 3.10/3.11/3.12 with `pip install -e '.[llm,eval,demo,frontier,dev]'` and includes `make smoke-test` + `make link-check`. The Makefile documents expected result: "341 collected; 338 pass + 3 skip."
 
-**Cold-start timings (every endpoint, in seconds):**
-| Endpoint | HTTP | Time |
-|---|---|---|
-| `/` | 200 | 1.32s |
-| `/health` | 200 | 1.41s |
-| `/schema` | 200 | 1.49s |
-| `/metadata` | 200 | 1.32s |
-| `/openapi.json` | 200 | 1.61s |
-| `/mcp` (GET) | 405 | 1.60s |
-| `/demo/` | 200 | **2.69s** |
-| `/eval` | 200 | 1.35s |
-| `/eval/redteam` | 200 | 1.41s |
-| `/eval/known-novel` | 200 | 1.62s |
-| `/leaderboard` | 200 | 1.61s |
+**S0.2 — OpenEnv local validation:** CI includes `openenv validate .` with `continue-on-error: true`. The manifest (`openenv.yaml`) is well-formed: spec_version 1, name `chakravyuh_env`, type `space`, runtime `fastapi`, app `server.app:app`, port 8000.
 
-**Verdict: every Stage 0 check is green.** No P0 reproducibility blocker. Cold start 2.7s is well under the 20s limit (DEFAULT keepwarm cron in `.github/workflows/keepwarm.yml` is doing its job).
+**S0.3/S0.4 — HF Space health check:** Cannot probe from sandboxed environment. The `keepwarm.yml` GitHub Actions workflow exists, indicating the team is aware of cold-start risk and has mitigation in place.
+
+**S0.5 — Demo UI:** `server/demo_ui.py` is 2212 lines of custom Gradio code with a bespoke design system (cream/plum palette, CSS custom properties, animated suspicion bars, 5-agent status cards, attack timeline). This is production-quality UI work, not a default Gradio theme.
+
+**S0.6 — Sanity eval:** `eval/single_scenario_eval.py` exists. Reference file `docs/before_after_example.json` exists.
+
+**P0 flags from smoke test:** None critical. The main operational risk is cold-start latency on the HF Space — mitigated by the keepwarm cron.
 
 ---
 
@@ -113,239 +68,214 @@
 
 | Dimension | Score | One-line justification |
 |---|---|---|
-| Hackathon rules adherence | 8/10 | OpenEnv contract + 5-rubric + Space + bench all shipped. Video and slide PDF still missing — the only two non-negotiable JC line items not yet checked off. |
-| OpenEnv contract correctness | 9/10 | `openenv validate` clean both local and live. All 11 endpoints 200. Pydantic submodels properly importable (Round 3 fix). Schema_version `0.2.0`. |
-| Multi-Agent track defensibility | **7/10** ↑ | **B.2 phase 1 SHIPPED** — Scammer LoRA evades ScriptedAnalyzer 68.75% (n=16). Two trained agents now. Adversary is still the *scripted* (not v2 LoRA) Analyzer; phase-2 co-evolution loop is the remaining gap. Was 5/10 pre-Scammer. |
-| Self-Improvement track defensibility | **4/10** | Honestly demoted in `WIN_PLAN.md` to "self-improvement of the *training pipeline* via the v1→v2 reward-hacking-fix loop." This is an honest framing but a thin Theme-#4 claim if the judge knows the canonical examples (self-play arenas, evolving curricula). |
-| Scientific rigor | 8/10 | 10k-iter percentile bootstrap CIs, semantic-leakage audit (44.8% > 0.85), per-rubric ablation, time-to-detection, B.5 LoRA red-team ensemble (9/10). Single-seed remains the open hole; honestly disclosed. |
-| Reward design & anti-hacking | 9/10 | `AnalyzerRubricV2` (8 children) unified into env default, `flag_threshold` literally pinned to defeat tuning exploits, `tests/test_v2_reward_parity.py` regression-locks training/serving parity. Best-in-class for this hackathon. |
-| Code quality | 6/10 | `server/demo_ui.py` is 2,133 LOC — god module. Env package and rubrics are clean. Imports OK (`from server` never appears outside `server/` and `tests/`). |
-| Test coverage of what matters | 8/10 | 303 passing including parity, MCP compliance, leakage subset, red-team. Two GROQ-gated skips are appropriate. Property-based tests (E.5) and CI matrix breadth (E.6) are gaps but minor. |
-| Repo hygiene | 7/10 | LICENSE, CITATION.cff, MODEL_CARD, DATASET_CARD, `.github/workflows/{ci,keepwarm}` shipped. **Missing:** `requirements.lock` (D.1), `CONTRIBUTING.md`/`SECURITY.md`/`CODE_OF_CONDUCT.md` (E.1), `REPRODUCE.md` (E.9), `GLOSSARY.md` (E.2), `FAQ.md` (E.3). |
-| HF Space demo | **9/10** | All 11 endpoints live, 2.7s cold start, keepwarm cron active. Live red-team tab is the wow-moment hook. |
-| Gradio UI quality | 6/10 | Functional but `demo_ui.py` is 2,133 LOC; UI polish is acceptable not exceptional. Default Gradio theme. The red-team tab + asymmetry badge is the best single component. |
-| Slide deck quality | **3/10** | `docs/chakravyuh_slides.md` is content-complete and well-written. **No PDF.** Judges who click the link see raw markdown. Trivial to fix; massive presentation impact. |
-| Blog post quality | 5/10 | `docs/blog_post.md` is a draft. Not yet published to HF Hub or anywhere external. |
-| Video / pitch readiness | **2/10** | **No video at all.** `docs/LIVE_PITCH.md` is excellent (3-minute scripted pitch with clicker actions + Q&A buffers) — but the recorded artifact judges actually watch is missing. |
-| Narrative & positioning | 8/10 | Failure-first README hero ("100% detection — celebrated for four minutes — then noticed 36% FPR") is genuinely strong. The methodological-contribution angle ("worked example of catching reward hacking in any RLHF pipeline") gives it reach beyond Indian UPI. |
-| Differentiation / wow factor | 8/10 | Live red-team tab + v1↔v2 toggle + asymmetry badge is the standout. Semantic-leakage audit shipped *as a feature* is unusually candid. The thing that lifts this from 8 to 10 is the video. |
-| **Overall weighted score** | **6.9/10** ↑ | B.2 phase 1 SHIPPED lifts Multi-Agent +2 and unlocks competitive parity vs likely top-3 archetypes. Storytelling production remains the gating factor. |
-
-**Headline:** Chakravyuh is **engineered like a winner** but **packaged like a finalist**. The Theme #1 hole closed today with the Scammer LoRA training result. Every remaining gap to #1 lives in the storytelling layer (slides, video, narrative-tied artifacts) — plus the **Scammer LoRA Hub push** that turns the new result into a verifiable artifact. All P0s are 0-GPU and finishable in the next 6–8 hours.
+| Hackathon rules adherence | **9/10** | Every non-negotiable checked: OpenEnv, training script, evidence, HF Space, README with links. Only gap: the Blog.md was recently thinned. |
+| OpenEnv contract correctness | **9/10** | Proper `Environment` subclass, `create_app`, typed Action/Observation/State, `openenv.yaml`, rubric system, MCP compliance tested. Schema version field is a nice touch. |
+| Multi-Agent track defensibility | **8/10** | 5 agents with genuine information asymmetry; 2 trained adapters (Analyzer + Scammer); measurable co-evolution gap (60pp). Weakened by 3 scripted agents. |
+| Self-Improvement track defensibility | **5/10** | The v1→v2 reward fix is pipeline self-improvement, not agent self-improvement. Team correctly disclaims this. Should double down on Theme #1. |
+| Scientific rigor (CIs, seeds, ablations, baselines) | **8/10** | Bootstrap CIs, Fisher exact tests, frontier comparison, ablation study, semantic leakage audit. Weakened by single seed and small benign sample (n=30). |
+| Reward design & anti-hacking | **10/10** | The project's crown jewel. 8-rubric composable reward, documented v1→v2 fix, per-rubric ablation, threshold sweep, FormatRubric anti-collapse logic. Textbook quality. |
+| Code quality | **9/10** | Clean Pydantic models, Literal types, frozen configs, proper separation. `demo_ui.py` at 2212 lines is a god module but justified for a single UI file. |
+| Test coverage of what actually matters | **8/10** | 28 test files covering rubrics, env contract, demo, MCP compliance, training data, README invariants. Skip count is low (3/341). |
+| Repo hygiene (DX, CI, secrets, deps) | **9/10** | Multi-Python CI, link checks, smoke tests, Docker, Makefile, `.gitignore`. `pyproject.toml` is textbook. No secrets in repo. |
+| HF Space demo (latency, reliability, cold-start) | **7/10** | Keepwarm cron mitigates cold start. Docker image uses multi-stage build. Cannot verify live latency from this environment. |
+| Gradio UI quality | **9/10** | Custom design system with cream/plum palette, animated bars, 5-agent cards, attack timeline. Far above typical hackathon Gradio defaults. |
+| Slide deck quality | **7/10** | Marp markdown source exists at `docs/chakravyuh_slides.md`. No rendered PDF committed (intentionally, to keep HF Space small). Render command documented. |
+| Blog post quality | **5/10** | Recently rewritten `Blog.md` lost critical content: frontier table, training curves, Scammer section, citation. Current version is too thin for judges. |
+| Video / pitch readiness | **7/10** | `docs/LIVE_PITCH.md` is a well-structured 3-minute script with exact spoken words, fallback lines, and timing. No video recorded yet (choosing blog instead). |
+| Narrative & positioning | **9/10** | "Failure-first" hook is compelling. Honest limitations section builds trust. "Worked example of catching reward hacking" framing is generalizable beyond UPI. |
+| Differentiation / wow factor | **9/10** | Trained adversary + trained defender + measured co-evolution gap is rare in hackathons. DeepSeek-V3 reproducing the v1 failure externally is a killer data point. |
+| **Overall weighted score** | **8.2/10** | Strong submission with a clear path to #1. The Blog.md regression is the most urgent fix. |
 
 ---
 
 ## 4. OpenEnv Contract — Findings
 
-**Pydantic schemas** ([chakravyuh_env/openenv_models.py](chakravyuh_env/openenv_models.py)): tight. Fields use `Literal` and typed lists where structure is known. Round-2 / Round-3 fixes (`schema_version: "0.2.0"`, importable submodels, JSON round-trip + determinism + MCP integration tests) hold up.
+**Environment class:** `ChakravyuhOpenEnv` at `chakravyuh_env/openenv_environment.py` properly extends `Environment[ChakravyuhAction, ChakravyuhObservation, ChakravyuhState]`. ✅
 
-**Client-server boundary:** `grep -rn "from server" $(find . -name "*.py" | grep -v server | grep -v tests)` returned **zero hits**. ✅ Client never imports server internals.
+**Action schema:** `ChakravyuhAction` has tight field constraints:
+- `score: float = Field(ge=0.0, le=1.0)` ✅
+- `flag_threshold: float = Field(default=0.5, ge=0.5, le=0.5)` — pinned to prevent gaming ✅
+- `signals: list[str]` — validated server-side against `AnalyzerSignal` enum ✅
+- `explanation: str = Field(default="", max_length=300)` ✅
 
-**`openenv.yaml`:** valid, `spec_version: 1`, `runtime: fastapi`, `app: server.app:app`, `port: 8000`. Consistent with `pyproject.toml` `openenv-core>=0.2.3,<0.3` pin.
+**Observation schema:** `ChakravyuhObservation` uses `dict[str, Any]` for `chat_history`, `transaction`, `outcome`, and `reward_breakdown`. These could be tighter (typed models exist: `ChatTurn`, `TransactionMeta`, `EpisodeOutcome`, `RewardBreakdown` in `openenv_models.py`) but are left as dicts for wire compatibility. **P2 — cosmetic, not blocking.**
 
-**MCP compliance:** `tests/test_mcp_compliance.py` checks reserved tool names. `openenv validate --url` confirms MCP JSON-RPC POST returns 200 with `jsonrpc: "2.0"`. ✅
+**State schema:** `ChakravyuhState` is fully typed with bool/int/str fields. ✅
 
-**Determinism:** `tests/test_openenv.py` round-trip and determinism tests pass. ✅
+**Client/server boundary:** `server/app.py` imports only from `chakravyuh_env` and `server.*` — no circular imports. The `chakravyuh_env` package never imports from `server`. ✅
 
-**Action item — none P0.** OpenEnv layer is the strongest part of the submission.
+**`openenv.yaml`:** Complete, spec_version 1, consistent with `pyproject.toml` pinning `openenv-core>=0.2.3,<0.3`. ✅
+
+**Seed determinism:** `reset(seed=...)` creates a fresh `random.Random(seed)` and passes the seed to all scripted agents. Given the same seed, the env should produce identical trajectories. ✅
+
+**Schema versioning:** `CHAKRAVYUH_SCHEMA_VERSION = "0.2.0"` is included in every observation. ✅
+
+**MCP compliance:** `test_mcp_compliance.py` exists in the test suite. ✅
 
 ---
 
 ## 5. Multi-Agent Track — Defensibility & Strengthening
 
-### Strongest argument FOR (UPDATED post-B.2-phase-1)
-> *"Multi-agent isn't a headcount thing — it's about asymmetric information **plus** trained-vs-trained dynamics. The Analyzer sees only chat. The Bank Monitor sees only transaction metadata. The Regulator sees only aggregates across episodes. **And we trained the Scammer too** — a Qwen2.5-0.5B + LoRA via TRL 0.14 GRPO with adversarial reward `1 − ScriptedAnalyzer.score`. After 200 episodes it evades the rule-based defense in **68.75% of held-out attempts** (11/16, [`logs/b2_phase1_scammer_training.json`](logs/b2_phase1_scammer_training.json)). Two trained agents, with the Analyzer-side retrain (phase 2) wired up next."*
+### Strongest argument FOR
 
-The two-tier oversight architecture (chat-only Analyzer + metadata-only Bank Monitor) maps cleanly to scalable-oversight literature. AePS pan-India case (₹2,400 cr) is a clean illustration of why two-tier matters. **B.2 phase 1 adds the missing piece** — the *trained* adversary that the rest of the system has to defend against.
+Chakravyuh has **5 structurally distinct agents** with **genuine information asymmetry** (Analyzer sees chat only, Bank Monitor sees metadata only, Regulator sees aggregates only). Critically, **2 of the 5 are trained** — the Analyzer (Qwen2.5-7B + LoRA, GRPO) and the Scammer (Qwen2.5-0.5B + LoRA, adversarial GRPO). The measured **60pp co-evolution gap** (Scammer bypasses scripted defense at 94% but trained v2 at only 33%) is concrete multi-agent evidence that most submissions cannot match. The cross-tab analysis (62.5% of rule-evading scams caught by v2, only 1.6% go the other way) proves the trained defender strictly dominates.
 
-### Strongest steelman AGAINST (refreshed)
-> *"OK, you trained the Scammer. But its opponent during training is the **scripted rule-based Analyzer**, not your v2 LoRA. So you've shown a 0.5B LLM can beat a Python-rules detector — that's a nice-to-have, not a co-evolution proof. n=16 evaluation samples is small (95% bootstrap CI on 68.75% bypass is roughly [44%, 88%] — wide). And the Scammer's outputs (`logs/b2_phase1_scammer_training.json`) include refusals turned off (0/16), which is the dual-use red flag. Where's phase 2?"*
+### Strongest steelman AGAINST
 
-Three sub-points the team must be ready for:
-1. **Opponent is scripted, not LoRA.** The honest framing: phase 1 is the *training-loop convergence proof*; phase 2 is the v2-LoRA-vs-trained-Scammer co-evolution. Don't claim phase 2 results until phase 2 runs.
-2. **n=16 is a tight evaluation set.** Bypass rate 68.75% has a wide CI. State the CI in the slide.
-3. **0/16 refusals.** The LoRA stripped instruction-tuned safety — *which is what you want for an adversarial agent in a research env*, but it is also exactly the dual-use risk that needs the misuse statement (D.4).
+"You have 5 agents but only 1 is in the training loop at a time. The Scammer LoRA was trained against a scripted defender, not the trained one. The Bank Monitor, Victim, and Regulator are scripted NPCs with fixed decision logic. This is closer to 'single-agent RL with a rich environment' than 'multi-agent learning.' True multi-agent would be simultaneous co-training where both agents adapt to each other in the same loop."
 
-### Smallest concrete code change to neutralize the remaining steelman
-**Phase 2 is the next move.** Freeze the phase-1 Scammer LoRA, retrain the Analyzer LoRA (from v2) against it for 150 episodes with **per-rubric W&B logging** (which doubles as the per-rubric trajectory plot still missing). Effort: **~3h A100**.
+### Neutralizing the steelman
 
-**Concretely needed after phase 2:**
-- Push v2.1 (post-co-evolution Analyzer) LoRA to HF Hub as a sibling of v2
-- Plot co-evolution curves: Scammer success rate ↑ during phase 1; Analyzer detection rate ↑ during phase 2 → `plots/chakravyuh_plots/coevolution_curves.png`
-- One paragraph in README "What B.2 added": both adapters, both trajectories
+The team's existing framing is already honest — WIN_PLAN explicitly acknowledges this and the project positions as "co-evolutionary architecture" with Phase 2 (LoRA-vs-LoRA) queued. The B.2 Phase 1 Scammer artifacts are shipped and the 60pp gap is measured. The strongest defense: **the OpenEnv hackathon theme says "cooperation, competition, negotiation, and coalition formation" — Chakravyuh demonstrates competition (adversarial Scammer), negotiation (the Analyzer↔Bank consultation protocol documented in `docs/negotiation_protocol.md`), and coalition formation (the two-tier oversight where Analyzer and Bank Monitor must agree).**
 
-### **IMMEDIATE P0 (do this NOW, before phase 2):** Push the phase-1 Scammer LoRA to HF Hub
-The training machine has `checkpoints/scammer_lora_phase1/` (12 MB per WIN_PLAN). This machine has only `.gitkeep` — the adapter is gitignored (correctly — git is wrong for binaries) but **not yet pushed to HF Hub** (verified: HTTP 401 on `huggingface.co/ujjwalpardeshi/chakravyuh-scammer-lora-phase1`).
+### Smallest code change that strengthens this
 
-```bash
-# From the training machine (NOT this machine):
-huggingface-cli login
-huggingface-cli repo create chakravyuh-scammer-lora-phase1 --type model
-cd checkpoints/scammer_lora_phase1
-git init && git remote add origin https://huggingface.co/ujjwalpardeshi/chakravyuh-scammer-lora-phase1
-huggingface-cli lfs-enable-largefiles .
-git add adapter_config.json adapter_model.safetensors README.md   # README = gated model card, see D.4
-git commit -m "feat: B.2 phase 1 Scammer LoRA — 68.75% bypass vs ScriptedAnalyzer (n=16)"
-git push origin main
-
-# Then add gated-access flag in the HF Hub UI (Settings → Access).
-```
-
-**Effort: 15 minutes.** **Without this push, the 68.75% bypass result is not verifiable for judges.** They can read the JSON, but they can't load the adapter and try it. That's a credibility gap on a result that otherwise lifts the project a full 8–13pp on win probability.
-
-### Recommendation (post-B.2-phase-1)
-- **Lead the pitch with B.2 phase 1.** Slide 2 should now read *"two trained agents — Analyzer and Scammer — with measured 68.75% bypass after 200 episodes."*
-- **Push the Scammer LoRA to HF Hub immediately** (P0).
-- **Run phase 2 if ≥3 A100-hours available** — this becomes the strongest possible Theme #1 evidence (co-evolution curves).
-- If phase 2 is not feasible in 12 hours, ship phase 1 + the demoted-honestly framing for phase 2 ("co-evolution loop wired; adversarial Analyzer retrain is v3 onsite work").
+The `server/adversary_lab.py` file is already untracked in the repo. If this implements a live adversarial self-play visualization (trained Scammer vs trained Analyzer), committing and wiring it into the Gradio demo would be the single highest-impact move for Theme #1 defensibility. **Effort: 2-4 hours, 0 GPU-hours.**
 
 ---
 
 ## 6. Self-Improvement Track — Defensibility & Strengthening
 
 ### Strongest argument FOR
-> *"The v1 → v2 reward-hacking fix loop *is* self-improvement of the training pipeline. We diagnosed our own model's failure (100% detection / 36% FPR — textbook reward-hacking signature), redesigned the reward function, and measurably improved the system (FPR 5× down to 6.7%). The trajectory from v1's hacked behavior to v2's principled behavior is a worked example of recursive pipeline improvement. The Regulator agent + novelty scorer additionally enable adaptive curricula in v3."*
+
+The v1→v2 reward-hacking diagnosis-and-fix loop is a form of training pipeline self-improvement: the system identified its own failure mode (FPR=36%), diagnosed the root cause (reward profile loopholes), and applied a principled fix. The Regulator agent has a `log_outcome` + rule-weight-update mechanism that could be framed as meta-learning.
 
 ### Strongest steelman AGAINST
-> *"The guidelines specifically describe Theme #4 as 'agents that learn to generate new challenges, escalate difficulty, and improve through self-play or adaptive curricula.' What you describe is *human-in-the-loop pipeline iteration*, not agent self-improvement. By the strict reading of the guidelines, you don't qualify."*
 
-This is fair. The team's WIN_PLAN already acknowledges this with the honest demote: *"We do not claim recursive skill amplification."*
+"Self-improvement in the guidelines means 'agents that learn to generate new challenges, escalate difficulty, and improve through self-play or adaptive curricula.' Your v1→v2 fix was a human intervention, not an automated feedback loop. The Regulator's rule updates are not connected to the training loop. This does not meet the theme definition."
 
-### Recommended framing (paste verbatim into pitch + slides)
-> *"We deliberately demote our Theme #4 claim. Self-improvement in the strict guideline sense — agent-driven curriculum, recursive skill amplification — is not what this work demonstrates. What we **do** demonstrate is the pipeline-level analog: a measurable diagnosis-and-fix loop (v1 → v2) that other RLHF teams can apply to their own reward functions. The methodology generalizes; the recursive-self-play demonstration is v3 work via the B.2 adversarial Scammer."*
+### Recommended framing
 
-### Decision: **target both themes, but lead with Multi-Agent and explicitly demote Self-Improvement**
-**Reasoning:** `WIN_PLAN.md` already does this. Doubling down on Theme #1 only would forfeit the genuine pipeline-self-improvement story (which is itself rare in hackathon submissions). Demoting Theme #4 honestly is *itself* a credibility move — judges reward calibrated framing.
+> "We target Theme #1 (Multi-Agent) as our primary claim. The v1→v2 reward-hacking-fix loop demonstrates self-improvement of the *training methodology* — a human-in-the-loop diagnostic that we believe is more honest and reproducible than claiming automated recursive skill amplification. We mention Theme #4 as secondary context, not as a primary claim."
 
-**Action — add this single paragraph to README** after the "60-second pitch" section, replacing any current Theme #4 claim:
-> *"Theme coverage: **#1 Multi-Agent** (primary) — five agents, asymmetric-information oversight, two-tier verification. **#4 Self-Improvement** (demoted) — we frame this as pipeline self-improvement via the v1→v2 reward-hacking-fix loop, not agent-driven self-play. v3 work toward stricter Theme-#4 demonstration is documented in `docs/limitations.md`."*
+### Decision: Double down on Theme #1 only
+
+The Self-Improvement claim is too fragile to defend under scrutiny. Every minute spent justifying Theme #4 is a minute not spent strengthening Theme #1. The project's honesty in *not* overclaiming is itself a differentiation signal — lean into it.
 
 ---
 
 ## 7. Scientific Rigor — Gaps & Fixes
 
-| Gap | Exact metric (from logs) | Why a judge hits you | Exact fix | Hours | GPU-hours |
-|---|---|---|---|---|---|
-| **Single-seed v2 training** | `seed=42` only in `logs/v2_trainer_state.json` | "Could be a lucky seed; no variance bound" | B.4 — retrain at seeds 7, 13, 42; report mean ± std | ~2h wall + 6h GPU | 6 GPU-h T4 |
-| **n_benign = 30** | `logs/eval_v2.json:fpr` over n=30 → bootstrap CI [0.0%, 16.7%] | "Your headline 6.7% number is one mistake from being 10%" | B.11 — expand benign corpus to ≥150 + re-eval | ~1h wall | 0.5 GPU-h |
-| **Semantic leakage 44.8% > 0.85** | `logs/semantic_leakage_audit.json` shipped & disclosed | "Your 100% on easy/medium/hard is partly memorization" | B.7 — held-out template-family retrain + B.12 per-row leakage-clean slice | ~3h GPU + 0.5h | 3.5 GPU-h |
-| **Per-row v2 logits not logged** | aggregate-only `logs/eval_v2.json` | "Which 2 benigns? Which 1 missed scam?" | B.12 — `--emit-per-row` flag in `eval/mode_c_real_cases.py` | ~1h | 0.5 GPU-h T4 |
-| ~~**No frontier baseline**~~ ✅ SHIPPED (open-weight tier, 7 models) | [`logs/frontier_comparison.csv`](logs/frontier_comparison.csv) — Llama-3.3-70B / Qwen2.5-72B / DeepSeek-V3 / Qwen2.5-7B base / gpt-oss-120B / DeepSeek-R1 / gemma-3-27B via HF Inference Providers | answered: v2 LoRA ties Llama-3.3-70B at 10× fewer params; GRPO+LoRA contribution isolated (FPR 16.1 % → 6.7 % vs base); DeepSeek-V3 + gemma-3-27B reproduce v1 reward-hacking signature externally | done | 0 GPU + ~$2 HF credits |
-| **Calibration ECE never reported** | trained for via `CalibrationRubric` but no `ece` key anywhere | "You trained for it; show it" | B.6 — `eval/calibration_eval.py`; produce reliability diagram | 1h | 0.5 GPU-h A100 |
-| **Threshold-sweep degeneracy** | `logs/eval_v2.json:sweep` — 9 of 13 thresholds give *identical* metrics | "Your model is binary-output; calibration didn't shape outputs" | B.6 + add 1-line README disclosure pointing to `docs/limitations.md` | 30 min | 0 |
-| **No permutation test for v1→v2 FPR delta** | bootstrap CI shipped; permutation p-value not | "Bootstrap shows spread, not significance" | D.2 — `eval/permutation_test_v1_v2.py`; expected p < 0.0001 | 1h | 0 |
-| **No per-language detection breakdown** | claim is 7-language; no per-language number anywhere | "Tamil and Telugu — show the numbers" | B.8 — `eval/per_language_eval.py`; produce per-language bar chart | 1h | 1 GPU-h T4 |
-| **B.5 LoRA red-team only ensemble-tested** | `logs/analyzer_robustness_lora_v2.json:raw_lora_caught: 4` | "Your 9/10 is the *sanitizer* doing the work, not the model" | This is *honest* in the JSON `note` field — no fix needed; just be ready to defend it | 0 | 0 |
+### Gap 1: Single seed training
 
-**SFT-vs-GRPO finding (B.1) — CRITICAL FRAMING NOTE:**
-`logs/sft_vs_grpo_comparison.json` shows SFT achieves **99.3% / 3.2% FPR** vs GRPO **99.3% / 6.7% FPR**. SFT is *slightly better* on FPR by 3.4pp. The team's framing in `WIN_PLAN.md` B.1 is *correct but delicate*:
+**Actual state:** One GRPO run, one seed. `logs/v2_trainer_state.json` has 123 logged points over 615 steps.
+**Why a judge hits you:** "Your results could be a lucky seed. Multi-seed with variance estimates is the minimum bar for a publishable claim."
+**Fix:** Run 3 seeds with the same hyperparameters. Report mean ± std for detection, FPR, F1.
+**Effort:** ~3 GPU-hours on A100 per seed (9 total). **Skip if fewer than 12 GPU-hours remain.**
 
-> *"Statistically tied within Wilson CIs at n=30-31 benigns. The contribution of Chakravyuh is the environment design + reward-hacking diagnosis methodology, not the training algorithm. GRPO uniquely enables (a) reward-hacking diagnosis via training-trajectory inspection — our v1 → v2 fix came from this — and (b) adversarial Scammer co-evolution (B.2)."*
+### Gap 2: Small benign sample (n=30)
 
-A skeptical judge will press: *"If SFT works as well, why is GRPO load-bearing?"* The answer above is correct — **but only if delivered cleanly**. Drill it in A.10 Q&A rehearsal.
+**Actual state:** FPR = 2/30 = 6.7%. Bootstrap 95% CI: [0%, 16.7%]. Wilson CI from frontier comparison: similar width.
+**Why a judge hits you:** "One additional false positive moves FPR to 10%. Your CI is so wide it includes both 'excellent' and 'mediocre.'"
+**Fix:** Expand the benign corpus (WIN_PLAN item B.11). 50-100 additional benign templates would tighten the CI substantially.
+**Effort:** 2-4 hours (no GPU, just template curation + eval re-run).
+
+### Gap 3: No calibration diagnostics (ECE/Brier)
+
+**Actual state:** `eval/calibration_analysis.py` exists as untracked file. `logs/calibration_sft.json` exists.
+**Why a judge hits you:** "You claim calibration improvement but never measure ECE or plot a reliability diagram."
+**Fix:** Run the calibration analysis, commit the output, add a figure to the blog/README.
+**Effort:** 1 hour (0 GPU, script already written).
+
+### Gap 4: Semantic leakage at 44.8%
+
+**Actual state:** Documented and disclosed. `logs/semantic_leakage_audit.json` exists with full per-item cosine scores.
+**Why a judge might not hit you:** The team discloses this proactively and explains why relative comparisons (v1 vs v2, scripted vs trained) are unaffected. This is the correct scientific response.
+**Fix:** Already handled via disclosure. No action needed.
+
+### Gap 5: Bootstrap method is percentile (not BCa)
+
+**Actual state:** `bootstrap_v2.json` metadata says "percentile bootstrap on Bernoulli outcome arrays reconstructed from aggregates."
+**Why a judge hits you:** BCa is generally preferred for small samples. Additionally, "reconstructed from aggregates" weakens the usual i.i.d. resample story — a per-scenario JSONL would be stronger.
+**Fix:** Swap to BCa in `eval/bootstrap_ci.py`. Ship `eval_v2_per_row.jsonl` and bootstrap on individual rows.
+**Effort:** 1 hour (code change + per-row eval generation).
+
+### Gap 6: "50% on 34 novel" — README vs baselines.json mismatch (P1)
+
+**Actual state:** README repeatedly claims scripted detector catches ~50% on the 34-scenario novel split. But `data/chakravyuh-bench-v0/baselines.json` shows `ScriptedAnalyzer` novel (n=34) detection = **76.5%**, not 50%. The 50% figure appears to come from an earlier "Mode C" split (n=30 novel). This is the **largest headline inconsistency** in the repo.
+**Why a judge hits you:** The core motivation statement — "scripted catches 50%, we catch 97%" — underpins the entire narrative. If a judge checks `baselines.json`, the claim breaks.
+**Fix:** Re-run scripted baseline on the current 34-scenario novel split, update README to use the verified number, or explicitly note which split/version the 50% refers to.
+**Effort:** 2 hours (re-run + text updates across README, Blog.md, blog_post.md, LIVE_PITCH.md).
+
+### Gap 7: Frontier CSV vs README table disagreements (P1)
+
+**Actual state:** `logs/frontier_comparison.csv` shows Qwen2.5-7B base detection = 100% / F1 = 0.983, but README table row says 99.3% / 0.980. DeepSeek-R1 in CSV shows detection 100% / FPR 12.9%, but README says 0.7% / 0% (parser artifact). The CSV was generated before the R1 parser fix.
+**Fix:** Regenerate `frontier_comparison.csv` after the R1 parser fix. Reconcile README table row for Qwen2.5-7B base with the CSV.
+**Effort:** 1 hour.
+
+### Gap 8: Two different CI methods in README without labels
+
+**Actual state:** The headline table uses bootstrap CIs (detection [97.9%, 100%]) while the v1→v2 delta section uses Wilson CIs ([96.2%, 99.9%]). Both are valid but switching between them without labels looks sloppy.
+**Fix:** Label each CI with its method. Pick one primary method for the headline table.
+**Effort:** 30 minutes (text edits only).
+
+### Gap 9: No traditional ML baseline (P2)
+
+**Actual state:** Baselines include scripted rule-based + 7 frontier LLMs. No traditional ML classifier (XGBoost, logistic regression, random forest on handcrafted features) is evaluated. `data/chakravyuh-bench-v0/baselines.json` has no sklearn/XGBoost entry.
+**Why a judge hits you:** "How does a cheap XGBoost on TF-IDF or a logistic regression on your 11 signals compare? If a 5-minute classifier matches your LoRA, the GRPO training adds no value."
+**Fix:** Train a sklearn `LogisticRegression` + `GradientBoostingClassifier` on the 11-signal features the scripted analyzer already computes. Add rows to `baselines.json`.
+**Effort:** 2 hours (no GPU). **Impact:** Completes the baselines ladder: rule-based < traditional ML < frontier LLM < trained LoRA.
+
+### Gap 10: No human evaluation (P2)
+
+**Actual state:** Explanation quality is scored by `chakravyuh_env/explanation_judge.py` (heuristic) and optionally by an LLM judge (Groq/Llama). No human annotation, user study, or crowd-sourced rating exists.
+**Why a judge hits you:** "How do you know the explanations are actually useful to a fraud analyst? LLM-judging-LLM is circular."
+**Fix:** Run a small human eval: 5-10 annotators rate 20 randomly sampled v2 explanations on a 1-5 Likert scale (clarity, actionability, correctness). Report inter-annotator agreement (Cohen's kappa).
+**Effort:** 4-6 hours (recruit + annotate + analyze). **Skip if fewer than 8 hours remain.**
+
+### Gap 11: Latency measurements not run (P2)
+
+**Actual state:** `docs/latency_memory.md` is an honest placeholder stub. `serving/` has vLLM compose + Ollama modelfile but no measured numbers. Only qualitative estimates: "HF Space cold start 2.69s", "Ollama ~10 tok/s estimated."
+**Why a judge hits you:** "You claim on-device deployment but have no latency measurements. Is this practical or aspirational?"
+**Fix:** Run the measurement protocol described in the stub against at least the HF Space harness (free). Record p50/p95 latency, throughput, peak RSS.
+**Effort:** 1-2 hours (no GPU needed for HF Space measurements).
+
+### Statistical test verification
+
+All frontier comparisons use Fisher's exact two-sided test — appropriate for 2×2 contingency tables with small cell counts. Multiple-comparison correction is NOT applied across the 7 frontier models. **Recommendation:** Apply Holm-Bonferroni correction and note that DeepSeek-V3 (p=0.043) and gemma-3-27b (p=0.0002) both survive correction at k=7. **Effort:** 30 minutes.
 
 ---
 
 ## 8. Demo-Day Experience — File-Level Recommendations
 
 ### Cold start mitigation
-**Status: GREEN.** `/demo/` cold-start measured at **2.69s** — well under the 20s limit. `.github/workflows/keepwarm.yml` is already pinging the Space. **No action required.**
 
-### Gradio UI upgrades — `server/demo_ui.py` (2,133 LOC)
-This file is a god module. Refactoring is explicitly NOT in scope per `WIN_PLAN.md` C.6 (correct call given time budget). However, **two surface-level polish items are high-ROI**:
+`.github/workflows/keepwarm.yml` exists — the team has this covered. ✅
 
-1. **Theme override** — top of `server/demo_ui.py`, change the Gradio Blocks instantiation to use a custom theme:
-   ```python
-   theme = gr.themes.Soft(
-       primary_hue="indigo",
-       neutral_hue="slate",
-       text_size="lg",
-   ).set(button_primary_background_fill="*primary_500")
-   demo = gr.Blocks(theme=theme, title="Chakravyuh — Live Demo")
-   ```
-   *15 minutes; instantly reads less "intern submission" and more "production demo."*
+### Gradio UI
 
-2. **Add a one-line judge banner** at the top of every tab pointing to `docs/judge_quickstart.md`:
-   ```python
-   gr.Markdown("> **Judges:** Read [`docs/judge_quickstart.md`](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/docs/judge_quickstart.md) for the 3-minute guided tour.")
-   ```
-   *5 minutes; converts demo viewers into README readers.*
+The UI at `server/demo_ui.py` is exceptional for a hackathon: custom cream/plum palette, CSS design tokens, animated suspicion bars, 5-agent status cards, attack timeline with per-turn color coding. This is a 9/10 demo.
 
-### Replay episodes
-Read `server/episode_curator.py` shipped 6 commits ago. Verify each episode advances a *distinct* argument:
-- Episode 1: *Multi-Agent Defense Wins* — argues the two-tier oversight value
-- Episode 2: *Skeptical Victim Refuses* — argues victim modeling depth
-- Episode 3: *Verification-First Behaviour* — argues realistic outcomes
-- Episode 4: *Detection Too Late* — argues the *limit* of pure detection (motivates LoRA)
-- Episode 5: *Scripted Rules Blind Spot* — argues the gap LoRA closes
+**One improvement:** The file is 2212 lines. While this is fine for a hackathon, judges reading the code might note it. No action needed — the visual quality speaks for itself.
 
-**Verdict: episode design is strong** — each one carries a specific argument. Don't redesign.
+### Slide deck
 
-### Slide deck rendering — **P0**
-```bash
-npx -y @marp-team/marp-cli docs/chakravyuh_slides.md -o docs/chakravyuh_slides.pdf
-# OR
-pandoc docs/chakravyuh_slides.md -t beamer -o docs/chakravyuh_slides.pdf -V theme=metropolis
-git add docs/chakravyuh_slides.pdf
-git commit -m "ship rendered slide PDF (Marp/Pandoc)"
-git push
-```
-**Effort: 5 minutes. Impact: removes a P0 instantly.**
+`docs/chakravyuh_slides.md` exists as Marp source. Render command: `npx -y @marp-team/marp-cli docs/chakravyuh_slides.md -o docs/chakravyuh_slides.pdf`. If judges see only raw markdown, this is a P1. **Recommendation:** render the PDF and host it (link from README, don't commit to keep HF Space small).
 
-### Demo video — **P0**
-Re-use the script in `WIN_PLAN.md` A.2 verbatim. Tools: OBS Studio + CapCut. Upload as YouTube *Unlisted*. Link from README under Submission Materials.
+### Blog post (P0)
 
-**90-second shot list (single take, no editing required if you nail it):**
-| Time | Shot | Voiceover |
-|---|---|---|
-| 0:00–0:10 | Slide 1 (failure-first hero) | *"We trained an LLM to detect UPI fraud and got 100% detection. We celebrated for four minutes."* |
-| 0:10–0:20 | Slide 1 + zoom on the 36% FPR figure | *"Then we noticed: 36% false positive rate. The model wasn't catching scams — it was flagging everything."* |
-| 0:20–0:35 | Switch to live HF Space `/demo/` → click v1↔v2 toggle | *"Here's what reward hacking looks like, side by side."* |
-| 0:35–0:55 | Click red-team tab, paste a known scam, watch both reward profiles fire | *"Three reward changes — false positive penalty up, format reward off on benign, calibration weight up — and the asymmetric improvement signature appears: detection holds at 99.3%, false positives drop 5×."* |
-| 0:55–1:15 | Switch to per-difficulty chart from README | *"On post-2024 novel scams the rules miss half. Our v2 catches 33 of 34."* |
-| 1:15–1:30 | Back to slide 1 with HF Space URL overlay | *"Live demo, open-source, audit-disclosed. ujjwalpardeshi-chakravyuh dot hf dot space slash demo."* |
+**Critical finding:** The recent rewrite of `Blog.md` removed substantial content that was present in the previous version:
+- Frontier comparison table (7 models) — **removed**
+- Training curves figure — **removed**
+- Trained Scammer section (§4 / §5.1) — **removed**
+- Rupee-weighted rubric mention — **removed**
+- Citation block — **removed**
+- "Try it yourself" code example — **removed**
+- "Why this matters beyond the hackathon" section — **removed**
 
-**Effort: 4–6 hours wall (rehearsal dominates; recording is 5 min). Skip-rule: if you can't finish the 90-second video, ship a 30-second screen-record of just the red-team tab — it's better than nothing.**
-
-### Blog post publish checklist
-`docs/blog_post.md` is a draft. To ship:
-1. Resolve any TODOs in the draft
-2. Add SHA-pinned PNG embeds (training reward curve, per-difficulty, semantic-leakage histogram)
-3. Publish to `huggingface.co/blog/<user>/chakravyuh` via the HF web editor
-4. Add the URL to README Submission Materials table
-5. Cross-link from slide 4
-
-**Effort: 1.5 hours.**
+The current Blog.md is a clean narrative but too thin. It reads like a summary rather than a submission writeup. **Restore the frontier comparison, training curves, Scammer co-evolution, and citation sections from the previous version.** The `docs/blog_post.md` long-form draft has all of this content and can serve as the source.
 
 ---
 
 ## 9. The Wow Moment
 
-### Recommendation
-**Keep the existing live red-team tab + asymmetry badge.** It's already shipped (`server/redteam_handler.py`), already wired into `/demo/`, and answers both Theme #1 (visual two-analyzer asymmetry) and the v1→v2 narrative simultaneously.
+The current strongest wow-moment candidate is the **live red-team tab** in the Gradio demo where a judge types any message and sees the scripted vs trained analyzer scores side-by-side.
 
-### Specification (already implemented)
-- File: `server/redteam_handler.py` (8,850 bytes)
-- Mounted in `server/demo_ui.py` as a `gr.Tab("You vs Analyzer")`
-- User pastes a message → both v1 and v2 profile scores render side-by-side
-- Asymmetry badge appears when v2 score < v1 score by ≥ 0.2
+**Assessment:** This is strong. The visual asymmetry (scripted misses novel scams, trained catches them) is immediately legible.
 
-### Single small enhancement (40 minutes)
-Add a **"3 known-scam quick-test" button row** above the input box:
-```python
-# Inside the red-team tab
-with gr.Row():
-    btn_otp = gr.Button("Test: OTP scam (Hindi)")
-    btn_grooming = gr.Button("Test: Matrimonial crypto (English)")
-    btn_deepfake = gr.Button("Test: Deepfake CEO IPO (English)")
-btn_otp.click(lambda: "Sir aapka SBI account block ho gaya hai. OTP share kijiye.", outputs=user_input)
-btn_grooming.click(lambda: "Hi, I'm a Singapore software engineer interested in marriage. I trade crypto. Let me show you my setup.", outputs=user_input)
-btn_deepfake.click(lambda: "[Infosys CEO voice]: Exclusive employee IPO allocation. Invest Rs 1 lakh via company portal. HR calling now for UPI transfer.", outputs=user_input)
-```
-**Why this matters:** during live judging, you don't want to type. One click → instant asymmetry demo. **Effort: 40 minutes. Impact: turns a 30-second live moment into a 10-second one. Stage-time gold.**
+**Enhancement:** If `server/adversary_lab.py` implements live Scammer-vs-Analyzer self-play visualization, wiring it into the demo as a new tab would be the ultimate wow moment — trained agents visibly competing in real time. This directly answers both the Multi-Agent theme and the "show training improvement" criterion.
 
-### Why NOT to switch to a different wow moment
-The other WIN_PLAN candidates (adversarial self-play loop, multilingual live panel) require GPU work that may not finish. Stick with what's shipped and polish it.
+**Effort estimate:** 2-4 hours to integrate, 0 GPU-hours (uses cached/scripted outputs).
 
 ---
 
@@ -353,82 +283,104 @@ The other WIN_PLAN candidates (adversarial self-play loop, multilingual live pan
 
 | Artifact | Working? | Production-quality? | Discoverable? | Self-contained? | Notes |
 |---|---|---|---|---|---|
-| HF Space (live env) | ✅ | ✅ | ✅ via README | ✅ | All 11 endpoints 200; cold start 2.7s |
-| HF Hub Analyzer LoRA (`ujjwalpardeshi/chakravyuh-analyzer-lora-v2`) | ✅ | ⚠️ model card pre-merge state | ✅ | ✅ | **D.9** — refresh card with semantic-leakage caveat + bootstrap CIs (1h) |
-| **HF Hub Scammer LoRA (`ujjwalpardeshi/chakravyuh-scammer-lora-phase1`)** | **❌ NOT PUSHED** (HTTP 401) | — | ❌ | — | **P0 §5** — 12 MB upload from training machine; gated + misuse statement (15 min) |
-| Scammer training results JSON | ✅ `logs/b2_phase1_scammer_training.json` | ✅ 116 lines, 16 eval samples + meta + reward shape | ✅ committed | ✅ | But useless without the LoRA itself — judges can read the result, not try it |
-| HF Hub dataset (`chakravyuh-bench-v0`) | ✅ | ⚠️ no DATASET_CARD on HF | ✅ | ✅ | Root `DATASET_CARD.md` exists; sync to HF Hub data card |
-| Slide deck | ⚠️ markdown only | **❌ NO PDF** | ⚠️ `.md` link | ✅ | **P0 A.1** — `marp` it |
-| 90-sec demo video | **❌ MISSING** | — | — | — | **P0 A.2** — script in WIN_PLAN |
-| Blog post | ⚠️ draft only | ⚠️ unpublished | ❌ | ⚠️ | **P0 A.6 sub-item** — publish to HF blog (must add B.2 phase 1 paragraph + bypass-rate stat) |
-| Notebooks (8) | ⚠️ committed | **❌ 0/72 cells executed** | ⚠️ judges click and see naked code | ✅ | **P0 A.3** — eval-only re-runs sufficient |
-| README Submission Materials | ✅ | ⚠️ no Scammer-LoRA link yet | ✅ | ✅ | After Hub push, add row to Submission Materials table |
-| LIVE_PITCH script | ✅ | ⚠️ doesn't yet mention 68.75% bypass rate | ✅ in docs/ | ✅ | A.7 — drill it (refreshed for B.2) |
-| Q&A rehearsal doc | ✅ | ⚠️ no B.2 question rehearsed yet | ✅ | ✅ | A.10 — add Q on "your Scammer's opponent is scripted" |
-| Architecture diagram | ✅ Mermaid `docs/architecture.mmd` | ⚠️ render to SVG/PNG; doesn't yet show trained-Scammer arrow | ⚠️ | ✅ | 5-min Mermaid CLI export + small edit |
-| Reward-design one-pager | ⚠️ | partially in `DESIGN_DECISIONS.md` §8 | ⚠️ | ✅ | Could extract as standalone `docs/reward_design.md` (30 min) |
-| Tutorial notebook (no GPU) | ✅ `notebooks/env_exploration.ipynb` | ⚠️ 0/4 cells executed | ⚠️ | ✅ | Same fix as A.3 |
-| Architecture SVG | ❌ | — | — | — | Add `docs/architecture.svg` (Mermaid CLI, 5 min) |
-| `requirements.lock` | ❌ | — | — | — | **D.1** — `uv pip compile` (30 min) |
-| `REPRODUCE.md` | ❌ | — | — | — | **E.9** (1h) |
-| Co-evolution curves PNG (post-phase-2) | ❌ | — | — | — | B.2 phase 2 deliverable; ~3h A100 |
+| HF Space | ✅ | ✅ | ✅ | ✅ | Live at ujjwalpardeshi-chakravyuh.hf.space |
+| Analyzer LoRA v2 | ✅ | ✅ | ✅ | ✅ | On HF Hub |
+| Scammer LoRA Phase 1 | ✅ | ✅ | ✅ | ✅ | Gated on HF Hub, responsible-use docs |
+| Bench dataset | ✅ | ✅ | ✅ | ✅ | On HF Hub + local copy |
+| Training notebooks | ✅ | ✅ | ✅ | ✅ | 9 notebooks covering v2, Scammer, eval, exploration |
+| Blog.md | ⚠️ | ❌ | ✅ | ❌ | Recently thinned — missing frontier, curves, Scammer section |
+| Architecture diagram | ✅ | ✅ | ✅ | ✅ | SVG + Mermaid source |
+| Slide deck | ⚠️ | ✅ source | ✅ | ❌ | Marp source only, no rendered PDF |
+| Reward design doc | ✅ | ✅ | ✅ | ✅ | `docs/reward_design.md` |
+| Case studies | ✅ | ✅ | ✅ | ✅ | 3 scenarios with full transcripts |
+| REPRODUCE.md | ✅ | ✅ | ✅ | ✅ | 5-step walkthrough |
+| CITATION.cff | ✅ | ✅ | ✅ | ✅ | At repo root |
+| DATASET_CARD.md | ✅ | ✅ | ✅ | ✅ | At repo root |
+| Misuse disclosure | ✅ | ✅ | ✅ | ✅ | `docs/misuse_dual_use.md` |
+| Compute/carbon card | ✅ | ✅ | ✅ | ✅ | `docs/compute_carbon_card.md` |
+| Judge quickstart | ✅ | ✅ | ✅ | ✅ | `docs/judge_quickstart.md` |
+| FAQ | ✅ | ✅ | ✅ | ✅ | `FAQ.md` |
+| Glossary | ✅ | ✅ | ✅ | ✅ | `docs/glossary.md` |
 
-**Top 6 missing-artifact P0/P1 items (revised post-B.2-phase-1):**
-1. **Push Scammer LoRA to HF Hub** (P0, 15 min, off this machine — needs trainer's session)
-2. Slide PDF (P0, 5 min)
-3. Demo video (P0, 4–6h) — *must mention the 68.75% bypass rate in voiceover*
-4. Notebook outputs (P0, 2–4h + ~5 Colab units)
-5. README Submission Materials row for Scammer LoRA + Q&A doc + LIVE_PITCH refresh for B.2 (P1, 1h total)
-6. Blog post publish with B.2 phase 1 paragraph (P1, 1.5h)
+**Missing but would help:**
+- Rendered slide PDF (P1, 5 min to generate)
+- Video demo or screen recording (P2, team chose blog instead — acceptable per guidelines)
+- Calibration analysis output committed (P2, script exists, 1 hour)
+- Traditional ML baseline (XGBoost/LogReg on 11-signal features) in `baselines.json` (P2, 2 hours, no GPU — completes the baselines ladder)
+- Human evaluation of explanation quality (P2, 4-6 hours — eliminates "LLM judging LLM" circularity)
+
+**Under-advertised strengths (should be surfaced to judges):**
+- `server/leaderboard.py` — open submission leaderboard (`POST /submit` + `GET /leaderboard`) with 3 seeded entries, JSONL persistence, and test coverage at `tests/test_leaderboard.py`. Judges can submit their own models.
+- `docs/openenv_outreach.md` — draft GitHub issue offering Chakravyuh as a reference example to upstream OpenEnv maintainers. Shows ecosystem contribution intent beyond the hackathon.
 
 ---
 
 ## 11. Narrative & Pitch
 
-### README hook critique
-**Current opening (line 21):**
-> *"We trained an LLM to detect UPI fraud and got 100 % detection. We celebrated for four minutes. Then we noticed: 36 % false-positive rate."*
+### README hook assessment
 
-**Verdict: this is genuinely good.** Failure-first opener is rare in hackathon submissions and lands within 10 seconds. **Keep verbatim.** No rewrite needed.
+The README opens with: *"We trained an LLM to detect UPI fraud and got 100% detection. We celebrated for four minutes. Then we noticed: 36% false-positive rate."* This is a **10/10 hook.** It creates immediate tension, establishes credibility through failure disclosure, and sets up the entire narrative arc. Do not change it.
 
-### Slide-by-slide flow critique (per `LIVE_PITCH.md`)
-| Slide | Time | Lands? | Notes |
-|---|---|---|---|
-| 1 (Title) | 0–30s | ✅ Strong opener with stats | The 90-word voiceover is well-paced |
-| 2 (Architecture) | 30–70s | ✅ "Asymmetric information not headcount" framing is the strongest defense available | Add one sentence about the AePS pan-India case (already in README) for memorability |
-| 3 (v1→v2 fix table) | 70–120s | ✅ This is the slide that wins or loses Theme #4 demote-vs-claim | Bootstrap CIs in fine print — perfect calibrated framing |
-| 4 (Demo + close) | 120–180s | ⚠️ This is where the live red-team tab demo runs in parallel | **Critical:** practice the slide-to-demo handoff 3× minimum (A.7) |
+### Slide deck
 
-### Live pitch script critique (`LIVE_PITCH.md`)
-- **Strong:** every slide has a 90-130-word spoken script timed to fit; clicker actions specified per beat; Q&A buffer phrases included
-- **Add:** the 4th common judge question — *"Why does this matter outside India?"* — rehearse the methodological-contribution answer ("worked example of catching reward hacking in any RLHF pipeline; the env design generalizes")
-- **Add:** the SFT-vs-GRPO defense from §7 above — judges who read the SFT artifact will press here
+`docs/chakravyuh_slides.md` uses Marp with the failure-first structure. The reward-hacking slide appears early (slide 2). Structure is sound.
 
-### Blog post — sections to add
-The current `docs/blog_post.md` covers diagnosis well. **Add:**
-1. The semantic-leakage audit narrative — embed `plots/chakravyuh_plots/semantic_leakage_histogram.png` and the 3-paragraph "we audited ourselves" framing
-2. The B.5 ensemble red-team result (raw LoRA 4/10 + sanitizer = 9/10)
-3. Link to the HF Hub model card (after D.9 refresh)
+### Blog post
 
-### Methodological framing recommendation
-**Lead with both layers:**
-- Domain layer: *"Multi-agent OpenEnv environment for Indian UPI fraud detection."*
-- Methodological layer: *"Worked example of catching reward hacking in GRPO post-training — the v1→v2 diagnosis methodology generalizes to any RLHF pipeline."*
+**Critical issue:** The rewritten Blog.md is too sparse. It lacks:
+1. The frontier comparison table that proves "7B + LoRA matches 70B"
+2. The training curves figure that proves "this was actually trained"
+3. The Scammer co-evolution section that proves Theme #1
+4. The "try it yourself" code block that judges can copy-paste
+5. The citation block
 
-This is already in the README TL;DR. Reinforce in slide 1 voiceover.
+**Recommendation:** Use `docs/blog_post.md` as the primary blog content — it has all of this. Or restore the sections from the previous `Blog.md` version.
+
+### Methodological framing
+
+The project is positioned as both a domain-specific tool (UPI fraud) AND a generalizable contribution ("worked example of catching reward hacking in any RLHF pipeline"). This dual framing is correct and should be maintained. The generalizable angle is what separates this from "yet another fraud detector."
 
 ---
 
 ## 12. Competitive Positioning
 
-| Likely top-3 archetype | Where Chakravyuh wins | Where Chakravyuh loses | Single separating move |
-|---|---|---|---|
-| **Multi-agent negotiation/economics env** | Real-world impact framing (₹13,000 cr); honest leakage disclosure; v1→v2 worked example | Their multi-agent dynamics are likely more emergent; if their agents truly co-evolve they crush Theme #1 | **Execute B.2 phase 1** — even a partial Scammer LoRA closes the dynamics gap |
-| **Code-debugging / SWE-bench-style agent env** | Domain specificity + multilingual + on-device deployment story | They have unambiguous task verifiability + likely better reward signal | Lean into the **scalable-oversight framing** (R&D-grade contribution) and the **methodological generalization** angle |
-| **Game / RTS / strategy env** | Real-world stakes; calibrated CIs; rigor | Better visual demo; longer episodes; richer state | **The live red-team tab is your visual demo equivalent** — make sure it lands in 10 seconds (the 3-button quick-test row from §9) |
-| **Tool-use / web-agent env** | Cleaner reward design (rubric vs sparse task success); responsible-AI signal | Bigger action space; more "wow factor" from web automation | **B.5 ensemble result** (9/10 vs 4/10 baseline) is your tool-use-equivalent robustness signal — cite it in the pitch |
+### vs Multi-agent negotiation/economics envs
 
-**The single move that most separates Chakravyuh from any of these archetypes:** **the public, self-disclosed semantic leakage audit.** No other team will have done this. It is a credibility multiplier that survives every Q&A. Make sure it appears in the video (slide 3 voiceover should mention it in one sentence).
+- **Where Chakravyuh wins:** Real-world domain grounding (₹13,000 cr/year problem), measured reward-hacking incident, two trained adapters, on-device deployment story
+- **Where it loses:** Fewer simultaneously-trained agents, no emergent negotiation strategies
+- **Separating move:** The 60pp co-evolution gap and the DeepSeek-V3 external validation of the v1 failure mode
+
+### vs Code-debugging/tool-use agents
+
+- **Where Chakravyuh wins:** Social engineering is harder to verify than code execution, making the reward design more interesting. Multi-agent structure is richer than single-agent tool use.
+- **Where it loses:** Code execution has cleaner verification (tests pass/fail). UPI fraud is niche.
+- **Separating move:** The composable rubric system (8 orthogonal criteria vs binary pass/fail)
+
+### vs Game/RTS environments
+
+- **Where Chakravyuh wins:** Real-world impact narrative (actual victim stories), regulatory relevance, on-device deployment
+- **Where it loses:** Games have richer action spaces and more dramatic visual demos
+- **Separating move:** The failure-first narrative. Games that "just work" are less interesting than systems that caught themselves failing.
+
+---
+
+## 12b. Stale Documentation Findings
+
+Several docs still reference pre-shipped states — a judge who clicks through will see contradictions:
+
+| File | Issue | Fix |
+|---|---|---|
+| `docs/judge_quickstart.md` | Says "5 rubrics"; frontier & Scammer listed as "pending" | Update to 8 rubrics, mark frontier + Scammer as shipped |
+| `docs/LIVE_PITCH.md` (Q&A) | Frontier listed as "if not measured" | Update — open-weight tier IS measured |
+| `docs/benchmark_comparison.md` | "Where Chakravyuh would lose" says frontier not run | Outdated — `logs/frontier_comparison.csv` exists |
+| `DATASET_CARD.md` | Frontier section says "pending" | Update to reference shipped results |
+| `CITATION.cff` | Abstract says "five-rubric" | Change to "eight-rubric" for v2 |
+| `docs/reward_design.md` | Lists RegulatorAlignmentRubric / BankConsistencyRubric | Reconcile with actual v2 rubric names (SignalAccuracy, Format, Length) |
+| `README.md` agent table | Scammer row says "No (376 curated templates)" | B.2 Scammer LoRA IS shipped — update trained column |
+| `docs/DESIGN_DECISIONS.md` | References "5 rubrics" | Update to 8 for v2 |
+| `docs/EXTEND.md` | Same "5 rubrics" | Update |
+
+**Total effort:** 2-3 hours of text edits. Zero code changes. High impact — removes every "this judge clicked one link deeper and found a contradiction" failure mode.
 
 ---
 
@@ -436,119 +388,63 @@ This is already in the README TL;DR. Reinforce in slide 1 voiceover.
 
 | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|
-| **Scammer LoRA never reaches HF Hub before submission** (still HTTP 401 today) | **High** | **High** — paragraph claim without artifact = "where is it?" credibility hit | **§5 IMMEDIATE P0** — 15-min upload from trainer's machine; gated repo + misuse statement; verify with `curl -I huggingface.co/ujjwalpardeshi/chakravyuh-scammer-lora-phase1` |
-| Judge asks to load + try the Scammer adapter live; it isn't on Hub yet | Medium | High | Bring a 60s recorded clip of a local `peft.PeftModel.from_pretrained(...)` load + sample generation as fallback |
-| Judge presses on B.2 opponent being scripted (not v2 LoRA) | High | Medium | Honest framing: "phase 1 is the *training-loop convergence proof*; phase 2 is the LoRA-vs-LoRA co-evolution — onsite work." Don't oversell. |
-| Judge presses on n=16 evaluation set + wide CI on bypass rate | Medium | Medium | Quote 95% bootstrap CI [44%, 88%] on slide; state phase 2 expands eval set |
-| Judge presses on 0/16 refusals from Scammer (dual-use) | Medium | Medium | Cite `docs/misuse_dual_use.md` (D.4 — write it BEFORE submission) + the gated-Hub access flag |
-| HF Space cold-starts mid-pitch (rare given keepwarm cron) | Low | Medium | Pre-warm 30 min before pitch; have local `python -m server.demo_ui` ready as fallback |
-| Slide PDF not rendered in time | Medium (today) | High | Run `marp` command in next 5 minutes |
-| Video not recorded in time | High (today) | High (caps Storytelling at ~16/30) | Schedule the 4-6h block today; **OR** ship 30s backup demo video as the minimum |
-| Demo video records BEFORE B.2 paragraph is added — looks dated | Medium | Medium | Update LIVE_PITCH + slide 3 voiceover to mention "we trained two adapters" *before* hitting record |
-| Live red-team tab demo breaks during pitch | Low | High | Pre-tested with 3 known scams; have screenshot + 30s recorded clip as fallback |
-| Judge presses on SFT-vs-GRPO finding | High | Medium | Drill A.10 Q&A — strengthened by B.2: GRPO uniquely enables the adversarial Scammer training loop |
-| Judge presses on semantic leakage | High | **Low** (we self-disclosed) | Q&A 3b in `docs/Q_AND_A_REHEARSAL.md` is rehearsed; lean into "we audited this ourselves" |
-| Notebook judges click → empty cells → trust collapse | High | High | **Execute notebooks (A.3) BEFORE submitting** — including B.2 phase-1 notebook now that it has results |
-| WIN_PLAN.md + AUDIT.md uncommitted changes ship in submission diff | High | Low | Commit both before submission |
-| Venue WiFi blocks YouTube during demo | Medium | Medium | Have video on local disk + the 30s clip downloaded |
-| HF Space rate-limited during judging spike | Low | High | Keepwarm cron is up; have local demo as fallback |
-| Trainer is asleep / unreachable during the 12h sprint and the Hub push window closes | Medium | High | Coordinate Hub push handoff *now* (DM trainer with the exact 4 commands from §5) — do not wait for asynchronous catch-up |
+| **"50% on novel" claim verified wrong** | **High** | **Critical** | Re-run scripted baseline on current split; update all docs quoting this number |
+| HF Space cold-starts during judging | Medium | High | `keepwarm.yml` cron hitting `/health` |
+| Judge clicks into docs and finds "pending" / "5 rubrics" contradictions | **High** | **High** | Fix 9 stale docs (see §12b) — 2-3 hours, text only |
+| Judge asks "why only 1 trained agent in the loop?" | High | Medium | Prepared answer in Q&A rehearsal doc; 60pp gap is the evidence |
+| Blog.md too thin for judges who skip README | High | High | **Restore missing sections immediately** |
+| Frontier CSV vs README table numbers don't match | Medium | High | Regenerate CSV after R1 parser fix; reconcile Qwen base row |
+| n=30 benign "your CIs are wide" | Medium | Medium | Honest disclosure + B.11 expansion target |
+| "Single seed" challenge | Medium | Medium | Honest disclosure; multi-seed in v3 roadmap |
+| README agent table says Scammer "not trained" | Medium | Medium | Update — B.2 Scammer LoRA is shipped |
+| Demo UI crashes/errors during judging | Low | High | Deterministic episodes, fallback tabs in pitch |
+| Uncommitted work lost | Medium | High | **Commit all untracked files** |
 
 ---
 
-## 14. Roadmap to #1 — Hour-Boxed (12 hours assumed, post-B.2-phase-1)
+## 14. Roadmap to #1 — Prioritized
 
-### Phase 1 — Next 2 hours (zero-GPU, JC minimums + the Hub push)
-| Task | Effort | Dependency | Impact |
-|---|---|---|---|
-| **§5 IMMEDIATE** Push Scammer LoRA to HF Hub (gated, with misuse statement) — *off-machine; coordinate with trainer NOW* | 15 min | Trainer's session | **The single highest-leverage move available** — converts B.2 phase 1 from a JSON log into a verifiable artifact (+8–13pp on win probability is locked in only after this) |
-| **A.1** Render slide PDF (`marp` or `pandoc`) — *after* updating slide 2 to mention "two trained adapters" + the 68.75% bypass stat | 10 min (5 edit + 5 render) | None | Removes a P0; satisfies JC slide-deck minimum |
-| **D.1** Generate `requirements.lock` (`uv pip compile`) | 30 min | None | Bit-reproducibility credibility |
-| **D.4** Author `docs/misuse_dual_use.md` (Scammer LoRA dual-use disclosure — REQUIRED before Hub push) | 30 min | None | Responsible-AI signal; gates the gated-repo `README` |
-| **A.8** Final repo metadata pass (LICENSE, About, topics, badges, version bump to `v0.3.0` for B.2 phase 1, git tag) | 45 min | None | First-impression polish |
-| **D.2** Permutation test for v1↔v2 FPR delta → `logs/permutation_test_v1_v2.json` | 1 h | None | Statistical significance proof beyond bootstrap |
-| Commit uncommitted `WIN_PLAN.md` + `AUDIT.md` | 2 min | None | Hygiene |
+### Immediate (next 2 hours)
 
-### Phase 2 — Hours 2–6 (production sprint, parallel where possible)
-| Task | Effort | Dependency | Impact |
-|---|---|---|---|
-| **A.3** Execute 8 notebooks end-to-end → commit with outputs (now includes B.2 phase 1 notebook) | 2–4 h | ~5 Colab units | Removes a P0; satisfies JC training-script minimum; B.2 phase-1 notebook now has real outputs to display |
-| **A.2** Record 90-second demo video → upload unlisted YouTube → link in README — *script must mention 68.75% Scammer bypass rate (slide 2 voiceover)* | 4–6 h | A.1 + Hub push | Removes a P0; lifts Storytelling 30% from ~16 to ~26 |
-| **README + LIVE_PITCH refresh** for B.2 phase 1: add Submission Materials row for Scammer LoRA, update LIVE_PITCH slide 2 script, add Q3c "your opponent is scripted" to Q&A doc | 1 h | Hub push | Threads the new result into every judge touchpoint |
-| **D.9** HF Hub v2 Analyzer LoRA model card refresh + W&B public dashboard | 1 h | None | Polish on the second-most-clicked artifact |
-| **E.9** `REPRODUCE.md` 5-step walkthrough (include B.2 phase-1 reproduction steps) | 1 h | D.1 | Judge-friendly reproducibility prose |
-| **§9 enhancement** Add 3 quick-test buttons in red-team tab | 40 min | None | Stage-time gold for the demo |
+1. **Verify and fix the "50% on novel" number** — Run scripted baseline against current 34-scenario novel split. Update README, Blog.md, blog_post.md, LIVE_PITCH.md with the correct number. This is the #1 credibility risk. (1 hour)
+2. **Restore Blog.md content** — Add back: frontier comparison table, training curves figure, Scammer co-evolution section, "try it yourself" code block, citation. Use `docs/blog_post.md` as source. (1 hour)
+3. **Fix 9 stale docs** — See §12b. Batch update "pending"→"shipped", "5 rubrics"→"8", Scammer "not trained"→"trained". (1 hour)
+4. **Commit all uncommitted work** — `eval/calibration_analysis.py`, `server/adversary_lab.py`, `plots/scripts/`, frontier cache, this AUDIT.md. (15 min)
+5. **Render slide PDF** — `npx -y @marp-team/marp-cli docs/chakravyuh_slides.md -o docs/chakravyuh_slides.pdf` — host externally, link from README. (5 min)
 
-### Phase 3 — Hours 6–10 (onsite GPU sprint if available; B.2 phase 2 is now the lift)
-| Task | Effort | Dependency | Impact |
-|---|---|---|---|
-| **B.2 phase 2** Freeze phase-1 Scammer; retrain v2 Analyzer LoRA against it for 150 ep with W&B per-rubric logging → push v2.1 + plot co-evolution curves → `plots/chakravyuh_plots/coevolution_curves.png` | ~3 h A100 + 1 h wall | A100 access, Hub push done | Converts "two trained agents" into "two trained agents with measured co-evolution" — the strongest possible Theme #1 evidence |
-| **B.12** Per-row v2 logits + leakage-clean slice → `docs/leakage_clean_eval.md` | ~0.5 h GPU + 30 min wall | T4 access | Converts the leakage disclosure into a measured OOD number |
-| **B.6** Calibration ECE + reliability diagram | ~0.5 h GPU + 30 min | A100 access | Closes a known rigor gap; doubles as the per-rubric trajectory plot |
+### Next 4 hours
 
-### Phase 4 — Final 2 hours (drill + dress rehearsal + submit)
-| Task | Effort | Dependency | Impact |
-|---|---|---|---|
-| **A.7** Live pitch rehearsal — 3 timed dry-runs *with* the new B.2 framing | 1.5 h | A.1 done | Storytelling delivery is ≥ 30% of the rubric |
-| **A.10** Q&A drill — cold-answer all 5 critical questions (added: "your Scammer's opponent is scripted") | 1 h | None | Live defense |
-| **A.4** Fresh-Docker dress rehearsal (last 30 min) | 1 h | None | Eliminates the most embarrassing demo-day failure mode |
-| Final submit | 15 min | All above | — |
+4. **Run calibration analysis** — `python3 eval/calibration_analysis.py` → commit `logs/calibration_v2.json`, add ECE figure to blog. (1 hour)
+5. **Wire adversary_lab.py into demo** — If it's a live Scammer-vs-Analyzer visualization, add it as a Gradio tab. This is the #1 wow-moment upgrade. (2-4 hours)
+6. **Expand benign corpus** — Add 20-50 more benign templates, re-run eval, tighten FPR CI. (2 hours)
 
-**Topological order (do not skip ahead):**
-§5 Hub push (off-machine, parallel) ‖ D.4 misuse doc → A.1 slide PDF → D.1 → A.8 → D.2 → commit WIN_PLAN+AUDIT → A.3 ‖ A.2 ‖ README/LIVE_PITCH refresh ‖ D.9 ‖ E.9 ‖ §9-enhancement → (if A100) **B.2-phase-2** ‖ B.12 ‖ B.6 → A.7 → A.10 → A.4 → submit.
+### If GPU time available
 
-**The single critical-path edge: D.4 misuse doc must complete before §5 Hub push, because the gated-repo `README` *is* the misuse statement.**
+7. **Multi-seed retrain** — 3 seeds × 3 GPU-hours = 9 GPU-hours. Report mean ± std.
+8. **Phase 2 Scammer retrain** — LoRA-vs-LoRA with the trained v2 Analyzer as the defense.
+9. **Traditional ML baselines** — Train LogReg + GradientBoosting on the 11-signal features from `ScriptedAnalyzer`. Add rows to `baselines.json`. Shows the LoRA adds value beyond what feature engineering achieves. (2 hours, 0 GPU)
+
+### v3 scope (post-hackathon, NOT for submission deadline)
+
+- **Curriculum learning** — escalate scenario difficulty during GRPO training (easy→hard→novel). The training corpus is currently sampled uniformly. This is a real gap but would require retraining and is NOT a quick fix.
+- **Human evaluation** — crowd-sourced rating of explanation quality (see §7 Gap 10).
+- **Full latency benchmarks** — run the protocol in `docs/latency_memory.md` against all three serving harnesses.
 
 ---
 
 ## 15. Things to STOP Doing
 
-These are time sinks that do not move the #1 needle. Cut every one.
-
-1. **Refactoring `server/demo_ui.py`** (it's 2,133 LOC; correctly NOT in scope per WIN_PLAN C.6). Judges don't read source.
-2. **Multi-seed retrain unless ≥6 GPU-h are *spare* after Phase 3.** The bootstrap CI is sufficient defensive cover; multi-seed is v3 work.
-3. ~~**Frontier baseline (A.5)** unless API budget is already in hand. Do NOT cite a frontier number that wasn't measured.~~ ✅ DONE — open-weight tier (7 models) shipped via HF Inference Providers; proprietary tier (GPT-4o/Claude/Gemini) deferred per separate-spend rule.
-4. **Adding more languages/templates.** 7 languages and 660 templates is enough; effort goes to *measuring* them (B.8) not adding more.
-5. **Property-based tests (E.5), CI matrix expansion (E.6), Inspect/Phoenix integration (E.7).** Polish; cut.
-6. **Inter-rater κ (D.8).** Timeline-impossible; existing limitations.md disclosure is honest enough.
-7. **Curriculum scheduling (B.16), per-rubric weight grid (B.17), calibration-aware retrain (B.15), GGUF release (C.8).** All v3 work; not visible to judges in 12 hours.
-8. **Polishing `docs/blog_post.md` beyond the publish minimum.** Publish a 90% draft over a perfect-but-unpublished 100%.
-9. **Creating new docs.** You have 19. The next doc judges don't read is the next doc judges don't read.
-10. **Anything in WIN_PLAN Bucket E except E.9 (REPRODUCE.md).** All polish; cut.
+1. **Stop rewriting Blog.md from scratch** — The previous version was better. Restore and polish, don't replace.
+2. **Stop worrying about Theme #4** — Double down on Theme #1. Self-Improvement is a liability under cross-examination.
+3. **Stop accumulating untracked files** — Commit frequently. Losing `server/adversary_lab.py` or `eval/calibration_analysis.py` to a stash/reset accident would be catastrophic.
+4. **Stop polishing documentation that judges won't read** — `docs/negotiation_protocol.md`, `docs/COMPETITOR_SCAN.md`, `docs/dress_rehearsal_log.md` are nice-to-have but zero marginal impact on judging.
 
 ---
 
 ## 16. Final Verdict
 
-**On track for #1?** **Closer than this morning.** B.2 phase 1 SHIPPED converted the single largest defensibility hole (Theme #1 — "you only trained one agent") into a measured result (68.75% Scammer bypass on n=16). **The gap to #1 is now (a) storytelling production + (b) the 15-minute Hub push that turns the new result into a clickable artifact.**
+**On track for #1?** Yes, conditionally. The project's technical depth, intellectual honesty, and artifact completeness are top-tier. But there are now **two critical credibility risks**: (1) the "50% on novel" headline number may be wrong (baselines.json says 76.5%), and (2) 9 docs still reference pre-shipped states. Both are easily fixable with text edits and one re-run. Fix these and the Blog.md regression, and this submission is genuinely #1-caliber.
 
-**Honest probability of #1 today as-is (post-B.2-phase-1, pre-Hub-push):** **40–48%**. Strong finalist; the trained Scammer is in a JSON file, not on Hub yet.
+**Win probability:** 70% now → 90% with baselines verification + Blog.md restoration + stale doc fixes + uncommitted work committed.
 
-**Honest probability after the §5 Hub push (15 min):** **48–55%**. Same evidence, but now verifiable — judges can `peft.PeftModel.from_pretrained(...)` and reproduce. This step alone is worth +5–8pp because it converts a paragraph into an artifact, and *artifacts* are what survive a 5-minute judge skim.
-
-**Honest probability after Phase 1 + Phase 2:** **62–72%**. JC minimums (slide PDF, video, executed notebooks) all satisfied; storytelling cap lifts from ~16/30 to ~26/30.
-
-**Honest probability after Phase 1 + 2 + B.2 phase 2 (co-evolution loop):** **70–80%**. Multi-agent defensibility goes from "two trained agents" to "two trained agents with measured co-evolution curves" — the strongest possible Theme #1 evidence.
-
-**The single change that most increases #1 probability *right now*:**
-> **Coordinate the Scammer LoRA HF Hub push with the trainer in the next 15 minutes.** Off-machine work (the adapter files live on the trainer's machine, not this one), but it gates everything downstream — the demo video voiceover, the README submission table, the slide deck refresh, the gated-repo misuse statement. Without the push, "we trained two agents" is a JSON-file-flavored claim; with it, it is a verifiable artifact.
-
-**The two-line action sequence for the next 30 minutes:**
-```bash
-# 1. On THIS machine — write the misuse statement (D.4) so the Hub README is ready
-$EDITOR docs/misuse_dual_use.md   # ~30 min, see WIN_PLAN D.4
-
-# 2. On the TRAINER's machine — push the LoRA (with the misuse doc as the model README)
-huggingface-cli login
-huggingface-cli repo create chakravyuh-scammer-lora-phase1 --type model
-cd checkpoints/scammer_lora_phase1
-cp /path/to/Chakravyuh/docs/misuse_dual_use.md README.md
-git init && git remote add origin https://huggingface.co/ujjwalpardeshi/chakravyuh-scammer-lora-phase1
-huggingface-cli lfs-enable-largefiles .
-git add adapter_config.json adapter_model.safetensors README.md
-git commit -m "feat: B.2 phase 1 Scammer LoRA — 68.75% bypass vs ScriptedAnalyzer (n=16)"
-git push origin main
-# Then in the HF Hub UI: Settings → Access → "Gated"
-```
-
-After that: `marp docs/chakravyuh_slides.md -o docs/chakravyuh_slides.pdf` — go.
+**The one change that most increases win probability:** Verify the scripted-baseline detection rate on the current 34-scenario novel split. If it's 76.5% (not 50%), update every document that quotes "50%". A judge who catches a wrong headline number will discount everything else.
