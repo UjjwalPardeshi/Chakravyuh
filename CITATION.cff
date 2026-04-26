@@ -27,11 +27,12 @@ abstract: >-
   fraud. The Analyzer agent (Qwen2.5-7B + LoRA) observes scripted
   Scammer-Victim dialogues and must output a calibrated suspicion score
   with a justified explanation, while a Bank Monitor and Regulator
-  provide cross-modal oversight. A composable five-rubric reward
-  (detection, false-positive penalty, missed-scam penalty, calibration,
-  explanation quality) is designed to be hard to game; v2 of the trained
-  adapter reduces false-positive rate by approximately 5x relative to a
-  reward-hacked v1 baseline on a 175-scenario Indian-grounded benchmark.
+  provide cross-modal oversight. A composable eight-rubric reward
+  (detection, missed-scam penalty, false-positive penalty, calibration,
+  explanation quality, signal accuracy, format adherence, length control)
+  is designed to be hard to game; v2 of the trained adapter reduces
+  false-positive rate by approximately 5x relative to a reward-hacked v1
+  baseline on a 175-scenario Indian-grounded benchmark.
 preferred-citation:
   type: software
   title: "Chakravyuh: A Multi-Agent RL Environment for Indian UPI Fraud Detection"

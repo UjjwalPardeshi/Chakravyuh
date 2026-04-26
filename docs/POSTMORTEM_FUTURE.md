@@ -119,7 +119,7 @@ In priority order — top items have highest ratio of (research signal) / (engin
 9. **Manual error analysis (B.5).** Audit every v2 FP and missed scam. Names a v3 fix per error. ~3 hours.
 10. **Rupee-weighted economic-loss headline.** Backs the "₹X saved per user" claim with a measured number. ~3 hours.
 
-Each item lists a concrete artifact path in [`/.claude/plan/chakravyuh-win-execution.md`](../.claude/plan/chakravyuh-win-execution.md). v3 ships when items 1–6 are green.
+v3 ships when items 1–6 are green.
 
 ---
 

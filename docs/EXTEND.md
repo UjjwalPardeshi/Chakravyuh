@@ -67,7 +67,7 @@ Make sure to keep these MCP-reserved names *out* of any custom routes: `reset`, 
 
 ### Step 4 — Adapt the rubrics
 
-Edit [`chakravyuh_env/rubrics.py`](../chakravyuh_env/rubrics.py). The 5 rubrics are well-shaped templates:
+Edit [`chakravyuh_env/rubrics.py`](../chakravyuh_env/rubrics.py). The 8 rubrics composed by `AnalyzerRubricV2` are well-shaped templates:
 
 | Keep | Possibly adapt |
 |---|---|
@@ -76,8 +76,11 @@ Edit [`chakravyuh_env/rubrics.py`](../chakravyuh_env/rubrics.py). The 5 rubrics 
 | `FalsePositiveRubric` | Weight depends on domain — high in low-volume / regulated domains, lower in high-volume |
 | `CalibrationRubric` | The `benign_target=0.1` assumption is universal |
 | `ExplanationRubric` | The signal-cross-reference logic is universal — just point it at your taxonomy |
+| `SignalAccuracyRubric` | Re-point the rule-based reference to your domain heuristics |
+| `FormatRubric` | Schema is JSON; if your wire format differs, swap the validator. Keep the "deny on benign-as-scam" gating — that fix is what closed the v1 reward hack |
+| `LengthRubric` | Min/max chars are domain-tunable; the principle (penalise empty + runaway) is universal |
 
-**Key principle:** keep the *count* at 5 and the *independence* between them. v1 → v2 demonstrated that fewer signals collapse to reward hacking.
+**Key principle:** independence between rubrics matters more than the *count*. v1 used 5 child rubrics and collapsed; v2 promoted three previously-inline shaping signals (`signal_accuracy`, `format`, `length`) into first-class composable rubrics and the FPR collapsed 5×. Adding orthogonal signals tightens the loophole surface; redundant signals just inflate variance.
 
 ### Step 5 — Build a domain bench
 

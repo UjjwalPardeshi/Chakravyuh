@@ -1,14 +1,42 @@
-# Latency & Memory Footprint — Pending (B.9)
+# Latency & Memory Footprint — Partial (B.9)
 
-> **Status:** measurements not yet run.
->
-> This document is a **placeholder** for the B.9 milestone in
-> [`WIN_PLAN.md`](../WIN_PLAN.md): per-harness latency and memory
-> measurements for the Chakravyuh Analyzer LoRA across the three
-> deployment paths documented in [`serving/README.md`](../serving/README.md).
-> The harness scaffolding ships; the measurements depend on access to
-> the target hardware (A10G for vLLM, Pixel 8 for Ollama) and have not
-> been run for this submission.
+> **Status:** **HF Space measurements shipped 2026-04-26** — see §HF Space results below + [`logs/latency_memory_hf_space.json`](../logs/latency_memory_hf_space.json). vLLM and Ollama measurements still depend on target hardware (A10G / Pixel 8) and remain unmeasured for this submission; that part of B.9 stays open.
+
+## HF Space results (measured 2026-04-26, n=10 sequential trials per endpoint)
+
+Source of truth: [`logs/latency_memory_hf_space.json`](../logs/latency_memory_hf_space.json).
+
+| Endpoint | p50 wall-clock | p95 wall-clock | Min | Max | Std-dev |
+|---|---|---|---|---|---|
+| `GET /health` | **1.21 s** | **1.45 s** | 1.08 s | 1.50 s | ±0.15 s |
+| `POST /diagnose` (scripted analyzer) | **1.19 s** | **1.32 s** | 0.96 s | 1.49 s | ±0.16 s |
+
+Single-probe latencies for the rest:
+
+| Endpoint | HTTP | Wall-clock |
+|---|---|---|
+| `/health` | 200 | 1.27 s |
+| `/metadata` | 200 | 1.26 s |
+| `/openapi.json` | 200 | 1.76 s |
+| `/schema` | 200 | 1.61 s |
+| `/eval/redteam` | 200 | 1.25 s |
+| `/demo/preview` | 200 | 0.98 s |
+
+**What these numbers include.** Wall-clock from `curl --max-time 30` measured on a laptop in Pune; HF Space is in EU/US per HF default routing. **~700 ms of every measurement is network RTT + TLS handshake**, not server compute. For server-side compute alone (no network), run the Docker container locally per [`serving/README.md`](../serving/README.md).
+
+**Cold start.** First `GET /health` after an idle period was 1.328 s when probed (the keepwarm cron had hit recently, so the Space was warm). The canonical cold-start number is the prior 2.69 s dress-rehearsal measurement quoted in `serving/README.md`; the keepwarm cron at `.github/workflows/keepwarm.yml` ensures judges rarely hit a cold container.
+
+**Acceptance.** All endpoints return 200 well under the 20 s OpenEnv cold-start ceiling. The `POST /diagnose` p95 of 1.32 s is the relevant interactive-latency number for the live red-team tab.
+
+---
+
+## What's still NOT measured (vLLM + Ollama)
+
+This document is **partial** for the B.9 milestone in
+[`WIN_PLAN.md`](../WIN_PLAN.md): per-harness latency and memory
+measurements for the Chakravyuh Analyzer LoRA across the three
+deployment paths documented in [`serving/README.md`](../serving/README.md).
+The harness scaffolding ships; the **vLLM (A10G) and Ollama (Pixel 8 / M1)** measurements depend on target hardware and have not yet been run for this submission.
 
 ## Methodology (when run)
 

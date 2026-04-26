@@ -1,0 +1,59 @@
+{
+  "_meta": {
+    "target": "https://ujjwalpardeshi-chakravyuh.hf.space",
+    "measured_at": "2026-04-26",
+    "method": "curl wall-clock time, n=10 sequential trials per endpoint, --max-time 30",
+    "caveat": "Wall-clock includes TLS handshake, DNS, network RTT from measurement machine. Server-side compute is a fraction of these numbers; for pure compute use the Docker container locally (see serving/README.md).",
+    "environment": "Curl from local laptop (Pune, India); HF Space hosted in EU/US per HF default routing. Network adds ~700ms RTT."
+  },
+  "cold_start": {
+    "first_health_after_idle_s": 1.328,
+    "note": "Space was warm (keepwarm cron hit recently). Cold-start measurement requires a 10-min idle period; quoted 2.7s figure in serving/README.md is from prior dress rehearsal."
+  },
+  "endpoints_single_probe": {
+    "/health": {
+      "http_code": 200,
+      "time_s": 1.268
+    },
+    "/metadata": {
+      "http_code": 200,
+      "time_s": 1.262
+    },
+    "/openapi.json": {
+      "http_code": 200,
+      "time_s": 1.759
+    },
+    "/schema": {
+      "http_code": 200,
+      "time_s": 1.606
+    },
+    "/eval/redteam": {
+      "http_code": 200,
+      "time_s": 1.25
+    },
+    "/demo/preview": {
+      "http_code": 200,
+      "time_s": 0.98
+    }
+  },
+  "health_p50_p95": {
+    "n": 10,
+    "mean_s": 1.2376,
+    "median_s": 1.199,
+    "p50_s": 1.214,
+    "p95_s": 1.449,
+    "min_s": 1.079,
+    "max_s": 1.502,
+    "stdev_s": 0.1525
+  },
+  "diagnose_p50_p95": {
+    "n": 10,
+    "mean_s": 1.1641,
+    "median_s": 1.145,
+    "p50_s": 1.194,
+    "p95_s": 1.316,
+    "min_s": 0.96,
+    "max_s": 1.489,
+    "stdev_s": 0.1644
+  }
+}

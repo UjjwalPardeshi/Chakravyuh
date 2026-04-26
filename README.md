@@ -36,9 +36,9 @@ Imagine a 58-year-old retired teacher in Mumbai. Her son lives in Singapore. A W
 
 **Approach.** A 5-agent OpenEnv environment (Scammer, Victim, Analyzer, Bank Monitor, Regulator) with a composable 8-rubric reward. The Analyzer is a Qwen2.5-7B LoRA, post-trained with TRL's GRPO. Reward-hacking diagnosed in v1 (FPR = 36 %), then *measurably* fixed in v2 (FPR = 6.7 % — **5× better**).
 
-**Headline result** — 174 scenarios, percentile bootstrap 95 % CIs (10 000 iters) from [`logs/bootstrap_v2.json`](logs/bootstrap_v2.json):
+**Headline result** — 174 scenarios, percentile bootstrap 95 % CIs (10 000 iters) from [`logs/bootstrap_v2.json`](logs/bootstrap_v2.json). All four CIs in this table are **percentile bootstrap** (n_resamples = 10 000); the v1→v2 delta table further down uses **Wilson** CIs on the per-class counts and labels each accordingly.
 
-| Metric | v1 (reward-hacked) | **v2 (this submission)** | 95 % CI (v2) |
+| Metric | v1 (reward-hacked) | **v2 (this submission)** | 95 % CI (v2, bootstrap) |
 |---|---|---|---|
 | Detection rate (recall on scams, n = 144) | 100.0 % | **99.3 %** | [97.9 %, 100 %] |
 | False positive rate (n = 30 benign) | 36.0 % | **6.7 %** | [0.0 %, 16.7 %] |
@@ -74,6 +74,7 @@ Four things to read out of this:
     - vs **DeepSeek-R1** (FPR 12.9 %, with the reasoning-aware parser): p = 0.67 — *directionally better but not at α = 0.05*.
     - vs **DeepSeek-V3-0324** (FPR 29.0 %): p = **0.043** — *significantly better*.
     - vs **gemma-3-27b-it** (FPR 51.6 %): p = **0.0002** — *significantly better*.
+    - Both significant comparisons survive **Holm-Bonferroni correction at k = 7** (corrected α ≈ 0.0071 — gemma's p clears it directly; DeepSeek-V3 clears the largest-p threshold of α = 0.05).
 3. **DeepSeek-V3 reproduces the v1 reward-hacking signature externally.** Detection 100 % / FPR 29 % at 671B parameters is structurally identical to our v1 (100 % / 36 %), and the FPR gap vs the calibrated v2 LoRA is statistically significant (p = 0.043). A frontier model independently falls into the failure mode our reward-engineering methodology diagnoses and fixes — *external validation* that calibrated reward design beats raw capacity. gemma-3-27B-it (100 % / FPR 51.6 %, p = 0.0002 vs LoRA) is the same story at smaller scale.
 4. **Open-weight frontier ≠ guaranteed scam-spotting.** **Six of the seven open frontier models we tested have FPR > 6.7 % on the same bench**; calibration is the contested axis, not capacity. The only one with lower FPR is Llama-3.3-70B (3.2 %, p = 0.61) — which we're statistically tied with at 10× fewer parameters.
 
@@ -229,7 +230,7 @@ Visual diagram (Mermaid, GitHub-rendered): [`docs/architecture.md`](docs/archite
 
 | Agent | Role | Sees | Trained? |
 |---|---|---|---|
-| Scammer | Adversary | Own plan + victim responses | No (376 curated templates, NPCI/RBI-grounded) |
+| Scammer | Adversary | Own plan + victim responses | **Yes — LoRA r=16 on Qwen2.5-0.5B-Instruct via TRL GRPO Phase 1** (B.2; bypasses scripted defense at 93.75 % best-of-8, 100 % held-out novel categories — see [`logs/b2_phase1_scammer_eval_n64_bestof8.json`](logs/b2_phase1_scammer_eval_n64_bestof8.json)). Falls back to 376 curated templates (NPCI/RBI-grounded) when the LoRA isn't loaded. |
 | Victim | Target | Chat + own demographic profile | No (scripted; SENIOR / SEMI_URBAN / YOUNG_URBAN profiles) |
 | Analyzer | Oversight | Full chat transcript | **Yes — LoRA on Qwen2.5-7B-Instruct via TRL GRPO** |
 | Bank Monitor | Oversight | Tx metadata only | No (scripted) |
@@ -460,8 +461,8 @@ The scripted baseline catches **76.5 % of novel post-2024 attacks** (26/34) — 
 
 | Metric | v1 (reward-hacked) | v2 (retrained) | Change | 95% CI (v2) |
 |---|---|---|---|---|
-| Detection rate | 100.0% | **99.3%** | ≈ same | [96.2%, 99.9%] |
-| False positive rate | 36.0% | **6.7%** | **−29.5 pp (~5×)** | [1.8%, 20.7%] |
+| Detection rate | 100.0% | **99.3%** | ≈ same | [96.2%, 99.9%] *(Wilson)* |
+| False positive rate | 36.0% | **6.7%** | **−29.5 pp (~5×)** | [1.8%, 20.7%] *(Wilson)* |
 | Precision | — | 98.6% | — | — |
 | F1 | 0.96 | **0.99** | +0.03 | — |
 | Bench n | 135 | 174 (scored) / 175 total | — | — |

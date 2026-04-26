@@ -1,0 +1,83 @@
+{
+  "_meta": {
+    "n_total": 175,
+    "n_scams": 144,
+    "n_benign": 31,
+    "feature_set": [
+      "urgency",
+      "impersonation",
+      "info_request",
+      "suspicious_link",
+      "unusual_amount",
+      "unknown_sender",
+      "authority",
+      "fear",
+      "greed",
+      "empathy",
+      "financial_lure",
+      "text_length_normalized",
+      "otp_mention",
+      "url_shortener",
+      "rupee_symbol"
+    ],
+    "feature_count": 15,
+    "cv_protocol": "stratified 5-fold, random_state=42",
+    "comparison_question": "Audit Gap 9: how does feature-engineered traditional ML compare to the GRPO+LoRA Analyzer on the same 175-scenario bench? Same input signals as ScriptedAnalyzer.",
+    "honest_caveat": "These models are trained on the same bench they are evaluated on (5-fold CV). They are an *upper bound* for what traditional ML with these features can achieve, not a held-out novel-scam claim. The v2 LoRA's 99.3 %/6.7 % point estimate is also evaluated on the same bench; this comparison is therefore fair (same data, different methods)."
+  },
+  "models": {
+    "LogisticRegression": {
+      "in_sample": {
+        "detection": 0.8402777777777778,
+        "fpr": 0.16129032258064516,
+        "precision": 0.9603174603174603,
+        "f1": 0.8962962962962963,
+        "tp": 121,
+        "fp": 5,
+        "fn": 23,
+        "tn": 26
+      },
+      "cv5_held_out": {
+        "detection_mean": 0.783743842364532,
+        "detection_std": 0.1085198307474787,
+        "fpr_mean": 0.16190476190476188,
+        "fpr_std": 0.010647942749998997,
+        "f1_mean": 0.8587337393633248,
+        "f1_std": 0.06836793031874376
+      },
+      "method": "L2-regularised logistic regression on 11 boolean rule signals + 4 trivial text features",
+      "params": {
+        "C": 1.0,
+        "class_weight": "balanced",
+        "max_iter": 2000,
+        "random_state": 42
+      }
+    },
+    "GradientBoostingClassifier": {
+      "in_sample": {
+        "detection": 1.0,
+        "fpr": 0.12903225806451613,
+        "precision": 0.972972972972973,
+        "f1": 0.9863013698630138,
+        "tp": 144,
+        "fp": 4,
+        "fn": 0,
+        "tn": 27
+      },
+      "cv5_held_out": {
+        "detection_mean": 0.9236453201970444,
+        "detection_std": 0.01518328572159845,
+        "fpr_mean": 0.6714285714285714,
+        "fpr_std": 0.17284468012268128,
+        "f1_mean": 0.8927437059464155,
+        "f1_std": 0.01809770616853324
+      },
+      "method": "Sklearn gradient-boosted decision tree ensemble on the same 15-feature set",
+      "params": {
+        "n_estimators": 100,
+        "max_depth": 3,
+        "random_state": 42
+      }
+    }
+  }
+}

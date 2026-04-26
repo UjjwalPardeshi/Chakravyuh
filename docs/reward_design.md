@@ -18,8 +18,8 @@ rubrics (`AnalyzerRubricV2`, [`chakravyuh_env/rubrics.py`](../chakravyuh_env/rub
 | `CalibrationRubric` | **+0.5** *(v1: +0.3)* | Score-vs-truth calibration over the episode | Rewards *low* scores on benign — kills "always 1.0" agents |
 | `ExplanationRubric` | **+0.4** | Natural-language explanation references declared signals | Empty-signals + boilerplate cannot collect the bonus |
 | `FormatRubric` | **+0.1** | Strict-JSON output adheres to the schema | Required for downstream wiring; **denied** when the model flags a benign as a scam (v2 fix) |
-| `RegulatorAlignmentRubric` | **+0.2** | Decision agrees with the meta-Regulator's outcome aggregation | Cross-channel oversight; cannot be reward-hacked from chat alone |
-| `BankConsistencyRubric` | **+0.2** | Decision consistent with the Bank Monitor's metadata-only signal | Asymmetric-information defence — both channels must agree |
+| `SignalAccuracyRubric` | **+0.2** | Declared signal set matches the rule-based heuristics fired on the same chat | Cross-channel sanity check — reading off the chat alone cannot game an independent rule-firing reference |
+| `LengthRubric` | **+0.1** | Explanation length within `[min, max]` characters | Penalises both empty `""` (which gamed the format channel in v1) and runaway one-paragraph essays |
 
 ## Three principles, encoded in the rubric structure
 

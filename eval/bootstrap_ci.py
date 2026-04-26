@@ -12,6 +12,7 @@ rigorous stats against frontier LLM baselines.
 from __future__ import annotations
 
 import random
+from statistics import NormalDist
 from typing import Callable, Sequence
 
 
@@ -43,6 +44,104 @@ def bootstrap_ci(
     lo = resamples[int(alpha * n_resamples)]
     hi = resamples[int((1.0 - alpha) * n_resamples)]
     point = statistic(values)
+    return float(point), float(lo), float(hi)
+
+
+def bootstrap_ci_bca(
+    values: Sequence[float],
+    statistic: Callable[[Sequence[float]], float] = lambda v: sum(v) / len(v),
+    n_resamples: int = 1000,
+    confidence: float = 0.95,
+    seed: int | None = None,
+) -> tuple[float, float, float]:
+    """Bias-corrected and accelerated (BCa) bootstrap CI.
+
+    Falls back to percentile when the resample distribution is degenerate
+    (e.g. all bootstrap statistics identical, or jackknife variance zero) —
+    that's the small-n / pathological-input regime where BCa is undefined.
+
+    Reference: Efron (1987) "Better Bootstrap Confidence Intervals."
+    Generally preferred over percentile for small samples and skewed
+    distributions because it corrects for both bias (the median of the
+    bootstrap distribution shifted away from the observed statistic) and
+    skewness (acceleration via jackknife).
+
+    >>> p, lo, hi = bootstrap_ci_bca([0, 1, 1, 1, 0, 1, 1, 0, 1, 1], seed=42)
+    >>> lo <= p <= hi
+    True
+    """
+    if not values:
+        return 0.0, 0.0, 0.0
+    n = len(values)
+    if n < 2:
+        # BCa is undefined for n < 2; return point estimate with degenerate CI.
+        point = statistic(values)
+        return float(point), float(point), float(point)
+
+    rng = random.Random(seed)
+    point = statistic(values)
+
+    # 1. Bootstrap resampling (same as percentile)
+    resamples = [
+        statistic([values[rng.randrange(n)] for _ in range(n)])
+        for _ in range(n_resamples)
+    ]
+    resamples.sort()
+
+    # 2. Bias correction z0 — Phi^-1 of fraction of resamples below the observed stat.
+    n_below = sum(1 for r in resamples if r < point)
+    if n_below == 0 or n_below == n_resamples:
+        # Degenerate: every resample is on one side of the point.
+        # Fall back to percentile to avoid division by zero / infinite z0.
+        return _percentile_from_sorted(resamples, point, confidence)
+    p_below = n_below / n_resamples
+    norm = NormalDist()
+    z0 = norm.inv_cdf(p_below)
+
+    # 3. Acceleration a — via jackknife.
+    jack_estimates = []
+    for i in range(n):
+        leave_one_out = list(values[:i]) + list(values[i + 1:])
+        jack_estimates.append(statistic(leave_one_out))
+    jack_mean = sum(jack_estimates) / n
+    diffs = [jack_mean - x for x in jack_estimates]
+    num = sum(d ** 3 for d in diffs)
+    denom = 6.0 * (sum(d ** 2 for d in diffs) ** 1.5)
+    if denom == 0:
+        return _percentile_from_sorted(resamples, point, confidence)
+    a = num / denom
+
+    # 4. Adjusted percentiles
+    alpha = (1.0 - confidence) / 2
+    z_lo = norm.inv_cdf(alpha)
+    z_hi = norm.inv_cdf(1.0 - alpha)
+
+    def _adjust(z: float) -> float:
+        denom_ = 1.0 - a * (z0 + z)
+        if denom_ == 0:
+            return alpha
+        return norm.cdf(z0 + (z0 + z) / denom_)
+
+    alpha1 = _adjust(z_lo)
+    alpha2 = _adjust(z_hi)
+    # Clamp to (0, 1) to avoid index errors on tail cases.
+    alpha1 = max(0.0, min(1.0 - 1.0 / n_resamples, alpha1))
+    alpha2 = max(1.0 / n_resamples, min(1.0, alpha2))
+
+    lo_idx = max(0, min(n_resamples - 1, int(alpha1 * n_resamples)))
+    hi_idx = max(0, min(n_resamples - 1, int(alpha2 * n_resamples)))
+    return float(point), float(resamples[lo_idx]), float(resamples[hi_idx])
+
+
+def _percentile_from_sorted(
+    sorted_resamples: Sequence[float],
+    point: float,
+    confidence: float,
+) -> tuple[float, float, float]:
+    n = len(sorted_resamples)
+    alpha = (1.0 - confidence) / 2
+    lo = sorted_resamples[int(alpha * n)]
+    hi = sorted_resamples[int((1.0 - alpha) * n)]
     return float(point), float(lo), float(hi)
 
 
@@ -152,9 +251,11 @@ def _bootstrap_proportion(
     outcomes: Sequence[int],
     n_resamples: int,
     seed: int,
+    method: str = "percentile",
 ) -> tuple[float, float, float]:
-    """Percentile bootstrap CI for a binary proportion."""
-    return bootstrap_ci(
+    """Bootstrap CI for a binary proportion. Method = 'percentile' or 'bca'."""
+    fn = bootstrap_ci_bca if method == "bca" else bootstrap_ci
+    return fn(
         outcomes,
         statistic=lambda v: sum(v) / len(v),
         n_resamples=n_resamples,
@@ -167,8 +268,9 @@ def _bootstrap_f1(
     benign_outcomes: Sequence[int],
     n_resamples: int,
     seed: int,
+    method: str = "percentile",
 ) -> tuple[float, float, float]:
-    """Joint percentile bootstrap CI for F1 over scam + benign outcomes."""
+    """Joint bootstrap CI for F1 over scam + benign outcomes (percentile or BCa)."""
     rng = random.Random(seed)
     n_s, n_b = len(scam_outcomes), len(benign_outcomes)
     if n_s == 0 or n_b == 0:
@@ -179,10 +281,51 @@ def _bootstrap_f1(
         b_resample = [benign_outcomes[rng.randrange(n_b)] for _ in range(n_b)]
         samples.append(_f1_from_outcomes(s_resample, b_resample))
     samples.sort()
-    lo = samples[int(0.025 * n_resamples)]
-    hi = samples[int(0.975 * n_resamples)]
     point = _f1_from_outcomes(scam_outcomes, benign_outcomes)
-    return float(point), float(lo), float(hi)
+
+    if method != "bca":
+        lo = samples[int(0.025 * n_resamples)]
+        hi = samples[int(0.975 * n_resamples)]
+        return float(point), float(lo), float(hi)
+
+    # BCa for the joint statistic — bias correction + jackknife acceleration.
+    n_below = sum(1 for s in samples if s < point)
+    if n_below == 0 or n_below == n_resamples:
+        lo = samples[int(0.025 * n_resamples)]
+        hi = samples[int(0.975 * n_resamples)]
+        return float(point), float(lo), float(hi)
+    norm = NormalDist()
+    z0 = norm.inv_cdf(n_below / n_resamples)
+
+    jack: list[float] = []
+    for i in range(n_s):
+        sub = list(scam_outcomes[:i]) + list(scam_outcomes[i + 1:])
+        jack.append(_f1_from_outcomes(sub, benign_outcomes))
+    for i in range(n_b):
+        sub = list(benign_outcomes[:i]) + list(benign_outcomes[i + 1:])
+        jack.append(_f1_from_outcomes(scam_outcomes, sub))
+    jack_mean = sum(jack) / len(jack)
+    diffs = [jack_mean - x for x in jack]
+    num = sum(d ** 3 for d in diffs)
+    denom = 6.0 * (sum(d ** 2 for d in diffs) ** 1.5)
+    if denom == 0:
+        lo = samples[int(0.025 * n_resamples)]
+        hi = samples[int(0.975 * n_resamples)]
+        return float(point), float(lo), float(hi)
+    a = num / denom
+
+    z_lo = norm.inv_cdf(0.025)
+    z_hi = norm.inv_cdf(0.975)
+    def _adjust(z: float) -> float:
+        d = 1.0 - a * (z0 + z)
+        if d == 0:
+            return 0.025
+        return norm.cdf(z0 + (z0 + z) / d)
+    a1 = max(0.0, min(1.0 - 1.0 / n_resamples, _adjust(z_lo)))
+    a2 = max(1.0 / n_resamples, min(1.0, _adjust(z_hi)))
+    lo_idx = max(0, min(n_resamples - 1, int(a1 * n_resamples)))
+    hi_idx = max(0, min(n_resamples - 1, int(a2 * n_resamples)))
+    return float(point), float(samples[lo_idx]), float(samples[hi_idx])
 
 
 def _ci_dict(point: float, lo: float, hi: float) -> dict:
@@ -199,6 +342,16 @@ def _run_cli() -> None:
     parser.add_argument("--iterations", type=int, default=10000, help="Bootstrap resamples")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--output", required=True, help="Path to write bootstrap CI JSON")
+    parser.add_argument(
+        "--method",
+        choices=["percentile", "bca"],
+        default="percentile",
+        help=(
+            "Bootstrap CI method. 'percentile' (default, used by `make bootstrap` "
+            "and the canonical `logs/bootstrap_v2.json`) or 'bca' (bias-corrected + "
+            "accelerated; generally preferred for small / skewed samples)."
+        ),
+    )
     args = parser.parse_args()
 
     eval_data = json.loads(Path(args.eval_file).read_text())
@@ -220,19 +373,25 @@ def _run_cli() -> None:
     scam_outcomes = _binary_outcomes(detection, n_scams)
     benign_correct_outcomes = _binary_outcomes(1.0 - fpr, n_benign)
 
+    method_label = (
+        "BCa (bias-corrected + accelerated) bootstrap on Bernoulli outcome "
+        "arrays reconstructed from logs/eval_v2.json aggregates"
+        if args.method == "bca"
+        else "percentile bootstrap on Bernoulli outcome arrays reconstructed from logs/eval_v2.json aggregates"
+    )
     out: dict = {
         "_meta": {
             "eval_file": args.eval_file,
             "iterations": args.iterations,
             "seed": args.seed,
-            "method": "percentile bootstrap on Bernoulli outcome arrays reconstructed from logs/eval_v2.json aggregates",
+            "method": method_label,
             "n_scams": n_scams,
             "n_benign": n_benign,
             "n_total": n_total,
         },
-        "detection": _ci_dict(*_bootstrap_proportion(scam_outcomes, args.iterations, args.seed)),
-        "fpr": _ci_dict(*_bootstrap_proportion([1 - o for o in benign_correct_outcomes], args.iterations, args.seed + 1)),
-        "f1": _ci_dict(*_bootstrap_f1(scam_outcomes, benign_correct_outcomes, args.iterations, args.seed + 2)),
+        "detection": _ci_dict(*_bootstrap_proportion(scam_outcomes, args.iterations, args.seed, args.method)),
+        "fpr": _ci_dict(*_bootstrap_proportion([1 - o for o in benign_correct_outcomes], args.iterations, args.seed + 1, args.method)),
+        "f1": _ci_dict(*_bootstrap_f1(scam_outcomes, benign_correct_outcomes, args.iterations, args.seed + 2, args.method)),
         "per_difficulty": {},
     }
 
@@ -244,7 +403,7 @@ def _run_cli() -> None:
         outcomes_d = _binary_outcomes(rate_d, n_d)
         out["per_difficulty"][name] = {
             "n": n_d,
-            "detection": _ci_dict(*_bootstrap_proportion(outcomes_d, args.iterations, args.seed + 10 + i)),
+            "detection": _ci_dict(*_bootstrap_proportion(outcomes_d, args.iterations, args.seed + 10 + i, args.method)),
         }
 
     Path(args.output).parent.mkdir(parents=True, exist_ok=True)

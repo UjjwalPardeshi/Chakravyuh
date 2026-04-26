@@ -21,17 +21,20 @@
         "info_keywords": 14,
         "suspicious_tlds": 22,
         "url_shorteners": 8,
-        "flag_threshold": 0.50
+        "flag_threshold": 0.5
       },
       "pretrained": false,
       "ran_on": "2026-04-21",
       "runtime_env": "CPU-only, Python 3.12",
-      "version": "v0.3 — 11-signal taxonomy + legit-domain allowlist + OTP-provided heuristic",
+      "version": "v0.3 \u2014 11-signal taxonomy + legit-domain allowlist + OTP-provided heuristic",
       "results": {
         "overall": {
           "n": 175,
-          "detection_rate": 0.840,
-          "detection_rate_ci_95": [0.778, 0.896],
+          "detection_rate": 0.84,
+          "detection_rate_ci_95": [
+            0.778,
+            0.896
+          ],
           "false_positive_rate": 0.097,
           "precision": 0.976,
           "f1": 0.903,
@@ -39,35 +42,74 @@
           "bootstrap_resamples": 2000
         },
         "by_category": {
-          "otp_theft": {"n": 24, "detection_rate": 1.000},
-          "kyc_fraud": {"n": 28, "detection_rate": 0.786},
-          "loan_app_fraud": {"n": 23, "detection_rate": 0.826},
-          "investment_fraud": {"n": 32, "detection_rate": 0.781},
-          "impersonation": {"n": 37, "detection_rate": 0.838},
-          "benign": {"n": 15, "false_positive_rate": 0.067},
-          "borderline": {"n": 16, "false_positive_rate": 0.125}
+          "otp_theft": {
+            "n": 24,
+            "detection_rate": 1.0
+          },
+          "kyc_fraud": {
+            "n": 28,
+            "detection_rate": 0.786
+          },
+          "loan_app_fraud": {
+            "n": 23,
+            "detection_rate": 0.826
+          },
+          "investment_fraud": {
+            "n": 32,
+            "detection_rate": 0.781
+          },
+          "impersonation": {
+            "n": 37,
+            "detection_rate": 0.838
+          },
+          "benign": {
+            "n": 15,
+            "false_positive_rate": 0.067
+          },
+          "borderline": {
+            "n": 16,
+            "false_positive_rate": 0.125
+          }
         },
         "by_difficulty": {
-          "easy": {"n": 30, "detection_rate": 0.962},
-          "medium": {"n": 78, "detection_rate": 0.864},
-          "hard": {"n": 33, "detection_rate": 0.722},
-          "novel": {"n": 34, "detection_rate": 0.765}
+          "easy": {
+            "n": 30,
+            "detection_rate": 0.962
+          },
+          "medium": {
+            "n": 78,
+            "detection_rate": 0.864
+          },
+          "hard": {
+            "n": 33,
+            "detection_rate": 0.722
+          },
+          "novel": {
+            "n": 34,
+            "detection_rate": 0.765
+          }
         },
         "known_vs_novel": {
           "known_subset": {
             "n": 110,
             "detection_rate": 0.864,
-            "ci_95": [0.800, 0.927]
+            "ci_95": [
+              0.8,
+              0.927
+            ]
           },
           "novel_subset": {
             "n": 34,
             "detection_rate": 0.765,
-            "ci_95": [0.618, 0.882]
+            "ci_95": [
+              0.618,
+              0.882
+            ]
           },
           "gap_pp": 9.9,
           "permutation_p_value": 0.184,
           "significant_at_p01": false,
-          "cohens_d": 0.270,
+          "cohens_d": 0.27,
           "effect_size": "small"
         },
         "rule_vs_expert_agreement": {
@@ -78,7 +120,7 @@
         },
         "v0_2_baseline_comparison": {
           "previous_f1": 0.795,
-          "previous_fpr": 0.290,
+          "previous_fpr": 0.29,
           "previous_kappa": 0.277,
           "previous_investment": 0.312,
           "delta_f1": 0.108,
@@ -153,13 +195,78 @@
         "episodes": 200,
         "kl_penalty": 0.04,
         "lora_rank": 16,
-        "target_modules": ["q_proj","k_proj","v_proj","o_proj","gate_proj","up_proj","down_proj"]
+        "target_modules": [
+          "q_proj",
+          "k_proj",
+          "v_proj",
+          "o_proj",
+          "gate_proj",
+          "up_proj",
+          "down_proj"
+        ]
       },
       "pretrained": false,
       "ran_on": null,
       "runtime_env": "RunPod A100 (80GB) or Colab T4 fallback with Qwen2.5-3B",
       "results": null,
       "_note": "Populated after training completes on 2026-04-22. Run: python -m training.self_play_loop --lora-path <path>"
+    },
+    {
+      "name": "LogisticRegression",
+      "method": "L2-regularised logistic regression on 11 boolean rule signals + 4 trivial text features",
+      "params": {
+        "C": 1.0,
+        "class_weight": "balanced",
+        "max_iter": 2000,
+        "random_state": 42
+      },
+      "pretrained": false,
+      "ran_on": "2026-04-26",
+      "runtime_env": "CPU-only, sklearn 1.8, n=175 stratified 5-fold CV",
+      "version": "v1.0",
+      "results": {
+        "overall": {
+          "n": 175,
+          "detection_rate": 0.7837,
+          "detection_rate_std": 0.1085,
+          "false_positive_rate": 0.1619,
+          "false_positive_rate_std": 0.0106,
+          "f1": 0.8587,
+          "f1_std": 0.0684,
+          "in_sample_detection": 0.8403,
+          "in_sample_fpr": 0.1613,
+          "in_sample_f1": 0.8963,
+          "cv_protocol": "stratified 5-fold, random_state=42"
+        }
+      }
+    },
+    {
+      "name": "GradientBoostingClassifier",
+      "method": "Sklearn gradient-boosted decision tree ensemble on the same 15-feature set",
+      "params": {
+        "n_estimators": 100,
+        "max_depth": 3,
+        "random_state": 42
+      },
+      "pretrained": false,
+      "ran_on": "2026-04-26",
+      "runtime_env": "CPU-only, sklearn 1.8, n=175 stratified 5-fold CV",
+      "version": "v1.0",
+      "results": {
+        "overall": {
+          "n": 175,
+          "detection_rate": 0.9236,
+          "detection_rate_std": 0.0152,
+          "false_positive_rate": 0.6714,
+          "false_positive_rate_std": 0.1728,
+          "f1": 0.8927,
+          "f1_std": 0.0181,
+          "in_sample_detection": 1.0,
+          "in_sample_fpr": 0.129,
+          "in_sample_f1": 0.9863,
+          "cv_protocol": "stratified 5-fold, random_state=42"
+        }
+      }
     }
   ],
   "reproduction": {

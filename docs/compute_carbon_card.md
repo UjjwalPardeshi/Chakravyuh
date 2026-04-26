@@ -27,7 +27,7 @@ Round-trip carbon = `power_kW × hours × carbon_intensity_g_per_kWh / 1000`.
 
 ## Compute planned for the 30-credit HF onsite spend
 
-Reference: [`.claude/plan/perfect-project.md`](../.claude/plan/perfect-project.md) §1 credit-allocation table.
+Credit allocation planned for the 30-credit HF onsite spend:
 
 | Phase | Hardware | Hours | kWh | g CO2 |
 |---|---|---|---|---|

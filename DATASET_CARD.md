@@ -86,7 +86,7 @@ A **fixed, citable test set** for any fraud detector — rule-based, LLM zero-sh
 
 Bootstrap 95 % CIs from [`logs/bootstrap_v2.json`](logs/bootstrap_v2.json) — detection [97.9 %, 100 %], FPR [0 %, 16.7 %], F1 [0.976, 1.000], novel detection [91.2 %, 100 %].
 
-Frontier zero-shot baselines (GPT-4o-mini / Claude / Gemini / Llama-3.3-70B) are *pending* — `eval/frontier_baseline.py` is wired up; running blocked on API budget.
+Frontier zero-shot baselines — **open-weight tier shipped 2026-04-26** via HuggingFace Inference Providers (paid from HF compute credits). Full results at [`logs/frontier_comparison.csv`](logs/frontier_comparison.csv): Llama-3.3-70B-Instruct (99.3 % / 3.2 % FPR / F1 0.993), Qwen2.5-72B-Instruct (98.6 % / 6.5 % / 0.986), DeepSeek-V3-0324 (100 % / 29.0 % / 0.970), Qwen2.5-7B-Instruct base (100 % / 16.1 % / 0.983), gpt-oss-120b (98.6 % / 16.1 % / 0.976), DeepSeek-R1 (100 % / 12.9 % / 0.986, with reasoning-aware parser), gemma-3-27b-it (100 % / 51.6 % / 0.947). Pairwise Fisher's exact significance vs the v2 LoRA at [`logs/frontier_significance.json`](logs/frontier_significance.json). Proprietary frontier (GPT-4o / Claude / Gemini) deferred — those APIs are not covered by HF compute credits.
 
 ## Adversarial Scammer evaluation (B.2 Phase 1, n=64 best-of-8)
 

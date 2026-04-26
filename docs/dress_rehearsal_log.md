@@ -1,6 +1,6 @@
 # Pre-submit dress rehearsal log
 
-Run on **2026-04-25** after the autonomous-execution batch (`/multi-execute` of `.claude/plan/autonomous-audit-execution.md`). All gates green.
+Run on **2026-04-25** after the full pre-submit verification pass. All gates green.
 
 ## Verification table
 
@@ -97,7 +97,7 @@ If any of these fail on a fresh clone, that is the bug — file an issue.
 
 # Pre-submit dress rehearsal (round 2)
 
-Run on **2026-04-25** after the second autonomous batch (`/multi-execute` of `.claude/plan/audit-autonomous-fixes.md`, batches 1-6). All gates green.
+Run on **2026-04-25** after the second pre-submit verification pass (batches 1-6). All gates green.
 
 ## Verification table — round 2
 
@@ -174,7 +174,7 @@ done
 
 # Pre-submit dress rehearsal (round 3 — audit-v2 no-GPU batch)
 
-Run on **2026-04-26** after the audit-v2-no-gpu batch (`/multi-execute` of `.claude/plan/audit-v2-no-gpu-execution.md`, batches 0-7). All in-process gates green. Container probe green. **`/demo/` and `/eval/*` 404 in production is fixed by the Dockerfile patch in Batch 0; awaiting user push to GitHub + HF orphan redeploy (Phase H).**
+Run on **2026-04-26** after the audit-v2 no-GPU verification batch (batches 0-7). All in-process gates green. Container probe green. **`/demo/` and `/eval/*` 404 in production is fixed by the Dockerfile patch in Batch 0; awaiting user push to GitHub + HF orphan redeploy (Phase H).**
 
 ## Verification matrix — round 3
 

@@ -52,7 +52,7 @@ This is *not a hyperbolic "first of its kind"* claim — it is a **scope-narrowe
 
 If a comparable benchmark *did* exist with a frontier LLM frontier baseline, Chakravyuh would lose on:
 
-- **Frontier-LLM coverage.** We do not yet have GPT-4o / Claude / Gemini / Llama-3 numbers (`eval/frontier_baseline.py` exists but was not run; ~$40-80 API cost).
+- **Proprietary-frontier coverage.** GPT-4o / Claude / Gemini are not covered by our HF compute credits (the script supports them with the appropriate API keys, just not the budget). The **open-weight tier IS shipped** (Llama-3.3-70B / Qwen2.5-72B / DeepSeek-V3-0324 / Qwen2.5-7B base / gpt-oss-120b / DeepSeek-R1 / gemma-3-27b-it) — see [`logs/frontier_comparison.csv`](../logs/frontier_comparison.csv) and pairwise Fisher's-exact significance tests vs the v2 LoRA at [`logs/frontier_significance.json`](../logs/frontier_significance.json). The v2 LoRA significantly beats DeepSeek-V3 (p = 0.043) and gemma-3-27B (p = 0.0002), and is statistically tied with Llama-3.3-70B (p = 0.61) and Qwen2.5-72B (p = 1.00) at 10× fewer parameters.
 - **Sample size.** n=175 vs Fraud-R1's larger eval set.
 - **Multi-modality.** AdapT-Bench evaluates on phishing screenshots; Chakravyuh is text-only.
 
@@ -66,4 +66,4 @@ Searches conducted via web search engine on 2026-04-26 (queries listed above). E
 
 - Source-of-truth limitations doc: [`docs/limitations.md`](limitations.md) — what we *do not* yet measure and why.
 - Project FAQ: [`FAQ.md`](../FAQ.md) — top-15 judge questions including "How does this compare to GPT-4o?"
-- Frontier baseline scaffolding: [`eval/frontier_baseline.py`](../eval/frontier_baseline.py) — wired but not yet run (~$40-80 API budget required).
+- Frontier baseline (open-weight tier shipped): [`eval/frontier_baseline.py`](../eval/frontier_baseline.py) → [`logs/frontier_comparison.csv`](../logs/frontier_comparison.csv) (paid from HF compute credits). Pairwise Fisher's-exact significance vs v2 LoRA at [`logs/frontier_significance.json`](../logs/frontier_significance.json). Frontier-LLMs-as-Scammer (attacker-side comparison) at [`logs/scammer_frontier_comparison.csv`](../logs/scammer_frontier_comparison.csv).

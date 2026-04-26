@@ -55,17 +55,20 @@ This shapes our 7B / LoRA / 4-bit-quant choice — the model has to fit on a fla
 
 ---
 
-## 4. Why 5 rubrics, and exactly these 5
+## 4. Why 8 rubrics, and exactly these 8
 
-The composable reward decomposes into:
+The composable reward `AnalyzerRubricV2` ([`chakravyuh_env/rubrics.py`](../chakravyuh_env/rubrics.py)) decomposes into:
 
-| Rubric | Weight | What it rewards |
+| Rubric | Weight (v2) | What it rewards |
 |---|---|---|
 | `DetectionRubric` | +1.0 | Early flag (turn ≤ 5) of a real scam |
 | `MissedScamRubric` | −0.5 | Missed-scam where money was extracted |
-| `FalsePositiveRubric` | −0.8 (v2) | Benign incorrectly flagged |
-| `CalibrationRubric` | +0.5 (v2) | Score matches ground truth (high on scam, low on benign) |
+| `FalsePositiveRubric` | −0.8 *(v1: −0.3)* | Benign incorrectly flagged |
+| `CalibrationRubric` | +0.5 *(v1: +0.3)* | Score matches ground truth (high on scam, low on benign) |
 | `ExplanationRubric` | +0.4 | Natural-language explanation references declared signals |
+| `SignalAccuracyRubric` | +0.2 | Declared signal set is consistent with the rule-based heuristics on the same chat |
+| `FormatRubric` | +0.1 | Strict-JSON output adheres to the schema; **denied** when the model flags benign as scam (v2 anti-collapse fix) |
+| `LengthRubric` | +0.1 | Penalises both empty and run-on explanations; tightens the explanation channel |
 
 The hackathon guide flagged reward hacking as the single biggest practical failure mode. Our prescription:
 
@@ -74,9 +77,10 @@ The hackathon guide flagged reward hacking as the single biggest practical failu
 - **Explicit FP penalty.** Makes "always flag" a dominated strategy.
 - **Calibration.** Rewards low scores on benign — an "always 1.0" agent tanks calibration.
 - **Explanation cross-references signals.** An empty-signals + boilerplate combination cannot collect the explanation bonus.
+- **Format reward gated on benign-as-scam.** Removes the perverse incentive that let v1 collect format reward while over-flagging.
 - **Trajectory awareness.** Detection requires `outcome.detected_by_turn ≤ 5`, not just a final-turn score flip.
 
-We rejected a 3-rubric simpler design (detection / FP / calibration) because v1 collapsed on it. Adding `MissedScamRubric` and `ExplanationRubric` were the changes that made v2 trainable without reward-hacking. We caught the v1 hack on the bench and the recovered v2 numbers (FPR 36 % → 6.7 %, 5×) are the empirical evidence those two extra rubrics matter.
+We rejected a 3-rubric simpler design (detection / FP / calibration) because v1 collapsed on it. The v1 → v2 fix promoted three previously-inline shaping signals (`signal_accuracy`, `format`, `length`) into first-class composable rubrics, alongside tightening `false_positive` (−0.3 → −0.8), raising `calibration` (+0.3 → +0.5), and denying `format` reward when benign is flagged. The recovered v2 numbers (FPR 36 % → 6.7 %, 5×) are the empirical evidence the v1 → v2 reward changes matter.
 
 ---
 
@@ -88,7 +92,7 @@ For the adversarial Phase-2 self-play (planned onsite), the Scammer LoRA is on Q
 - **Asymmetry by design.** Real scammers don't run frontier LLMs on burner phones — they run cheap, fast, repetitive scripts. A 0.5B Scammer mirrors the threat surface more honestly than a 7B Scammer would.
 - **Detection still has to work.** If a 7B Analyzer can be reliably fooled by a 0.5B Scammer, that's a stronger negative result than two equally large models trading attacks.
 
-Adverse-results plan documented in [`.claude/plan/chakravyuh-win-execution.md`](../.claude/plan/chakravyuh-win-execution.md) C.2: if the 0.5B Scammer doesn't converge in 2 h, fall back to an SFT generation head; do not pretend a non-convergent run worked.
+Adverse-results plan (C.2): if the 0.5B Scammer doesn't converge in 2 h, fall back to an SFT generation head; do not pretend a non-convergent run worked.
 
 ---
 
