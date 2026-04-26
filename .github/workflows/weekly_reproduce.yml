@@ -1,0 +1,60 @@
+name: Weekly bench reproduction
+
+# Cron-driven smoke + cached-eval reproducibility check. Detects regressions
+# over time without spending CI minutes on a full GPU rerun. Runs once a week
+# and on-demand via workflow_dispatch.
+
+on:
+  schedule:
+    - cron: "0 0 * * 0"  # Sunday 00:00 UTC
+  workflow_dispatch:
+
+concurrency:
+  group: weekly-reproduce
+  cancel-in-progress: false
+
+jobs:
+  reproduce-cached:
+    name: make reproduce (CHAKRAVYUH_SKIP_INFERENCE=1)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install package + eval extras
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e '.[llm,eval,dev]'
+
+      - name: Smoke test (in-process env)
+        run: make smoke-test
+
+      - name: Cached reproduce (no GPU; ~10 min CPU)
+        env:
+          CHAKRAVYUH_SKIP_INFERENCE: "1"
+        run: make reproduce
+
+      - name: Verify v1 → v2 permutation test still significant
+        run: |
+          python eval/permutation_test_v1_v2.py
+          python -c "import json; r = json.load(open('logs/permutation_test_v1_v2.json')); p = r['aggregate_fpr_test']['p_value_permutation']; assert p < 0.05, f'permutation p={p} not significant'; print(f'OK: p={p}')"
+
+      - name: Upload regenerated artifacts (debug)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: weekly-reproduce-${{ github.run_id }}
+          path: |
+            logs/eval_v2_reproduce.json
+            logs/bootstrap_v2_reproduce.json
+            logs/permutation_test_v1_v2.json
+          if-no-files-found: ignore
+          retention-days: 14

@@ -117,7 +117,66 @@ Per-language eval is Phase B.8. Numbers not yet measured. The base model (Qwen2.
 
 ---
 
-## 15. What's the most uncomfortable thing about your submission?
+## 15. The Scammer's opponent during training was scripted — your "two trained agents" claim is overstated.
+
+Fair pushback. The honest framing: **Phase 1 is the *training-loop convergence proof*; Phase 2 is the v2-LoRA-vs-trained-Scammer co-evolution.** What Phase 1 demonstrates is that GRPO can train a small LLM to reliably evade a rule-based defense (93.75 % best-of-8 on n=64) and that the trained Scammer **generalizes to held-out novel categories at 100 %** (eight categories never seen in training: income-tax refund, vaccine slot, lottery, EMI conversion, blue-tick verification, EPF pension, customer-support callback, police notice). Held-out > train under best-of-8 is the real-generalization signature, not memorization.
+
+Phase 2 (Analyzer LoRA retrain against the frozen Phase-1 Scammer with per-rubric W&B logging) is queued for the onsite GPU sprint and produces co-evolution curves. We don't claim Phase 2 results until Phase 2 runs.
+
+Artifacts: [`logs/b2_phase1_scammer_eval_n64.json`](../logs/b2_phase1_scammer_eval_n64.json), [`logs/b2_phase1_scammer_eval_n64_bestof8.json`](../logs/b2_phase1_scammer_eval_n64_bestof8.json).
+
+---
+
+## 16. Why best-of-8 not single-shot — isn't 93.75 % cherry-picking?
+
+We ship both numbers, single-shot **59.4 %** and best-of-8 **93.75 %**, precisely so a reviewer can see both. The reasoning:
+
+- **Single-shot** = the model's bare per-attempt capability. Useful for academic comparison.
+- **Best-of-8** = the **realistic threat model**. Real attackers iterate — they don't send one phishing message and quit if it fails. 8 retries is conservative; production scammers attempt thousands.
+
+The Wilson 95 % CI on best-of-8 is [85.0 %, 97.5 %] (n=64); on the held-out subset it's [89.3 %, 100 %] (n=32). Both numbers are statistically defensible for their respective claims. The Stiennon et al. 2020 best-of-N literature is the standard reference for this evaluation regime.
+
+---
+
+## 17. The Scammer LoRA had 0 / 64 refusals. Is it dangerous to release?
+
+The 0 / 64 refusal count is **disclosed precisely so the dual-use risk is visible**. The LoRA stripped Qwen2.5-0.5B-Instruct's safety training — which is what you want for an *internal red-team adversary in a research environment*, but it is also exactly the dual-use risk that needs the misuse statement.
+
+Mitigations:
+1. The Scammer adapter (`ujjwalpardeshi/chakravyuh-scammer-0.5b-v1`) is **gated** on the HF Hub — access requires accepting the [`docs/RESPONSIBLE_USE.md`](RESPONSIBLE_USE.md) terms.
+2. The adapter weights are 12 MB and **useless without the Qwen2.5-0.5B base**, which is itself instruction-tuned — anyone wanting to do harm has easier paths than this.
+3. The Scammer is **not served externally**. Our live HF Space exposes the *Analyzer*, not the *Scammer*.
+4. Held-out 100 % bypass is vs *the rule-based ScriptedAnalyzer*, not vs the v2 Analyzer LoRA. The v2 LoRA crushes this Scammer; that asymmetry IS the B.2 Phase 2 motivation.
+
+See [`SECURITY.md`](../SECURITY.md) and the responsible-disclosure contact.
+
+---
+
+## 18. How do you compare to frontier LLMs?
+
+We ran an open-weight frontier comparison via HuggingFace Inference Providers — paid from our HF compute credits — across Llama-3.3-70B, Qwen2.5-72B, and DeepSeek-V3-0324 on the same n=174 bench with the same scoring prompt. Source of truth: [`logs/frontier_comparison.csv`](../logs/frontier_comparison.csv).
+
+Three findings:
+
+1. **Parameter efficiency.** Our 7B + LoRA scores F1 = **0.990**; Llama-3.3-70B scores 0.993. Tied within bootstrap CI at 10× fewer parameters.
+2. **Beats larger frontier.** F1 = 0.990 beats Qwen2.5-72B (0.986) and DeepSeek-V3-0324 at 671B MoE (0.969).
+3. **🔥 The killer finding.** DeepSeek-V3 (671B) scores detection 100 % / FPR **29 %** / F1 = 0.969. That is structurally identical to our v1 LoRA (100 % / 36 % / F1 = 0.96). **A frontier-class model independently reproduces the exact reward-hacking signature our methodology diagnoses and fixes.** External validation that calibrated reward design beats raw model capacity.
+
+Proprietary frontier (GPT-4o / Claude / Gemini) deferred — those APIs are not covered by HF compute credits and we did not authorize the ~$40–80 separate spend. The script supports them; running it is a single command for anyone with the keys.
+
+---
+
+## 19. Why didn't you compare to GPT-4o specifically?
+
+Three reasons, ordered by importance:
+
+1. **Budget honesty.** Proprietary-frontier APIs are not covered by HF compute credits. We had a $0 frontier budget and ran the comparison via the routes our credits *do* cover.
+2. **Open-weight frontier is the more relevant comparison anyway.** Our pitch is parameter-efficient on-device deployment; the natural comparison is to other open-weight models in the same deployability tier.
+3. **`eval/frontier_baseline.py` ships GPT-4o / Claude / Gemini support out of the box.** Anyone who wants to run it with API keys can do so in one command. We will not cite a number we did not measure.
+
+---
+
+## 20. What's the most uncomfortable thing about your submission?
 
 Three things, ordered by discomfort:
 

@@ -12,8 +12,8 @@ Each beat below has the spoken script (read aloud), the slide visible, and the o
 
 **Slide 1:** Title — "Chakravyuh: A Multi-Agent RL Environment for Indian UPI Fraud Detection." Sub-line: Meta PyTorch OpenEnv Hackathon 2026, Bangalore.
 
-**Spoken (90 words):**
-> India loses thirteen thousand crore rupees a year to UPI fraud. Sixty crore users are exposed. Rule-based detectors degrade on post-2024 attacks — we measured 50 percent detection on our 34-scenario novel split: matrimonial crypto, deepfake CEO, digital arrest. There's no public RL environment for multi-agent fraud-detection research, so we built one. Five agents. Five-rubric reward. We trained an Analyzer on Qwen 2.5-7B with GRPO. We caught a reward-hacking failure in v1 and measurably fixed it in v2. The whole thing fits on a phone.
+**Spoken (95 words):**
+> India loses thirteen thousand crore rupees a year to UPI fraud. Sixty crore users are exposed. Rule-based detectors degrade on post-2024 attacks — we measured 50 percent detection on our 34-scenario novel split: matrimonial crypto, deepfake CEO, digital arrest. There's no public RL environment for multi-agent fraud-detection research, so we built one. Five agents. Eight-rubric composable reward. **We trained two adapters — Analyzer on Qwen2.5-7B and Scammer on Qwen2.5-0.5B, both with GRPO.** We caught a reward-hacking failure in v1 and measurably fixed it in v2. The whole thing fits on a phone.
 
 **Action:** No clicker move. Hands at sides. Look at one judge per sentence.
 
@@ -23,10 +23,12 @@ Each beat below has the spoken script (read aloud), the slide visible, and the o
 
 **Slide 2:** Architecture diagram — 5 agents (Scammer / Victim / Analyzer / Bank Monitor / Regulator) with arrows showing chat-only and tx-metadata-only channels.
 
-**Spoken (110 words):**
-> Multi-agent isn't a headcount thing — it's about asymmetric information. The Analyzer sees only chat. The Bank Monitor sees only transaction metadata. The Regulator sees only aggregates across episodes. Neither single oversight channel can be reward-hacked into suppressing the "money extracted" outcome — they have to agree.
+**Spoken (140 words):**
+> Multi-agent isn't a headcount thing — it's about asymmetric information *and* trained-vs-trained dynamics. The Analyzer sees only chat. The Bank Monitor sees only transaction metadata. The Regulator sees only aggregates across episodes. Neither single oversight channel can be reward-hacked into suppressing the money-extracted outcome — they have to agree.
 
-> v1 trained to detection 100 %, FPR 36 %. That's not success — that's the textbook fingerprint of reward hacking. The model learned "always flag." We diagnosed the reward profile: FP penalty too small, format reward paid even on wrong calls, calibration weight too light on benign. Three fixes, one retrain.
+> And we trained the Scammer too. Phase 1 — Qwen2.5-0.5B with LoRA via TRL 0.14 GRPO, adversarial reward one-minus-scripted-analyzer score. After 200 episodes it evades the rule-based defense at ninety-three-point-seven-five percent best-of-eight on n equals 64. **One hundred percent on eight categories never seen in training** — income-tax refund, vaccine slot, EMI conversion, blue-tick verify. Real generalization.
+
+> v1 trained to detection 100 %, FPR 36 %. That's not success — that's the textbook fingerprint of reward hacking. The model learned "always flag." Three fixes, one retrain.
 
 **Action:** Click slide on "Multi-agent." Point at the Analyzer node. On "asymmetric information" — gesture left-right between Analyzer and Bank Monitor.
 

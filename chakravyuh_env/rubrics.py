@@ -288,6 +288,64 @@ class FormatRubric(Rubric):
         return 1.0
 
 
+class RupeeWeightedRubric(Rubric):
+    """Economic-loss-weighted detection signal in [-1, 1].
+
+    Reads ``outcome["loss_amount_inr"]`` (set from the bench scenario's
+    ``metadata.loss_amount_inr``) and returns a normalised reward that
+    scales with the ₹ at risk:
+
+      - +(loss_inr / cap)  on a correctly-detected scam
+      - -(loss_inr / cap)  on a missed scam where money was extracted
+      -  0.0               on benigns or non-terminal observations
+
+    The cap (default ₹1 lakh = 100 000) bounds the signal to [-1, 1] so it
+    composes safely with the other rubrics. Scenarios with no
+    ``loss_amount_inr`` (e.g. benigns or pre-bench-v0 templates) contribute
+    0.0 and are silently skipped — this is intentional, the rubric is
+    economic-loss-aware not always-on.
+
+    The rubric exists so that aggregated headline numbers ("Chakravyuh
+    prevented ₹X cr in expected loss across the bench") are derivable
+    from the same per-episode reward stream the trainer optimises against,
+    rather than computed by a separate post-hoc script. See
+    ``eval/rupee_weighted_eval.py`` for the aggregator used in the README.
+    """
+
+    cap_inr: float
+
+    def __init__(self, cap_inr: float = 100_000.0) -> None:
+        super().__init__()
+        if cap_inr <= 0:
+            raise ValueError(f"cap_inr must be positive, got {cap_inr}")
+        self.cap_inr = float(cap_inr)
+
+    def forward(self, action: Any, observation: Any) -> float:
+        outcome = _outcome(observation)
+        if outcome is None:
+            return 0.0
+        is_benign = bool(outcome.get("is_benign", False))
+        if is_benign:
+            return 0.0
+        loss_raw = outcome.get("loss_amount_inr")
+        if loss_raw is None:
+            return 0.0
+        try:
+            loss = float(loss_raw)
+        except (TypeError, ValueError):
+            return 0.0
+        if loss <= 0.0:
+            return 0.0
+        magnitude = min(1.0, loss / self.cap_inr)
+        flagged = bool(outcome.get("analyzer_flagged"))
+        money = bool(outcome.get("money_extracted"))
+        if flagged and not money:
+            return magnitude
+        if not flagged and money:
+            return -magnitude
+        return 0.0
+
+
 class LengthRubric(Rubric):
     """Length-shaping bonus peaking around 45 tokens, in [-1, 1].
 

@@ -1,0 +1,9 @@
+{
+  "n_scenarios": 175,
+  "n_scams_with_amount": 130,
+  "rupees_at_risk": 7794533.0,
+  "rupees_prevented": 0.0,
+  "rupees_leaked": 0.0,
+  "prevention_rate": 0.0,
+  "notes": []
+}

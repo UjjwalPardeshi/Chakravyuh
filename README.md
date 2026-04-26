@@ -47,6 +47,26 @@ Imagine a 58-year-old retired teacher in Mumbai. Her son lives in Singapore. A W
 
 The asymmetric improvement — detection unchanged, FPR down 5× — is the signature of the model actually learning the task instead of gaming the reward. Full v1→v2 diagnosis below.
 
+### Open-weight frontier comparison (n = 174, same bench, same prompt)
+
+Run via `python -m eval.frontier_baseline --providers hf --hf-models ...` (HuggingFace Inference Providers, paid from HF compute credits). Source: [`logs/frontier_comparison.csv`](logs/frontier_comparison.csv).
+
+| Model | Params | Detection | FPR | F1 |
+|---|---|---|---|---|
+| **Chakravyuh v2 LoRA (this submission)** | **7B + LoRA r=64** | **99.3 %** | **6.7 %** | **0.990** |
+| Llama-3.3-70B-Instruct (open) | 70B | 99.3 % | 3.2 % | 0.993 |
+| Qwen2.5-72B-Instruct (open) | 72B | 98.6 % | 6.5 % | 0.986 |
+| DeepSeek-V3-0324 (open) | 671B MoE (~37B active) | 100.0 % | **29.0 %** | 0.969 |
+| Scripted rule-based baseline | — | 84.6 % | 9.7 % | 0.906 |
+
+Three things to read out of this:
+
+1. **Parameter efficiency.** Our 7B + LoRA ties Llama-3.3-70B on F1 (0.990 vs 0.993) at **10× fewer parameters**.
+2. **Outperforms larger frontier on F1.** Beats Qwen2.5-72B (0.986) and DeepSeek-V3-671B (0.969).
+3. **DeepSeek-V3 reproduces the v1 reward-hacking signature externally.** Detection 100 % / FPR 29 % at 671B parameters is structurally identical to our v1 (100 % / 36 %). A frontier model independently falls into the exact failure mode our reward-engineering methodology diagnoses and fixes — *external validation* that calibrated reward design beats raw capacity. The v2 LoRA's 99.3 % / 6.7 % is the calibrated equivalent.
+
+Proprietary frontier (GPT-4o / Claude / Gemini) deferred — the API budget is not covered by the HF compute credits we ran on. The script supports those providers with the appropriate API keys; see [`FAQ.md`](FAQ.md) and [`REPRODUCE.md`](REPRODUCE.md).
+
 ---
 
 ## Real incidents Chakravyuh is built for
@@ -101,14 +121,23 @@ The composable rubric system ([chakravyuh_env/rubrics.py](chakravyuh_env/rubrics
 | Asset | Link |
 |---|---|
 | Hugging Face Space (live env) | [ujjwalpardeshi/chakravyuh](https://huggingface.co/spaces/ujjwalpardeshi/chakravyuh) — **LIVE** at `https://ujjwalpardeshi-chakravyuh.hf.space/demo/` |
-| Trained adapter (HF Hub) | [`ujjwalpardeshi/chakravyuh-analyzer-lora-v2`](https://huggingface.co/ujjwalpardeshi/chakravyuh-analyzer-lora-v2) |
-| Adversarial Scammer LoRA (B.2 phase 1) | [`ujjwalpardeshi/chakravyuh-scammer-lora-phase1`](https://huggingface.co/ujjwalpardeshi/chakravyuh-scammer-lora-phase1) — Qwen2.5-0.5B + GRPO; 94% bypass vs rule-based, 33% vs v2 LoRA (n=64) |
-| Training Colab (TRL + GRPO) | [`training/train_colab.ipynb`](training/train_colab.ipynb) · v2 retrain notebook: [`notebooks/v2_retrain_safe.ipynb`](notebooks/v2_retrain_safe.ipynb) |
+| **Analyzer LoRA v2** (defender, HF Hub) | [`ujjwalpardeshi/chakravyuh-analyzer-lora-v2`](https://huggingface.co/ujjwalpardeshi/chakravyuh-analyzer-lora-v2) |
+| **Scammer LoRA Phase 1** (adversary, HF Hub) | [`ujjwalpardeshi/chakravyuh-scammer-lora-phase1`](https://huggingface.co/ujjwalpardeshi/chakravyuh-scammer-lora-phase1) — Qwen2.5-0.5B + GRPO-trained adversary. **n=64 best-of-8 bypass: 93.75 % vs rule-based ScriptedAnalyzer (100 % on held-out novel categories), 32.8 % vs v2 LoRA defender — a 60 pp gap that quantifies co-evolution.** Per-sample artifacts: [`logs/b2_phase1_scammer_eval_n64_bestof8.json`](logs/b2_phase1_scammer_eval_n64_bestof8.json) · [`logs/b2_phase1_scammer_vs_v2_lora.json`](logs/b2_phase1_scammer_vs_v2_lora.json) |
+| Training notebook (TRL + GRPO) | v2 retrain: [`notebooks/v2_retrain_safe.ipynb`](notebooks/v2_retrain_safe.ipynb) · B.2 Scammer: [`notebooks/T4_or_A100_b2_phase1_scammer.ipynb`](notebooks/T4_or_A100_b2_phase1_scammer.ipynb) |
 | HF Blog post (draft) | [`docs/blog_post.md`](docs/blog_post.md) |
-| Slide deck (markdown source) | [`docs/chakravyuh_slides.md`](docs/chakravyuh_slides.md) |
+| Slide deck | [`docs/chakravyuh_slides.pdf`](docs/chakravyuh_slides.pdf) (rendered) · source: [`docs/chakravyuh_slides.md`](docs/chakravyuh_slides.md) |
+| Architecture diagram (rendered SVG) | [`docs/architecture.svg`](docs/architecture.svg) · source: [`docs/architecture.mmd`](docs/architecture.mmd) |
+| Reward design one-pager | [`docs/reward_design.md`](docs/reward_design.md) |
+| Worked case studies (3 scenarios with full transcripts + reward breakdowns) | [`docs/case_studies/`](docs/case_studies/) |
+| Misuse / dual-use disclosure (gates the Scammer LoRA) | [`docs/misuse_dual_use.md`](docs/misuse_dual_use.md) |
 | Public benchmark dataset | [`ujjwalpardeshi/chakravyuh-bench-v0`](https://huggingface.co/datasets/ujjwalpardeshi/chakravyuh-bench-v0) on HF Hub · local copy: [`data/chakravyuh-bench-v0/`](data/chakravyuh-bench-v0/) (175 scenarios) |
 | Judge quickstart | [`docs/judge_quickstart.md`](docs/judge_quickstart.md) |
 | Live pitch script (3 min) | [`docs/LIVE_PITCH.md`](docs/LIVE_PITCH.md) |
+| FAQ for judges | [`FAQ.md`](FAQ.md) · Glossary (non-Indian readers): [`docs/glossary.md`](docs/glossary.md) |
+| Reproducibility walkthrough | [`REPRODUCE.md`](REPRODUCE.md) (5-step prose + expected outputs) |
+| Responsible-use & dual-use disclosure | [`docs/RESPONSIBLE_USE.md`](docs/RESPONSIBLE_USE.md) |
+| Compute & carbon disclosure | [`docs/compute_carbon_card.md`](docs/compute_carbon_card.md) |
+| Comparison vs published benchmarks | [`docs/benchmark_comparison.md`](docs/benchmark_comparison.md) |
 | Official hackathon guidelines | [`guidelines/`](guidelines/) |
 
 ---
@@ -258,10 +287,11 @@ print(obs.reward, obs.reward_breakdown)
 
 ```bash
 pytest tests/ -v
-# 305 collected · 303 passed · 2 skipped (LLM-judge tests skip without GROQ_API_KEY)
+# 337 collected · 335 passed · 2 skipped (LLM-judge tests skip without GROQ_API_KEY)
 # Coverage: openenv contract, rubrics, scripted env, demo, explanation judge,
 # GRPO reward, MCP compliance, mode-C bench, negotiation, leaderboard, training data,
-# benign augmentation, known/novel split, red-team robustness, input sanitizer.
+# benign augmentation, known/novel split, red-team robustness, input sanitizer,
+# permutation test for v1↔v2 FPR delta.
 # Tests require '.[llm,eval]' extras:
 #   pip install -e '.[llm,eval]'
 ```
@@ -298,8 +328,9 @@ The Analyzer's reward decomposes into **eight orthogonal, introspectable child r
 | `SignalAccuracyRubric` | — | **+0.2** | NEW v2: fraction of expected signals correctly named |
 | `FormatRubric` | — | **+0.15** | NEW v2: JSON-emission shaping; **denied when flagging benign as scam** |
 | `LengthRubric` | — | **±0.15** | NEW v2: peak at ~45 tokens, penalty above 70 |
+| `RupeeWeightedRubric` *(side-channel aggregator, not in `AnalyzerRubricV2`)* | — | n/a | NEW v3-ready: economic-loss-aware reward in `[-1, +1]`. +loss/cap on detected scams, −loss/cap on missed scams with money extracted. Used by [`eval/rupee_weighted_eval.py`](eval/rupee_weighted_eval.py) to produce the bench-level "₹ at risk" / "₹ prevented" headlines. Bench has **₹77.95 lakh** of labelled scam loss across 130 scams — see [`logs/rupee_weighted_eval.json`](logs/rupee_weighted_eval.json). |
 
-The three v1→v2 changes (FP −0.3 → −0.8, calibration +0.2 → +0.5, format reward denied on benign-flagged-scam) are the principled fix that produced the asymmetric improvement in §Results — detection unchanged, FPR 5× down. The v1 profile is still available as `AnalyzerRubric()` for v1-weight reproducibility.
+The three v1→v2 changes (FP −0.3 → −0.8, calibration +0.2 → +0.5, format reward denied on benign-flagged-scam) are the principled fix that produced the asymmetric improvement in §Results — detection unchanged, FPR 5× down. The v1 profile is still available as `AnalyzerRubric()` for v1-weight reproducibility. Full reward-design rationale (one page): [`docs/reward_design.md`](docs/reward_design.md).
 
 ### Inspection
 

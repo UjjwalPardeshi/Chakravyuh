@@ -1,0 +1,47 @@
+# Chakravyuh Analyzer v2 — Ollama Modelfile
+#
+# Builds a local Ollama model from the merged-and-quantized Chakravyuh v2 GGUF.
+# Once C.8 (GGUF quantization release) ships, this Modelfile becomes unnecessary
+# because `ollama pull hf.co/ujjwalpardeshi/chakravyuh-v2-gguf:q4_k_m` works
+# directly. Until then, point the FROM line at a local GGUF you've built via
+# `training/merge_lora.py + llama_cpp.convert_hf_to_gguf`.
+#
+# Build:
+#   ollama create chakravyuh -f serving/ollama_modelfile
+#
+# Run interactively:
+#   ollama run chakravyuh
+#
+# Run via API (OpenAI-compatible on Ollama 0.5+):
+#   curl http://localhost:11434/api/chat -d '{
+#     "model": "chakravyuh",
+#     "messages": [{"role": "user", "content": "..."}],
+#     "stream": false
+#   }'
+
+# Replace this path with your local GGUF after C.8 GGUF release.
+# When the Hub artifact is published, this will become:
+#   FROM hf.co/ujjwalpardeshi/chakravyuh-v2-gguf:q4_k_m
+FROM ./checkpoints/chakravyuh-v2.q4_k_m.gguf
+
+# Match the v2 inference setup from server/app.py and MODEL_CARD.md
+PARAMETER temperature 0.0
+PARAMETER top_p 1.0
+PARAMETER top_k 1
+PARAMETER num_predict 160
+PARAMETER stop "<|im_end|>"
+PARAMETER stop "</s>"
+
+# System prompt matches server/app.py's analyzer prompt.
+SYSTEM """You are Chakravyuh's Behavioral Analyzer, a fraud detection AI deployed on-device to monitor real-time chat for Indian UPI scam patterns. Output strict JSON with `score` in [0,1], `signals` from the taxonomy {urgency, info_request, impersonation, link_redirect, qr_misuse, brand_spoofing, deepfake_audio, otp_request}, and `explanation`. Be calibrated. Do not flag benign messages."""
+
+# Qwen2.5 chat template
+TEMPLATE """{{ if .System }}<|im_start|>system
+{{ .System }}<|im_end|>
+{{ end }}{{ range .Messages }}<|im_start|>{{ .Role }}
+{{ .Content }}<|im_end|>
+{{ end }}<|im_start|>assistant
+"""
+
+# License (matches MODEL_CARD.md)
+LICENSE """MIT — see https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/LICENSE"""

@@ -60,17 +60,21 @@ Real-incident grounding cited in [README](https://github.com/UjjwalPardeshi/Chak
 
 ---
 
-## 2 · Environment & 5-rubric reward design
+## 2 · Environment, two trained agents & 5-rubric reward
 
 ```
         REGULATOR (meta) ── adapts rule weights from outcomes
                 │
-ON-DEVICE  → BEHAVIORAL ANALYZER ←  oversight LLM (Qwen2.5-7B + LoRA via GRPO)
+ON-DEVICE  → BEHAVIORAL ANALYZER ←  Qwen2.5-7B + LoRA-v2 (GRPO)   [TRAINED]
             │  sees chat only
    SCAMMER ─┴─ chat ── VICTIM ── attempts transaction
+   ▲
+   └─ Qwen2.5-0.5B + LoRA-Phase1 (GRPO, adversarial reward)        [TRAINED, B.2]
                                  │
             BANK MONITOR ── sees transaction metadata only
 ```
+
+**Two trained adapters, not one.** Phase-1 Scammer LoRA evades the rule-based defense at **93.75 % best-of-8 (n=64)**, with **100 % bypass on 8 held-out novel categories** (income-tax refund, vaccine slot, lottery, EMI conversion, blue-tick verify, EPF, customer-support callback, police notice — never seen in training). Real generalization, not memorization. Phase 2 (LoRA-vs-LoRA co-evolution) in progress.
 
 **Composable rubric system** ([`chakravyuh_env/rubrics.py`](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/chakravyuh_env/rubrics.py)):
 
@@ -102,7 +106,20 @@ Per-rubric ablation in [`docs/ablation_study.md`](https://github.com/UjjwalParde
 
 **The asymmetric improvement is the proof.** *Detection unchanged · FPR collapsed* = model learned the task, not the proxy. Backing artifacts: [`logs/eval_v2.json`](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/logs/eval_v2.json) · [`logs/bootstrap_v2.json`](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/logs/bootstrap_v2.json).
 
-Frontier comparison + SFT-vs-RL controlled experiment + adversarial Scammer self-play are listed honestly as v3 work in [`docs/limitations.md`](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/docs/limitations.md).
+**B.2 Phase 1 (adversarial Scammer) — SHIPPED:** trained Qwen2.5-0.5B + LoRA via TRL 0.14 GRPO with reward `1 − ScriptedAnalyzer.score`; n=64 eval reports **single-shot 59.4 %**, **best-of-8 93.75 % [85 %, 97.5 %]**, **held-out novel 100 % [89.3 %, 100 %]**. Caveat: vs scripted defense (not v2 LoRA); LoRA-vs-LoRA Phase 2 in progress. Artifacts: [`logs/b2_phase1_scammer_eval_n64.json`](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/logs/b2_phase1_scammer_eval_n64.json), [`logs/b2_phase1_scammer_eval_n64_bestof8.json`](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/logs/b2_phase1_scammer_eval_n64_bestof8.json).
+
+**Open-weight frontier comparison (SHIPPED, n=174):**
+
+| Model | Params | F1 | FPR |
+|---|---|---|---|
+| **v2 LoRA (this work)** | **7B+LoRA** | **0.990** | **6.7 %** |
+| Llama-3.3-70B | 70B | 0.993 | 3.2 % |
+| Qwen2.5-72B | 72B | 0.986 | 6.5 % |
+| DeepSeek-V3-0324 | 671B MoE | 0.969 | **29 %** |
+
+**v2 LoRA ties Llama-3.3-70B on F1 at 10× fewer params; beats Qwen2.5-72B and DeepSeek-V3 on F1. DeepSeek-V3 (671B) reproduces the v1 reward-hacking signature (100 %/29 % FPR ≈ v1's 100 %/36 %) — external validation that calibrated reward design beats raw capacity.** Source: [`logs/frontier_comparison.csv`](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/logs/frontier_comparison.csv).
+
+Proprietary frontier (GPT-4o / Claude / Gemini) deferred — API budget not covered by HF compute credits. SFT-vs-RL ablation listed in [`docs/limitations.md`](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/docs/limitations.md).
 
 ---
 

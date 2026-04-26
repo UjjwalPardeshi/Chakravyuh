@@ -66,7 +66,8 @@ Last verified: 2026-04-25.
 
 | Claim | Why deferred | Tracked as |
 |---|---|---|
-| Frontier comparison vs GPT-4o / Claude / Gemini / Llama-3 | Needs ~$40–80 in API budget; pending user authorization | v3 — `eval/frontier_baseline.py` |
+| Frontier comparison — proprietary tier (GPT-4o / Claude / Gemini) | Needs ~$40–80 in API budget; not covered by HF compute credits; pending user authorization | v3 — `eval/frontier_baseline.py` (script supports it; just needs the keys) |
+| ~~Frontier comparison — open-weight tier (Llama-3.3-70B / Qwen2.5-72B / DeepSeek-V3)~~ | **✅ SHIPPED 2026-04-26** — paid from HF compute credits via HuggingFace Inference Providers; v2 LoRA ties Llama-3.3-70B at 10× fewer params, beats Qwen2.5-72B + DeepSeek-V3 on F1; DeepSeek-V3 (671B) reproduces v1 reward-hacking signature externally | [`logs/frontier_comparison.csv`](../logs/frontier_comparison.csv) |
 | Adversarial Scammer co-evolves with Analyzer | Needs HF GPU credits, ~5 hours A100 | v3 — onsite hackathon work |
 | SFT vs RL controlled experiment | Needs ~1.5 hours A100 | v3 — onsite hackathon work |
 | Per-scenario v2 LoRA error analysis (which 2 FPs, which 1 missed scam) | Eval is aggregate-only; per-scenario audit needs GPU re-inference | v3 — re-run inference, log per-row |

@@ -61,12 +61,16 @@ The Analyzer's job: read a multi-turn dialogue between a (scripted) Scammer and 
 
 ## Quick numbers (full results in `logs/eval_v2.json` of the GitHub repo)
 
-| Metric | v1 (reward-hacked) | **v2 (this adapter)** |
-|---|---|---|
-| Detection rate | 100.0% | **99.3%** |
-| False positive rate | 36.0% | **6.7%** (5× better) |
-| F1 | 0.96 | **0.99** |
-| Bench size | 135 | 174 evaluated (175 total, 1 skipped) |
+| Metric | v1 (reward-hacked) | **v2 (this adapter)** | 95 % bootstrap CI |
+|---|---|---|---|
+| Detection rate | 100.0 % | **99.3 %** | [97.9 %, 100 %] |
+| False positive rate | 36.0 % | **6.7 %** (5× better) | [1.8 %, 20.7 %] |
+| F1 | 0.96 | **0.99** | [0.976, 1.000] |
+| Bench size | 135 | 174 evaluated (175 total, 1 skipped) | — |
+
+**Statistical significance.** The v1 → v2 FPR drop is significant at p ≈ 0.008 (paired permutation, 10 000 iterations) and p ≈ 0.010 (Fisher exact). Source: `logs/permutation_test_v1_v2.json` in the GitHub repo. Reproduce with `python eval/permutation_test_v1_v2.py`.
+
+**Bootstrap details.** Percentile-method bootstrap, 10 000 iterations, n = 30 benign / n = 144 scam. Source: `logs/bootstrap_v2.json`.
 
 ### Per-difficulty detection (scams only, n=144)
 
@@ -176,13 +180,16 @@ Expected output (JSON):
 
 ## Limitations
 
-1. **Small benign sample (n=30 evaluated, 1 of 31 in bench skipped due to empty text).** Wilson 95% CI on FPR is approximately [1.9%, 21.3%]. We stand behind the "5× FPR reduction vs v1" claim (statistically real) but not the precise "6.7%" figure as a tight estimate.
-2. **Single-seed training.** Multi-seed retrains are deferred to v3.
-3. **Bench is a proxy.** 175 curated scenarios do not span real-world Indian fraud diversity. Production performance will be lower.
-4. **One epoch over 619 templates.** More data + more epochs are deferred to v3.
-5. **Language coverage is English-dominant, not 7-language production-grade.** Bench v0 distribution is en=161, hi=9, and *one sample each* of ta/te/kn/bn/mr. The HF Hub `language:` field above lists all seven (Hub convention for tag-discoverability), but the bench has placeholder coverage only for the five non-English-non-Hindi languages. Per-language detection eval is v3 work.
+1. **Semantic leakage between training and bench (we audited this ourselves).** A MiniLM-L6 cosine-similarity audit ([logs/semantic_leakage_audit.json](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/logs/semantic_leakage_audit.json)) shows mean cosine 0.80 between bench scenarios and the nearest training text, with **44.8 % of bench at cosine > 0.85** (highly similar) and 18.4 % at cosine > 0.95 (near-duplicates). Implication: the 100 % detection on easy / medium / hard difficulty buckets is partly memorization. The v1 → v2 relative FPR fix is unaffected by leakage (relative comparison on the same bench). v3 closes the absolute generalization gap with a held-out template-family retrain — see [docs/limitations.md](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/docs/limitations.md).
+2. **Small benign sample (n=30 evaluated, 1 of 31 in bench skipped due to empty text).** Wilson 95 % CI on FPR is approximately [1.9 %, 21.3 %]; bootstrap 95 % CI from `logs/bootstrap_v2.json` is [1.8 %, 20.7 %]. We stand behind the "5× FPR reduction vs v1" claim (statistically real, p ≈ 0.008) but not the precise "6.7 %" figure as a tight point estimate.
+3. **Single-seed training.** Multi-seed retrains are deferred to v3 and run on the cleaner template-family-held-out split.
+4. **Bench is a proxy.** 175 curated scenarios do not span real-world Indian fraud diversity. Production performance will be lower.
+5. **One epoch over 619 templates.** More data + more epochs are deferred to v3.
+6. **Language coverage is English-dominant, not 7-language production-grade.** Bench v0 distribution is en=161, hi=9, and *one sample each* of ta/te/kn/bn/mr. The HF Hub `language:` field above lists all seven (Hub convention for tag-discoverability), but the bench has placeholder coverage only for the five non-English-non-Hindi languages. Per-language detection eval is v3 work.
+7. **KL trajectory plateau.** v2's GRPO trajectory plateaued KL at 0.25–0.45 with `clip_ratio = 0` for ~600 steps. Honest read in [docs/training_diagnostics.md](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/docs/training_diagnostics.md). v3 includes a KL-early-stop guard.
+8. **Threshold-sweep degeneracy.** 9 of 13 thresholds in the 0.30–0.85 sweep yield identical detection / FPR — v2 outputs near-binary scores. v3 work includes temperature-scaled logits + reliability diagrams (B.6 in WIN_PLAN).
 
-See [docs/RESPONSIBLE_USE.md](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/docs/RESPONSIBLE_USE.md) for intended use and dual-use considerations.
+See [docs/RESPONSIBLE_USE.md](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/docs/RESPONSIBLE_USE.md) for intended use and dual-use considerations. See the **gated** companion adapter [`ujjwalpardeshi/chakravyuh-scammer-0.5b-v1`](https://huggingface.co/ujjwalpardeshi/chakravyuh-scammer-0.5b-v1) for the adversarial Scammer trained against the rule-based defense (B.2 Phase 1: 93.75 % best-of-8 / 100 % held-out novel bypass on n=64) — the natural test case for *this* Analyzer adapter.
 
 ## Links
 

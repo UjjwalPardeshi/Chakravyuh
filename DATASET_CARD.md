@@ -88,6 +88,36 @@ Bootstrap 95 % CIs from [`logs/bootstrap_v2.json`](logs/bootstrap_v2.json) — d
 
 Frontier zero-shot baselines (GPT-4o-mini / Claude / Gemini / Llama-3.3-70B) are *pending* — `eval/frontier_baseline.py` is wired up; running blocked on API budget.
 
+## Adversarial Scammer evaluation (B.2 Phase 1, n=64 best-of-8)
+
+The bench is also re-used as the held-out evaluation set for an
+adversarial Scammer LoRA (Qwen2.5-0.5B + GRPO, paired adapter to the
+Analyzer LoRA above). The Scammer's adversarial bypass rate is measured
+per category against two defenders — the rule-based ScriptedAnalyzer
+and the v2 Analyzer LoRA from this dataset card:
+
+| Defender | Best-of-8 bypass (n=64) | Held-out novel (n=32) | Backing artefact |
+|---|---|---|---|
+| Rule-based ScriptedAnalyzer | **93.75 %** | **100 %** | [`logs/b2_phase1_scammer_eval_n64_bestof8.json`](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/logs/b2_phase1_scammer_eval_n64_bestof8.json) |
+| v2 Analyzer LoRA (this card) | **32.8 %** | **37.5 %** | [`logs/b2_phase1_scammer_vs_v2_lora.json`](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/logs/b2_phase1_scammer_vs_v2_lora.json) |
+
+The 60.9-pp gap is the bench-derived measurement of the v2 LoRA's
+defensive lift over rule-based detection in an adversarial setting.
+The Scammer adapter (`ujjwalpardeshi/chakravyuh-scammer-lora-phase1`) is
+published behind an HF Hub gated-access flag with the misuse statement
+at [`docs/misuse_dual_use.md`](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/docs/misuse_dual_use.md).
+
+## Economic-loss aggregator
+
+Each scenario carries `metadata.loss_amount_inr` (a publicly-sourced
+victim-loss estimate in INR; `null` for benigns and borderline cases).
+Aggregating across the 130 scams with positive loss values gives a
+total **₹77.95 lakh at risk** in the bench. The
+[`eval/rupee_weighted_eval.py`](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/eval/rupee_weighted_eval.py)
+script joins per-row eval logs with these amounts to produce the
+"₹ prevented" headline number. Backing artefact:
+[`logs/rupee_weighted_eval.json`](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/logs/rupee_weighted_eval.json).
+
 ## Label quality
 
 - **Rule-vs-expert Cohen's κ = 0.277** — fair agreement (Landis-Koch). The benchmark is *not* a keyword-matching exercise; a trained model should meaningfully exceed κ > 0.70 to claim real detection capability.

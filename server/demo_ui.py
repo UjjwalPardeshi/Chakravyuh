@@ -1556,6 +1556,12 @@ def build_app() -> gr.Blocks:
                 "</script>"
             )
 
+            gr.Markdown(
+                "> **Judges:** read [`docs/judge_quickstart.md`](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/docs/judge_quickstart.md) "
+                "for the 3-minute guided tour · headline numbers in [`README.md`](https://github.com/UjjwalPardeshi/Chakravyuh#readme) · "
+                "ask anything → [Q&A rehearsal](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/docs/Q_AND_A_REHEARSAL.md)."
+            )
+
             with gr.Tabs():
                 # =================================================
                 # REPLAY TAB
@@ -1828,6 +1834,27 @@ def build_app() -> gr.Blocks:
                             ),
                             lines=4,
                         )
+                    # Three one-click presets — load a known scam into the textbox without
+                    # requiring the judge to type during a live demo.
+                    with gr.Row():
+                        quick_otp = gr.Button("Test: OTP scam (Hindi)", size="sm")
+                        quick_grooming = gr.Button("Test: Matrimonial crypto (English)", size="sm")
+                        quick_deepfake = gr.Button("Test: Deepfake CEO IPO (English)", size="sm")
+                    quick_otp.click(
+                        lambda: "SBI: Aapka account block ho gaya hai. Turant OTP share kijiye verify ke liye, warna account permanently band ho jayega.",
+                        inputs=[],
+                        outputs=[adv_input],
+                    )
+                    quick_grooming.click(
+                        lambda: "Hi, I'm a Singapore software engineer interested in marriage. I trade crypto and have made good returns. Let me show you my setup — invest a small amount and you'll see for yourself.",
+                        inputs=[],
+                        outputs=[adv_input],
+                    )
+                    quick_deepfake.click(
+                        lambda: "[Infosys CEO voice]: Exclusive employee IPO allocation. Invest Rs 1 lakh via company portal. HR will call now for UPI transfer. Limited to first 100 employees.",
+                        inputs=[],
+                        outputs=[adv_input],
+                    )
                     with gr.Row():
                         adv_send = gr.Button("Send to Analyzer", variant="primary")
                         adv_clear = gr.Button("Clear")

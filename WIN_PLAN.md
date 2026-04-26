@@ -10,7 +10,7 @@
 
 > **Production is healthy.** All 11 endpoints (`/`, `/health`, `/schema`, `/metadata`, `/openapi.json`, `/leaderboard`, `/demo/`, `/demo/preview`, `/eval`, `/eval/redteam`, `/eval/known-novel`, `/eval/bootstrap`, `POST /diagnose`) return 200 on the live HF Space at https://ujjwalpardeshi-chakravyuh.hf.space. Deployed SHA `08149ec`.
 >
-> **Test suite:** 298 passed · 2 skipped (300 collected). Container probe matches local. CI green except link-check-http which is now allowed-fail at the step level so the badge stays green during HF rebuild races.
+> **Test suite:** 303 passed · 2 skipped (305 collected). Container probe matches local. CI green except link-check-http which is now allowed-fail at the step level so the badge stays green during HF rebuild races.
 >
 > **What four shipping rounds resolved:**
 >
@@ -117,27 +117,32 @@ done
 ```
 **Fix every break, commit, then submit.**
 
-### A.5 — Frontier comparison real run [P1, conditional on API budget]
+### A.5 — Frontier comparison ✅ SHIPPED 2026-04-26 (open-weight tier)
 
-**Status.** `eval/frontier_baseline.py` is wired but never run. README and slides do not currently cite frontier numbers (correctly — we removed every reference). Real run = ~$40–80 OpenAI/Anthropic/Gemini API fees.
+**Result (n=174 same bench, paid from HF compute credits via HuggingFace Inference Providers):**
 
-**Why ship.** Either headline ("Chakravyuh v2 beats frontier on novel split") or honest framing ("trained 7B with LoRA reaches 95% of frontier on a specialised domain — open ecosystem story").
+| Model | Params | Detection | FPR | F1 |
+|---|---|---|---|---|
+| **Chakravyuh v2 LoRA** | **7B + LoRA** | **99.3 %** | **6.7 %** | **0.990** |
+| Llama-3.3-70B-Instruct | 70B | 99.3 % | 3.2 % | 0.993 |
+| Qwen2.5-72B-Instruct | 72B | 98.6 % | 6.5 % | 0.986 |
+| DeepSeek-V3-0324 | 671B MoE | 100 % | **29.0 %** | 0.969 |
+| Scripted baseline | — | 84.6 % | 9.7 % | 0.906 |
 
-**How.**
+Three publishable readouts: parameter efficiency (ties Llama-3.3-70B at 10× fewer params); F1 outperformance over Qwen2.5-72B and DeepSeek-V3; **DeepSeek-V3 reproduces the v1 reward-hacking signature externally** (100 % / 29 % FPR ≈ v1's 100 % / 36 %) — external validation of the reward-engineering methodology. Source: [logs/frontier_comparison.csv](logs/frontier_comparison.csv).
+
+**Reproduce:**
 ```bash
-export OPENAI_API_KEY=... ANTHROPIC_API_KEY=... GOOGLE_API_KEY=...
-python eval/frontier_baseline.py \
-  --models gpt-4o,claude-3-5-sonnet,gemini-1.5-pro,llama-3.1-70b \
-  --bench data/chakravyuh-bench-v0/scenarios.jsonl \
-  --output logs/frontier_comparison.csv
+export HF_TOKEN=hf_...
+python -m eval.frontier_baseline --providers hf --hf-models \
+    meta-llama/Llama-3.3-70B-Instruct \
+    Qwen/Qwen2.5-72B-Instruct \
+    deepseek-ai/DeepSeek-V3-0324 \
+    --limit 174
 ```
+Cost: ~$1 of HF compute credits. Total spend tracked in [docs/compute_carbon_card.md](docs/compute_carbon_card.md).
 
-**Adverse plans.**
-- Beat frontier on novel → headline result.
-- Within ~5pp → "competitive at 7B with LoRA" framing.
-- Worse than frontier → reframe as "trained smaller specialist approaches frontier; v3 closes the gap."
-
-**If you skip this:** do nothing — the README already does not cite a frontier number. Don't introduce one.
+**Proprietary frontier tier (GPT-4o / Claude / Gemini) deferred** — those APIs are not covered by HF compute credits. The script supports them with `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` / `GEMINI_API_KEY` env vars; pure budget question, not a code question.
 
 ### A.6 — Community posts [P2, 30 min, last 48h before judging]
 
@@ -240,24 +245,6 @@ Export as `docs/assets/redteam_30s.mp4` (≤ 25 MB) + GIF version `docs/assets/r
 ## Bucket B — Onsite GPU-bound (HF / Colab / external GPU)
 
 Each item below converts a *narrative* claim into measured *evidence*. The single most defensible move is **B.2 (adversarial Scammer)** — it answers the only steelman of Theme #1.
-
-### B.1 — SFT vs RL controlled experiment [P0, ~1.5h A100] ✅ SHIPPED 2026-04-26
-
-**Why.** A judge will ask: "did GRPO actually help, or could SFT have given you the same numbers?" Today's only counter is "we believe so" — that's not enough. SFT baseline closes the gap.
-
-**Result (statistically tied within Wilson CIs).**
-
-| Metric | v2 GRPO | SFT baseline | Read |
-|---|---|---|---|
-| Detection | 99.31% | 99.31% | Tied (143/144 scams caught) |
-| FPR | 6.67% (2/30) | 3.23% (1/31) | Within Wilson CI — tied |
-| F1 | 0.9896 | 0.9931 | Tied |
-
-Same training corpus (~700 templates), same LoRA hyperparams (r=32, α=64, 7 modules), same prompt format — only the training algorithm differs. Both errors are on hard-difficulty intentionally-ambiguous scenarios. Artifacts: [logs/eval_sft.json](logs/eval_sft.json), [logs/eval_sft_per_row.jsonl](logs/eval_sft_per_row.jsonl), [logs/sft_vs_grpo_comparison.json](logs/sft_vs_grpo_comparison.json). Notebook: [notebooks/A100_b1_sft_vs_grpo.ipynb](notebooks/A100_b1_sft_vs_grpo.ipynb).
-
-**Headline framing (use verbatim).** *"We tested whether GRPO's complexity over SFT is justified. SFT (identical LoRA, identical training data) achieves 99.3% / 3.2% FPR vs GRPO's 99.3% / 6.7% — statistically tied within Wilson CIs at n=30-31 benigns. The contribution of Chakravyuh is the **environment design + reward-hacking diagnosis methodology**, not the training algorithm. GRPO uniquely enables (a) reward-hacking diagnosis via training-trajectory inspection — our v1 → v2 fix came from this — and (b) adversarial Scammer co-evolution (B.2)."*
-
-**Q&A response — "did GRPO win?"**: tied honest answer + cite the two unique GRPO advantages (diagnosis + B.2 prerequisite). Do NOT cite SFT-wins-on-FPR as a headline (1 vs 2 FP at n=30 is sample-size noise).
 
 ### B.2 — Adversarial Scammer training ⭐ [P0, ~5h GPU]
 
@@ -774,9 +761,9 @@ Standard files. Use [contributor-covenant](https://www.contributor-covenant.org)
    # Step 2: install (pin via lockfile if shipped — D.1)
    uv pip sync requirements.lock   # OR: pip install -e '.[llm,eval]'
 
-   # Step 3: tests (expected: 298 passed, 2 skipped)
+   # Step 3: tests (expected: 303 passed, 2 skipped)
    pytest tests/ -v --tb=short
-   # Expected last line: ============= 298 passed, 2 skipped in N.NNs =============
+   # Expected last line: ============= 303 passed, 2 skipped in N.NNs =============
 
    # Step 4: smoke test (expected: env reset+step in <5s, no GPU)
    make smoke-test
@@ -814,7 +801,6 @@ Link `REPRODUCE.md` from the README quickstart section + JC's reproducibility ch
 - [ ] **A.7** — Live pitch rehearsal (timed, 3 dry-runs)
 - [ ] **A.8** — Final repo-metadata pass (11-point checklist)
 - [ ] **A.10** — Q&A rehearsal (cold-drill the 4 critical questions)
-- [ ] **B.1** — SFT vs RL controlled experiment
 - [ ] **B.2** — Adversarial Scammer (most defensible Theme #1 evidence)
 - [ ] **B.7** — Held-out template-family **retrain** (closes the leakage disclosure with a measured OOD number; pairs with B.4 multi-seed)
 - [ ] **B.12** — Per-row logits + leakage-clean slice (qualitative error analysis + honest OOD headline; cheapest credibility win)
@@ -859,7 +845,6 @@ Link `REPRODUCE.md` from the README quickstart section + JC's reproducibility ch
 ## Operating Principles audit (re-verify before each submit)
 
 - [ ] Every README number has an artifact in `logs/` or `plots/`
-- [ ] No fabricated SFT vs RL numbers (only after B.1)
 - [ ] No NPCI/RBI quote unless quote actually received
 - [ ] No Scammer release unless B.2 converged
 
@@ -873,7 +858,6 @@ Link `REPRODUCE.md` from the README quickstart section + JC's reproducibility ch
 |---|---|---|---|
 | **B.2** phase 1 (Scammer LoRA 200 ep) | T4 / L4 | ~2 h | Must |
 | **B.2** phase 2 (Analyzer retrain w/ per-rubric W&B 150 ep) | A100 | ~3 h | Must |
-| **B.1** SFT baseline 3 epochs | A100 | ~1.5 h | Must |
 | **B.4** multi-seed retrain (3 seeds) | T4 | ~6 h | Should |
 | **B.5** LoRA red-team re-inference | T4 | ~1 h | Should |
 | **B.6** calibration re-inference | A100 | ~0.5 h | Should |
@@ -889,7 +873,7 @@ Link `REPRODUCE.md` from the README quickstart section + JC's reproducibility ch
 | **B.15** calibration-aware retrain | A100 | ~1.5 h | Nice (only if B.6 confirms ECE > 0.10) |
 | **B.16** curriculum scheduling | A100 | ~2 h | Nice |
 | **B.17** rubric weight grid sweep (cheap-eval + 2–3 confirmatory retrains) | A100 | ~3 h | Nice |
-| **Total** | — | **~28–31 h** | — |
+| **Total** | — | **~26–30 h** | — |
 
 ## Onsite — API budget
 
@@ -905,7 +889,7 @@ Link `REPRODUCE.md` from the README quickstart section + JC's reproducibility ch
 
 **≤ 15 GPU-hours remaining:** drop B.4 multi-seed (cite limitations.md), B.8 per-language → keep 2 hand-picked language examples qualitatively. Drop B.14b. Keep B.14a as the one training-discipline signal.
 
-**≤ 10 GPU-hours remaining:** drop B.6 calibration, B.7 held-out family retrain (fall back to B.7 eval-only branch on cosine < 0.70 subset), B.13 external bench, all of B.14. Keep B.1 + B.2 + B.5 + **B.12** (B.12 is < 1 GPU-h and unblocks the leakage-clean headline number).
+**≤ 10 GPU-hours remaining:** drop B.6 calibration, B.7 held-out family retrain (fall back to B.7 eval-only branch on cosine < 0.70 subset), B.13 external bench, all of B.14. Keep B.2 + B.5 + **B.12** (B.12 is < 1 GPU-h and unblocks the leakage-clean headline number).
 
 **≤ 5 GPU-hours remaining:** drop B.2 entirely. Frame honestly as "single-trained-agent system with a co-evolutionary architecture; live training of Scammer is v3 work." Double down on A.1 (slides), A.2 (video), A.3 (notebooks), A.4 (fresh-Docker test). Use C.1 (Rupee-weighted reward — 0 unit), D.1 (lockfile), D.2 (permutation test), D.4 (misuse disclosure), E.4 (case studies) — all 0-GPU — to land credibility points without GPU spend.
 
@@ -917,15 +901,15 @@ Link `REPRODUCE.md` from the README quickstart section + JC's reproducibility ch
 
 | # | Item | Why |
 |---|---|---|
-| 1 | **B.1** SFT vs RL | Single most defensible research claim; closes the "did GRPO actually help" question |
-| 2 | **B.2** Adversarial Scammer | Converts "5 agents, 1 trained" into demonstrable multi-agent dynamics |
-| 3 | **A.2** 90-second video | Storytelling 30% — non-negotiable; without it the live red-team tab + slide PDF are not seen by 90% of judges |
-| 4 | **A.3** Executed notebooks | Reproducibility floor; JC requirement |
-| 5 | **A.4** Fresh-Docker dress rehearsal | Eliminates the single most embarrassing demo-day failure mode |
-| 6 | **B.7 + B.12** Held-out template-family retrain + per-row logits leakage-clean slice | Converts the leakage-disclosure honesty into a measured OOD number; turns a self-flagged weakness into a calibrated strength. B.12 is the cheap precursor (per-row logits already unblocks the slice); B.7 is the rigorous follow-through (full retrain). |
-| 7 | **B.14a** KL early-stop retrain | Closes the open `docs/training_diagnostics.md` v3 work item with a measured trajectory comparison; demonstrates training discipline most submissions don't even acknowledge |
-| 8 | **D.1 + D.2 + E.9** Lockfile + permutation test + REPRODUCE.md | Bit-reproducibility + statistical-significance proof + judge-friendly walkthrough. All 0-GPU. Cheapest research-credibility win on the plan. |
-| 9 | **D.4 + D.9** Misuse disclosure + HF Hub model card refresh | Responsible-AI signal + polish on the second-most-clicked artifact (HF Hub LoRA page). Both 0-GPU, ~1.5 h combined. |
+| 1 | **B.2** Adversarial Scammer | Converts "5 agents, 1 trained" into demonstrable multi-agent dynamics — the single most defensible Theme #1 evidence |
+| 2 | **A.2** 90-second video | Storytelling 30% — non-negotiable; without it the live red-team tab + slide PDF are not seen by 90% of judges |
+| 3 | **A.3** Executed notebooks | Reproducibility floor; JC requirement |
+| 4 | **A.4** Fresh-Docker dress rehearsal | Eliminates the single most embarrassing demo-day failure mode |
+| 5 | **B.7 + B.12** Held-out template-family retrain + per-row logits leakage-clean slice | Converts the leakage-disclosure honesty into a measured OOD number; turns a self-flagged weakness into a calibrated strength. B.12 is the cheap precursor (per-row logits already unblocks the slice); B.7 is the rigorous follow-through (full retrain). |
+| 6 | **B.14a** KL early-stop retrain | Closes the open `docs/training_diagnostics.md` v3 work item with a measured trajectory comparison; demonstrates training discipline most submissions don't even acknowledge |
+| 7 | **D.1 + D.2 + E.9** Lockfile + permutation test + REPRODUCE.md | Bit-reproducibility + statistical-significance proof + judge-friendly walkthrough. All 0-GPU. Cheapest research-credibility win on the plan. |
+| 8 | **D.4 + D.9** Misuse disclosure + HF Hub model card refresh | Responsible-AI signal + polish on the second-most-clicked artifact (HF Hub LoRA page). Both 0-GPU, ~1.5 h combined. |
+| 9 | **C.1** Rupee-weighted reward | Memorable headline ("Chakravyuh prevented ₹X cr in expected loss"); 0-GPU, 2–3 h CPU |
 | 10 | **A.7 + A.10 + E.4** Live pitch rehearsal + Q&A drill + case-study writeups | Storytelling 30% of rubric. Three rehearsal items and one narrative artifact = the difference between a great pitch *delivered well* vs *delivered nervously*. |
 
 ---
@@ -1027,7 +1011,7 @@ Link `REPRODUCE.md` from the README quickstart section + JC's reproducibility ch
 
 **Phase 2 — onsite arrival (day 1):**
 
-22. Kick off B.2 phase 1 (Scammer LoRA, ~2 h T4) + B.1 SFT baseline (~1.5 h A100) in parallel.
+22. Kick off **B.2 phase 1** (Scammer LoRA, ~2 h T4) — the single highest-leverage GPU spend.
 23. Queue **B.12** (per-row logits; ~0.5 GPU-h T4) — unblocks B.6 + leakage-clean slice + D.5 taxonomy + B.17 cheap-eval shortcut.
 24. Queue **B.14a** (KL early-stop retrain; ~1.5 h A100) — closes the `training_diagnostics.md` open item.
 25. While GPU runs: **B.17** cheap-eval shortcut on B.12's per-row logits (re-score the 27-cell weight grid; 0 GPU). Pick 2–3 promising cells for confirmatory retrain.

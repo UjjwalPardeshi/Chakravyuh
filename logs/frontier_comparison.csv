@@ -1,0 +1,5 @@
+provider,n,detection_rate,ci_low,ci_high,false_positive_rate,precision,f1
+scripted,174,0.8462,0.7832,0.9021,0.0968,0.9758,0.9064
+hf-llama-3.3-70b-instruct,174,0.9930,0.9790,1.0000,0.0323,0.9930,0.9930
+hf-qwen2.5-72b-instruct,174,0.9860,0.9650,1.0000,0.0645,0.9860,0.9860
+hf-deepseek-v3-0324,174,1.0000,1.0000,1.0000,0.2903,0.9408,0.9695

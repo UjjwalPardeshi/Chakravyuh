@@ -1,0 +1,63 @@
+# Chakravyuh — vLLM serving harness
+#
+# Boots a vLLM 0.6+ server with the Chakravyuh Analyzer LoRA pre-loaded
+# against Qwen2.5-7B-Instruct. Exposes an OpenAI-compatible
+# `/v1/chat/completions` endpoint on port 8000.
+#
+# Usage:
+#   docker compose -f serving/vllm_compose.yml up
+#
+# Hardware: requires NVIDIA GPU with at least 14 GB VRAM (A10G+, A100, H100).
+#
+# To use AWQ quantization (~8 GB VRAM), uncomment the --quantization line below.
+
+version: "3.9"
+
+services:
+  chakravyuh-vllm:
+    image: vllm/vllm-openai:v0.6.4
+    container_name: chakravyuh-analyzer
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - HUGGING_FACE_HUB_TOKEN=${HUGGING_FACE_HUB_TOKEN:-}
+      - HF_HOME=/root/.cache/huggingface
+    volumes:
+      - hf_cache:/root/.cache/huggingface
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    command:
+      - "--model"
+      - "Qwen/Qwen2.5-7B-Instruct"
+      - "--enable-lora"
+      - "--lora-modules"
+      - "chakravyuh-analyzer-lora-v2=ujjwalpardeshi/chakravyuh-analyzer-lora-v2"
+      - "--max-loras"
+      - "1"
+      - "--max-lora-rank"
+      - "64"
+      - "--dtype"
+      - "bfloat16"
+      - "--gpu-memory-utilization"
+      - "0.85"
+      - "--max-model-len"
+      - "4096"
+      # Uncomment for AWQ 4-bit quantization (~8 GB VRAM):
+      # - "--quantization"
+      # - "awq"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+
+volumes:
+  hf_cache:
+    driver: local

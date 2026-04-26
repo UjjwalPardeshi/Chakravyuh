@@ -22,6 +22,7 @@ from chakravyuh_env.rubrics import (
     FormatRubric,
     LengthRubric,
     MissedScamRubric,
+    RupeeWeightedRubric,
     SignalAccuracyRubric,
     V2_WEIGHTS,
 )

@@ -1,17 +1,24 @@
 """Frontier LLM baseline runner against `chakravyuh-bench-v0`.
 
-> **STATUS (2026-04-25): NOT YET RUN.** The frontier comparison requires
-> ~$40–80 in OpenAI / Anthropic / Google API fees and a ≥30-scenario
-> sample. Until that run executes against ≥4 providers, **do not cite
-> any output of this script as a "frontier baseline"**. The previous
-> 1-row scripted-only stub at `logs/frontier_comparison.csv` has been
-> renamed `logs/scripted_baseline_n5_archived.csv` to remove ambiguity.
+Runs LLM analyzers through the EXACT SAME AnalyzerProtocol the Mode C runner
+uses. Produces a comparison CSV + bootstrap 95% CIs + pairwise permutation
+tests.
 
-Runs GPT-4o-mini, Claude Haiku, Groq Llama-3.3-70B, and Gemini 2.0 Flash
-through the EXACT SAME AnalyzerProtocol the Mode C runner uses. Produces
-a comparison CSV + bootstrap 95% CIs + pairwise permutation tests.
+Five provider backends (paid ones skip gracefully if the API key is missing):
 
-This is the data that populates the "79% vs 61%" slide in the pitch deck.
+  - **OpenAI** — proprietary frontier (GPT-4o, GPT-4o-mini). Paid; needs
+    `OPENAI_API_KEY`. Out-of-scope for HF compute credits.
+  - **Anthropic** — Claude family. Paid; needs `ANTHROPIC_API_KEY`. Out-of-scope
+    for HF compute credits.
+  - **Gemini** — Google Gemini. Paid; needs `GEMINI_API_KEY`. Out-of-scope for
+    HF compute credits.
+  - **Groq** — open-weight Llama-3.3-70B etc. **Free tier** at console.groq.com;
+    needs `GROQ_API_KEY`. **No HF credits required.**
+  - **HuggingFace Inference Providers (`hf`)** — open-weight frontier
+    (Llama-3.1-405B, Qwen3-72B, DeepSeek-V3, Mistral-Large, etc.) routed
+    through `https://router.huggingface.co/v1`. Pay-per-token from your
+    HF compute credits — typical bench run is ~$0.50 to $2 of credits.
+    Needs `HF_TOKEN` (your normal HF Hub token).
 
 Design:
   - Each provider is an independent class implementing `score_text(str) -> float`.
@@ -21,10 +28,24 @@ Design:
   - Results cached per (provider, scenario_id) so partial runs resume.
 
 Usage:
-    # Use .env or env vars: OPENAI_API_KEY, ANTHROPIC_API_KEY,
-    #                      GROQ_API_KEY, GEMINI_API_KEY
-    python -m eval.frontier_baseline --providers groq gemini --limit 30
-    python -m eval.frontier_baseline --providers openai anthropic groq gemini
+    # Free path — Groq's hosted Llama-3.3-70B, no HF credits, no money:
+    export GROQ_API_KEY=gsk_...
+    python -m eval.frontier_baseline --providers groq --limit 30
+
+    # HF Inference Providers — open-weight frontier paid from your HF credits:
+    export HF_TOKEN=hf_...
+    python -m eval.frontier_baseline --providers hf --limit 30
+    python -m eval.frontier_baseline --providers hf --hf-models \\
+        meta-llama/Llama-3.3-70B-Instruct \\
+        meta-llama/Llama-3.1-405B-Instruct \\
+        Qwen/Qwen3-72B-Instruct \\
+        deepseek-ai/DeepSeek-V3-0324 --limit 30
+
+    # Proprietary frontier — paid separately, NOT from HF credits:
+    python -m eval.frontier_baseline --providers openai anthropic gemini
+
+    # Combined:
+    python -m eval.frontier_baseline --providers groq hf openai anthropic gemini
 """
 
 from __future__ import annotations
@@ -225,6 +246,65 @@ class GroqProvider(FrontierProvider):
         return r.choices[0].message.content or ""
 
 
+class HuggingFaceProvider(FrontierProvider):
+    """HuggingFace Inference Providers — OpenAI-compatible router at
+    `https://router.huggingface.co/v1`. Pay-per-token from HF compute credits.
+
+    Supports any chat-completion model exposed by an HF Inference Provider
+    (Together AI, Fireworks, Novita, SambaNova, Cerebras, Hyperbolic, Nebius,
+    HF Inference, Featherless AI, etc.) — auto-routes by default. Pin a
+    specific provider with the colon syntax, e.g.
+    `meta-llama/Llama-3.3-70B-Instruct:together`.
+
+    Default model: `meta-llama/Llama-3.3-70B-Instruct` (cheap, competitive,
+    auto-routed). Override via constructor or via the `--hf-models` CLI flag.
+    """
+
+    spec = ProviderSpec(name="hf-llama-3.3-70b")
+
+    DEFAULT_MODEL = "meta-llama/Llama-3.3-70B-Instruct"
+
+    def __init__(self, model: str = DEFAULT_MODEL) -> None:
+        # Strip optional `:provider` suffix when building the spec name so the
+        # CSV / table column stays readable while the API call retains the pin.
+        display = model.split(":", 1)[0].split("/", 1)[-1].lower()
+        self.spec = ProviderSpec(name=f"hf-{display}")
+        self._model = model
+        self._client: Any = None
+
+    def available(self) -> bool:
+        if not os.environ.get("HF_TOKEN"):
+            return False
+        try:
+            import openai  # noqa: F401
+        except ImportError:
+            return False
+        return True
+
+    def _ensure(self) -> None:
+        if self._client is not None:
+            return
+        from openai import OpenAI  # type: ignore[import-not-found]
+
+        self._client = OpenAI(
+            api_key=os.environ["HF_TOKEN"],
+            base_url="https://router.huggingface.co/v1",
+        )
+
+    def _complete(self, user_msg: str) -> str:
+        self._ensure()
+        r = self._client.chat.completions.create(
+            model=self._model,
+            messages=[
+                {"role": "system", "content": FRONTIER_SYSTEM_PROMPT},
+                {"role": "user", "content": user_msg},
+            ],
+            temperature=0.0,
+            max_tokens=150,
+        )
+        return r.choices[0].message.content or ""
+
+
 class AnthropicProvider(FrontierProvider):
     """Anthropic Claude. Uses `anthropic` pkg + ANTHROPIC_API_KEY."""
 
@@ -308,6 +388,7 @@ class GeminiProvider(FrontierProvider):
 PROVIDER_REGISTRY: dict[str, type[FrontierProvider]] = {
     "openai": OpenAIProvider,
     "groq": GroqProvider,
+    "hf": HuggingFaceProvider,
     "anthropic": AnthropicProvider,
     "gemini": GeminiProvider,
 }
@@ -357,29 +438,54 @@ class ProviderResult:
     per_category_detection: dict[str, float] = field(default_factory=dict)
 
 
+def _build_provider_lineup(
+    provider_names: list[str],
+    hf_models: list[str] | None = None,
+) -> list[tuple[str, FrontierProvider | str]]:
+    """Expand `--providers` + `--hf-models` into an ordered (name, instance) list.
+
+    Returns "scripted" as a sentinel string at index 0 (handled by the caller).
+    For "hf" with a non-empty `hf_models` list, expands to one HuggingFaceProvider
+    per model so multiple open-weight comparisons run in a single invocation.
+    """
+    lineup: list[tuple[str, FrontierProvider | str]] = [("scripted", "scripted")]
+    seen: set[str] = {"scripted"}
+    for name in provider_names:
+        if name == "scripted" or name in seen:
+            continue
+        seen.add(name)
+        if name == "hf" and hf_models:
+            for model in hf_models:
+                inst = HuggingFaceProvider(model=model)
+                lineup.append((inst.spec.name, inst))
+            continue
+        cls = PROVIDER_REGISTRY.get(name)
+        if cls is None:
+            logger.warning("Unknown provider '%s' — skipping.", name)
+            continue
+        lineup.append((name, cls()))
+    return lineup
+
+
 def evaluate_providers(
     provider_names: list[str],
     dataset_path: Path = DEFAULT_DATASET,
     limit: int | None = None,
     bootstrap_n: int = 1000,
+    hf_models: list[str] | None = None,
 ) -> dict[str, ProviderResult]:
     data = load_dataset(dataset_path)
     if limit:
         data = data[:limit]
     results: dict[str, ProviderResult] = {}
 
-    # Always include our scripted baseline as reference (index 0)
-    provider_names = ["scripted"] + [p for p in provider_names if p != "scripted"]
+    lineup = _build_provider_lineup(provider_names, hf_models=hf_models)
 
-    for name in provider_names:
-        if name == "scripted":
+    for name, entry in lineup:
+        if entry == "scripted":
             analyzer: Any = ScriptedAnalyzerAdapter()
         else:
-            cls = PROVIDER_REGISTRY.get(name)
-            if cls is None:
-                logger.warning("Unknown provider '%s' — skipping.", name)
-                continue
-            provider = cls()
+            provider = entry  # type: ignore[assignment]
             if not provider.available():
                 logger.warning(
                     "Provider '%s' unavailable (missing API key or SDK) — skipping.",
@@ -474,9 +580,26 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--providers",
         nargs="+",
-        default=["groq", "gemini"],
+        default=["groq", "hf"],
         choices=list(PROVIDER_REGISTRY.keys()) + ["scripted"],
-        help="Providers to evaluate (skips if API key missing).",
+        help=(
+            "Providers to evaluate (skips if API key missing). "
+            "'groq' = free Llama-3.3-70B (no HF credits needed); "
+            "'hf' = HuggingFace Inference Providers (paid from HF credits)."
+        ),
+    )
+    parser.add_argument(
+        "--hf-models",
+        nargs="+",
+        default=None,
+        metavar="MODEL_ID",
+        help=(
+            "When 'hf' is in --providers, override the default Llama-3.3-70B "
+            "with one or more open-weight model IDs hosted on HF Inference "
+            "Providers, e.g. meta-llama/Llama-3.1-405B-Instruct "
+            "Qwen/Qwen3-72B-Instruct deepseek-ai/DeepSeek-V3-0324. "
+            "Each model adds one row to the comparison CSV."
+        ),
     )
     parser.add_argument("--dataset", type=Path, default=DEFAULT_DATASET)
     parser.add_argument("--limit", type=int, default=None, help="Scenarios to run")
@@ -491,6 +614,7 @@ def main(argv: list[str] | None = None) -> int:
         dataset_path=args.dataset,
         limit=args.limit,
         bootstrap_n=args.bootstrap,
+        hf_models=args.hf_models,
     )
     print_comparison_table(results)
     save_comparison_csv(results, args.output)

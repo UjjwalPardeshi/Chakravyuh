@@ -1,0 +1,28 @@
+{
+  "meta": {
+    "script": "eval/permutation_test_v1_v2.py",
+    "n_perm": 10000,
+    "seed": 42,
+    "interpretation_threshold": "alpha=0.05",
+    "tests_run": [
+      "aggregate_fpr_test"
+    ],
+    "per_row_test_skipped_reason": "B.12 per-row outputs not yet shipped (logs/eval_v2_per_row.jsonl + logs/eval_v1_per_row.jsonl). When B.12 produces them, re-run with --v1-per-row and --v2-per-row flags."
+  },
+  "aggregate_fpr_test": {
+    "input": {
+      "v1_fp": 11,
+      "v1_n": 30,
+      "v1_fpr": 0.3667,
+      "v2_fp": 2,
+      "v2_n": 30,
+      "v2_fpr": 0.0667
+    },
+    "observed_fpr_delta_abs": 0.3,
+    "p_value_permutation": 0.0084,
+    "p_value_fisher_exact": 0.010248938246969784,
+    "interpretation_permutation": "significant (p = 0.0084)",
+    "interpretation_fisher_exact": "significant (p = 0.01025)"
+  },
+  "per_row_paired_test": null
+}

@@ -4,15 +4,42 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "chakravyuh"
-version = "0.1.0"
-description = "A self-improving multi-agent RL environment for Indian UPI fraud detection"
+version = "0.3.0"
+description = "Multi-agent OpenEnv RL environment for Indian UPI fraud detection — diagnoses + fixes reward hacking in RLHF (v1 100%/36% FPR → v2 99.3%/6.7%)"
 readme = "README.md"
 requires-python = ">=3.10,<3.13"
 license = { text = "MIT" }
 authors = [
+    { name = "Ujjwal Pardeshi" },
     { name = "Chakravyuh Team" }
 ]
-keywords = ["reinforcement-learning", "multi-agent", "fraud-detection", "openenv", "llm"]
+keywords = [
+    "reinforcement-learning",
+    "multi-agent",
+    "fraud-detection",
+    "openenv",
+    "llm",
+    "grpo",
+    "lora",
+    "qwen",
+    "rlhf",
+    "reward-hacking",
+    "ai-safety",
+    "red-team",
+    "upi",
+    "india",
+    "scam-detection",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 
 # Core dependencies are deliberately lightweight so the OpenEnv server
 # (HF Space) can build a small image. Torch / transformers /
@@ -68,8 +95,14 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://huggingface.co/spaces/chakravyuh"
-Repository = "https://github.com/chakravyuh/chakravyuh"
+Homepage = "https://huggingface.co/spaces/ujjwalpardeshi/chakravyuh"
+Repository = "https://github.com/UjjwalPardeshi/Chakravyuh"
+Documentation = "https://github.com/UjjwalPardeshi/Chakravyuh#readme"
+Changelog = "https://github.com/UjjwalPardeshi/Chakravyuh/releases"
+Issues = "https://github.com/UjjwalPardeshi/Chakravyuh/issues"
+"HF Space (live demo)" = "https://ujjwalpardeshi-chakravyuh.hf.space"
+"HF Hub Model (Analyzer v2)" = "https://huggingface.co/ujjwalpardeshi/chakravyuh-analyzer-lora-v2"
+"HF Hub Dataset (bench-v0)" = "https://huggingface.co/datasets/ujjwalpardeshi/chakravyuh-bench-v0"
 
 [project.scripts]
 # The OpenEnv validator (`openenv validate .`) requires the key to be
