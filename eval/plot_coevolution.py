@@ -255,49 +255,78 @@ def plot_score_movement() -> Path | None:
     return out
 
 
-def plot_training_reward() -> Path | None:
-    """Phase 2 GRPO training reward over steps. Needs `training_log_history` in phase 2 JSON."""
+def plot_training_curve() -> Path | None:
+    """Phase 2 training trajectory. Plots GRPO reward if present; falls back to SFT loss.
+    Needs `training_log_history` in phase 2 JSON's meta dict."""
     if not PHASE2_EVAL.exists():
-        print("[skip] training reward curve (needs phase 2 eval)")
+        print("[skip] training curve (needs phase 2 eval)")
         return None
     p2 = json.load(open(PHASE2_EVAL))
     log_history = p2.get("meta", {}).get("training_log_history") or p2.get("training_log_history")
     if not log_history:
-        print("[skip] training reward curve (no training_log_history in phase 2 JSON)")
+        print("[skip] training curve (no training_log_history in phase 2 JSON)")
         return None
 
-    steps = [e.get("step") for e in log_history if "reward" in e]
-    rewards = [e.get("reward") for e in log_history if "reward" in e]
-    kl_steps = [e.get("step") for e in log_history if "kl" in e]
-    kls = [e.get("kl") for e in log_history if "kl" in e]
-    if not rewards:
-        print("[skip] log_history has no 'reward' entries")
-        return None
+    method = p2.get("meta", {}).get("phase2_training", {}).get("method", "").lower()
+    has_reward = any("reward" in e for e in log_history)
+    has_loss = any("loss" in e for e in log_history)
 
     fig, ax = plt.subplots(figsize=(10, 5.5))
-    ax.plot(steps, rewards, color=C_COEVO, linewidth=1.6, marker="o", markersize=3,
-            label="mean reward (group)")
-    ax.axhline(0, color="#999", linewidth=0.6, linestyle="-")
-    ax.axhline(-0.3, color="#c62828", linewidth=0.8, linestyle="--",
-               label="SafetyEarlyStop threshold (-0.3)")
-    ax.fill_between(steps, -0.3, min(rewards) - 0.05, color="#ffcdd2", alpha=0.25)
+
+    if has_reward:
+        # GRPO regime — plot reward as primary signal
+        steps = [e.get("step") for e in log_history if "reward" in e]
+        rewards = [e.get("reward") for e in log_history if "reward" in e]
+        ax.plot(steps, rewards, color=C_COEVO, linewidth=1.6, marker="o", markersize=3,
+                label="mean reward (group)")
+        ax.axhline(0, color="#999", linewidth=0.6, linestyle="-")
+        ax.axhline(-0.3, color="#c62828", linewidth=0.8, linestyle="--",
+                   label="SafetyEarlyStop threshold (-0.3)")
+        ax.fill_between(steps, -0.3, min(rewards) - 0.05, color="#ffcdd2", alpha=0.25)
+        ax.set_ylabel("Mean GRPO reward (higher = better detection)", fontsize=11)
+        ax.set_title("Phase 2 GRPO training trajectory — v2 → v2-coevolved", fontsize=12, pad=10)
+
+        kl_entries = [e for e in log_history if "kl" in e]
+        if kl_entries:
+            ax2 = ax.twinx()
+            ax2.plot([e["step"] for e in kl_entries], [e["kl"] for e in kl_entries],
+                     color="#1976d2", linewidth=1.2, alpha=0.6, linestyle=":",
+                     label="KL(policy || base)")
+            ax2.set_ylabel("KL divergence", color="#1976d2", fontsize=10)
+            ax2.tick_params(axis="y", labelcolor="#1976d2")
+
+    elif has_loss:
+        # SFT regime — plot cross-entropy loss as primary signal
+        steps = [e.get("step") for e in log_history if "loss" in e]
+        losses = [e.get("loss") for e in log_history if "loss" in e]
+        ax.plot(steps, losses, color=C_COEVO, linewidth=1.6, marker="o", markersize=3,
+                label="cross-entropy loss")
+        ax.set_ylabel("SFT loss (lower = better fit to gold JSON)", fontsize=11)
+        ax.set_title("Phase 2 SFT training trajectory — v2 → v2-coevolved (hardened on bypass cases)",
+                     fontsize=12, pad=10)
+        if losses:
+            ax.set_ylim(bottom=0, top=max(losses) * 1.1)
+
+        lr_entries = [e for e in log_history if "learning_rate" in e]
+        if lr_entries:
+            ax2 = ax.twinx()
+            ax2.plot([e["step"] for e in lr_entries], [e["learning_rate"] for e in lr_entries],
+                     color="#1976d2", linewidth=1.2, alpha=0.6, linestyle=":",
+                     label="learning rate (cosine decay)")
+            ax2.set_ylabel("Learning rate", color="#1976d2", fontsize=10)
+            ax2.tick_params(axis="y", labelcolor="#1976d2")
+            ax2.ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
+    else:
+        print("[skip] log_history has neither 'reward' nor 'loss' entries")
+        plt.close()
+        return None
 
     ax.set_xlabel("Optimizer step", fontsize=11)
-    ax.set_ylabel("Mean GRPO reward", fontsize=11)
-    ax.set_title("Phase 2 GRPO training reward — v2 → v2-coevolved", fontsize=12, pad=10)
-
-    if kls and len(kls) == len(steps):
-        ax2 = ax.twinx()
-        ax2.plot(kl_steps, kls, color="#1976d2", linewidth=1.2, alpha=0.6,
-                 linestyle=":", label="KL(policy || base)")
-        ax2.set_ylabel("KL divergence", color="#1976d2", fontsize=10)
-        ax2.tick_params(axis="y", labelcolor="#1976d2")
-
-    ax.legend(loc="lower right", framealpha=0.95, fontsize=10)
+    ax.legend(loc="upper right" if has_loss else "lower right", framealpha=0.95, fontsize=10)
     ax.grid(alpha=0.3, linewidth=0.5)
     ax.set_axisbelow(True)
 
-    out = PLOTS / "coevolution_training_reward.png"
+    out = PLOTS / "coevolution_training_curve.png"
     plt.tight_layout()
     plt.savefig(out, dpi=140, bbox_inches="tight")
     plt.close()
@@ -375,7 +404,7 @@ def main() -> None:
         plot_coevolution_headline,
         plot_per_category,
         plot_score_movement,
-        plot_training_reward,
+        plot_training_curve,
         plot_scammer_phase1_summary,
     ):
         out = fn()
