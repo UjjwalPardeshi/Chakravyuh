@@ -96,19 +96,52 @@ Output strict JSON only:
 
 _SCORE_PATTERN = re.compile(r'"?score"?\s*:\s*([0-9]*\.?[0-9]+)')
 _JSON_OBJ = re.compile(r"\{[^{}]*\}", re.DOTALL)
+_THINK_BLOCK = re.compile(r"<think>.*?</think>", re.DOTALL | re.IGNORECASE)
+_THINK_OPEN = re.compile(r"<think>.*", re.DOTALL | re.IGNORECASE)
+_FENCED_JSON = re.compile(r"```(?:json)?\s*(\{.*?\})\s*```", re.DOTALL | re.IGNORECASE)
+
+
+def _strip_reasoning(raw: str) -> str:
+    """Remove <think>...</think> blocks emitted by chain-of-thought models.
+
+    DeepSeek-R1, o1-class, and other reasoning models prepend their answer with
+    a thinking section. Without stripping, the JSON-extraction regex can latch
+    onto malformed JSON-like substrings inside the reasoning, or — if the
+    model hits the token cap mid-thought — find no closing JSON at all.
+    """
+    cleaned = _THINK_BLOCK.sub("", raw)
+    if "<think>" in cleaned.lower():
+        cleaned = _THINK_OPEN.sub("", cleaned)
+    return cleaned.strip()
 
 
 def parse_frontier_score(raw: str) -> float:
-    """Extract score from any provider's response. Forgiving."""
+    """Extract score from any provider's response. Forgiving.
+
+    Order of attempts:
+    1. Strip reasoning-model `<think>` blocks first.
+    2. Prefer JSON inside ```json ... ``` fenced blocks (some models wrap output).
+    3. Fall back to the first `{...}` JSON object.
+    4. Fall back to a regex match on `"score": <num>`.
+    """
+    cleaned = _strip_reasoning(raw)
+    fenced = _FENCED_JSON.search(cleaned)
+    if fenced:
+        try:
+            data = json.loads(fenced.group(1))
+            s = float(data.get("score", 0.0))
+            return max(0.0, min(1.0, s))
+        except (json.JSONDecodeError, ValueError, TypeError):
+            pass
     try:
-        m = _JSON_OBJ.search(raw)
+        m = _JSON_OBJ.search(cleaned)
         if m:
             data = json.loads(m.group(0))
             s = float(data.get("score", 0.0))
             return max(0.0, min(1.0, s))
     except (json.JSONDecodeError, ValueError, TypeError):
         pass
-    m = _SCORE_PATTERN.search(raw)
+    m = _SCORE_PATTERN.search(cleaned)
     if m:
         try:
             return max(0.0, min(1.0, float(m.group(1))))

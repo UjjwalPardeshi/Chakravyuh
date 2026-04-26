@@ -57,7 +57,7 @@ The merged 7B + LoRA quantized to q4_k_m runs at ~10 tok/s on a Pixel 8 (8 GB RA
 ```bash
 git clone https://github.com/UjjwalPardeshi/Chakravyuh && cd Chakravyuh
 uv pip sync uv.lock          # pinned reproducible install
-pytest tests/ -v             # 337 collected, 334 pass, 3 GROQ-gated skip
+pytest tests/ -v             # 337 collected, 335 pass, 2 GROQ-gated skip
 make smoke-test              # in-process env reset+step
 make reproduce               # CHAKRAVYUH_SKIP_INFERENCE=1 for cached scores (~10 min CPU)
 ```
@@ -74,17 +74,28 @@ The semantic-leakage audit. We assumed our substring-filter was sufficient to en
 
 ## How does this compare to GPT-4o / Claude / Gemini?
 
-We ran an open-weight frontier comparison via HuggingFace Inference Providers (paid from our HF compute credits, ~$1 total). Numbers from [`logs/frontier_comparison.csv`](logs/frontier_comparison.csv), n=174 same bench:
+We ran an open-weight frontier comparison via HuggingFace Inference Providers (paid from our HF compute credits, ~$2 total across 7 models). Numbers from [`logs/frontier_comparison.csv`](logs/frontier_comparison.csv) — frontier rows are n = 175 (full bench file); v2 LoRA row is n = 174 (one row dropped on inference, see [`docs/limitations.md`](docs/limitations.md)):
 
 | Model | Params | Detection | FPR | F1 |
 |---|---|---|---|---|
 | **Chakravyuh v2 LoRA (this work)** | **7B + LoRA** | **99.3 %** | **6.7 %** | **0.990** |
-| Llama-3.3-70B-Instruct | 70B | 99.3 % | 3.2 % | 0.993 |
-| Qwen2.5-72B-Instruct | 72B | 98.6 % | 6.5 % | 0.986 |
-| DeepSeek-V3-0324 | 671B MoE | 100 % | **29.0 %** | 0.969 |
-| Scripted baseline | — | 84.6 % | 9.7 % | 0.906 |
+| Qwen2.5-7B-Instruct (base, no LoRA) | 7B | 99.3 % | 16.1 % | 0.980 |
+| Llama-3.3-70B-Instruct | 70B | 98.6 % | 3.2 % | 0.990 |
+| Qwen2.5-72B-Instruct | 72B | 97.9 % | 6.5 % | 0.983 |
+| DeepSeek-V3-0324 | 671B MoE | 99.3 % | **29.0 %** | 0.966 |
+| gpt-oss-120b | 120B | 97.9 % | 16.1 % | 0.972 |
+| gemma-3-27b-it | 27B | 99.3 % | **51.6 %** | 0.944 |
+| DeepSeek-R1 † | 671B MoE | 0.7 % | 0.0 % | 0.014 |
+| Scripted baseline | — | 84.0 % | 9.7 % | 0.903 |
 
-Three readouts: (1) v2 LoRA ties Llama-3.3-70B on F1 at 10× fewer parameters; (2) beats Qwen2.5-72B and DeepSeek-V3 on F1; (3) **DeepSeek-V3 (671B) reproduces the v1 reward-hacking signature externally** — its 100 % / 29 % FPR profile is structurally identical to our v1's 100 % / 36 %. A frontier-class model independently lands in the same failure mode our reward-engineering methodology diagnoses and fixes, which is external validation of the diagnostic itself.
+Four readouts:
+
+1. **GRPO + LoRA contribution is now isolated.** Same Qwen2.5-7B base, no LoRA → FPR 16.1 % / F1 0.980. After our GRPO training → FPR **6.7 %** / F1 **0.990**. **−9.4 pp FPR, +0.010 F1 from the reward-engineered training alone.**
+2. **Parameter efficiency.** 7B + LoRA ties Llama-3.3-70B on F1 (0.990 vs 0.990) at 10× fewer parameters and beats every other model in the table on F1.
+3. **DeepSeek-V3 (671B) reproduces the v1 reward-hacking signature externally** — its 99.3 % / 29 % FPR profile is structurally identical to our v1's 100 % / 36 %. A frontier-class model independently lands in the failure mode our reward-engineering methodology diagnoses and fixes — external validation of the diagnostic itself. gemma-3-27B-it (FPR 51.6 %) is the same story at smaller scale.
+4. **Open-weight frontier ≠ guaranteed scam-spotting.** Five of seven open frontier models we tested have FPR > 6.7 % on the same bench. The calibration channel — not raw capacity — is what's actually contested.
+
+† **DeepSeek-R1** is a chain-of-thought reasoning model: its output starts with `<think>` blocks instead of the JSON we ask for, so the score parser defaults to 0. The 0.7 % is a parsing artifact, not a model claim. A reasoning-aware parser would lift this; tracked as v3 work.
 
 **Proprietary frontier (GPT-4o / Claude / Gemini) deferred** — those APIs are not covered by HF compute credits and we did not authorize the ~$40–80 separate spend. The script supports them with the appropriate API keys (`OPENAI_API_KEY` / `ANTHROPIC_API_KEY` / `GEMINI_API_KEY`); reproducing instructions in [`REPRODUCE.md`](REPRODUCE.md) Step 6b.
 

@@ -53,10 +53,10 @@ pytest tests/ -v --tb=short
 Expected last line:
 
 ```
-============= 334 passed, 3 skipped in N.Ns =============
+============= 335 passed, 2 skipped in N.Ns =============
 ```
 
-(Counts may shift slightly as the suite grows; the floor is **334 passed, 3 skipped** (337 collected) for the canonical hackathon-submission state. The skips are GROQ-gated tests in `tests/test_explanation_judge.py` and `tests/test_explanation_rubric.py` that skip cleanly if `GROQ_API_KEY` is not in the environment — that is correct behaviour.)
+(Counts may shift slightly as the suite grows; the floor is **335 passed, 2 skipped** (337 collected) for the canonical hackathon-submission state. The skips are GROQ-gated tests in `tests/test_explanation_judge.py` that skip cleanly if `GROQ_API_KEY` is not in the environment — that is correct behaviour.)
 
 If any test fails, please attach the full pytest output to the issue.
 
@@ -129,16 +129,20 @@ These are the values from `logs/permutation_test_v1_v2.json`. Both p-values are 
 export GROQ_API_KEY=gsk_...   # https://console.groq.com (free tier)
 python -m eval.frontier_baseline --providers groq --limit 30
 
-# HF-credit path — pay-per-token from your HF compute credits, ~$0.50-$2 for full bench
+# HF-credit path — pay-per-token from your HF compute credits, ~$2 for the 7-model
+# bench we shipped (~$0.30 per 175-row run; cached after first run is free).
 export HF_TOKEN=hf_...
 python -m eval.frontier_baseline --providers hf --hf-models \
     meta-llama/Llama-3.3-70B-Instruct \
-    Qwen/Qwen3-72B-Instruct \
+    Qwen/Qwen2.5-72B-Instruct \
     deepseek-ai/DeepSeek-V3-0324 \
-    --limit 30
+    Qwen/Qwen2.5-7B-Instruct \
+    openai/gpt-oss-120b \
+    deepseek-ai/DeepSeek-R1 \
+    google/gemma-3-27b-it
 ```
 
-Output: `logs/frontier_comparison.csv` with one row per provider model + a scripted-baseline reference row. CIs are bootstrap 1 000-iteration. Permutation tests vs the scripted baseline are appended to the same CSV.
+Output: `logs/frontier_comparison.csv` with one row per provider model + a scripted-baseline reference row. CIs are bootstrap 1 000-iteration. Permutation tests vs the scripted baseline are appended to the same CSV. Per-row scores cached at `logs/frontier_cache/<provider>:<sha1>.json` so re-runs of any subset are free after the first call. **Note**: Qwen2.5-7B-Instruct is the LoRA's base model — running it gives you the head-to-head that isolates the GRPO+LoRA training contribution.
 
 ## Step 7 (optional) — Verify the live demo
 

@@ -67,7 +67,8 @@ Last verified: 2026-04-25.
 | Claim | Why deferred | Tracked as |
 |---|---|---|
 | Frontier comparison — proprietary tier (GPT-4o / Claude / Gemini) | Needs ~$40–80 in API budget; not covered by HF compute credits; pending user authorization | v3 — `eval/frontier_baseline.py` (script supports it; just needs the keys) |
-| ~~Frontier comparison — open-weight tier (Llama-3.3-70B / Qwen2.5-72B / DeepSeek-V3)~~ | **✅ SHIPPED 2026-04-26** — paid from HF compute credits via HuggingFace Inference Providers; v2 LoRA ties Llama-3.3-70B at 10× fewer params, beats Qwen2.5-72B + DeepSeek-V3 on F1; DeepSeek-V3 (671B) reproduces v1 reward-hacking signature externally | [`logs/frontier_comparison.csv`](../logs/frontier_comparison.csv) |
+| ~~Frontier comparison — open-weight tier (7 models: Llama-3.3-70B, Qwen2.5-72B, DeepSeek-V3, Qwen2.5-7B base, gpt-oss-120B, DeepSeek-R1, gemma-3-27B)~~ | **✅ SHIPPED 2026-04-26** — paid from HF compute credits via HuggingFace Inference Providers; v2 LoRA ties Llama-3.3-70B at 10× fewer params, beats Qwen2.5-72B + DeepSeek-V3 + gpt-oss-120B + gemma-3-27B on F1; **GRPO+LoRA contribution isolated** by base-model comparison (Qwen2.5-7B no-LoRA → FPR 16.1 %; with LoRA → 6.7 %); DeepSeek-V3 + gemma-3-27B reproduce v1 reward-hacking signature externally | [`logs/frontier_comparison.csv`](../logs/frontier_comparison.csv) |
+| Reasoning-aware score parser for chain-of-thought models (DeepSeek-R1, future o1-class) | DeepSeek-R1's `<think>...</think>` output isn't recognized by our JSON-only score parser, so it defaulted to 0 (F1 = 0.014 in [`logs/frontier_comparison.csv`](../logs/frontier_comparison.csv)). The model itself is fine; the eval harness needs to strip thinking tokens before parsing. | v3 — small parser change in [`eval/frontier_baseline.py`](../eval/frontier_baseline.py) `parse_frontier_score` |
 | Adversarial Scammer co-evolves with Analyzer | Needs HF GPU credits, ~5 hours A100 | v3 — onsite hackathon work |
 | SFT vs RL controlled experiment | Needs ~1.5 hours A100 | v3 — onsite hackathon work |
 | Per-scenario v2 LoRA error analysis (which 2 FPs, which 1 missed scam) | Eval is aggregate-only; per-scenario audit needs GPU re-inference | v3 — re-run inference, log per-row |
@@ -122,7 +123,7 @@ KL divergence reached 0.36 by step 15 and stayed in the [0.25, 0.45] band for th
 
 ```bash
 make reproduce        # eval-v2 + bootstrap, ~10 min CPU cached
-pytest tests/ -v      # 337 collected · 334 pass · 3 skipped
+pytest tests/ -v      # 337 collected · 335 pass · 2 skipped
 make smoke-test       # in-process env contract
 make link-check       # README references resolve
 ```

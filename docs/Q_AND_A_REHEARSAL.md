@@ -154,13 +154,16 @@ See [`SECURITY.md`](../SECURITY.md) and the responsible-disclosure contact.
 
 ## 18. How do you compare to frontier LLMs?
 
-We ran an open-weight frontier comparison via HuggingFace Inference Providers — paid from our HF compute credits — across Llama-3.3-70B, Qwen2.5-72B, and DeepSeek-V3-0324 on the same n=174 bench with the same scoring prompt. Source of truth: [`logs/frontier_comparison.csv`](../logs/frontier_comparison.csv).
+We ran an open-weight frontier comparison via HuggingFace Inference Providers — paid from our HF compute credits — across **seven open-weight frontier models** on the same bench (n=175 frontier rows; v2 LoRA row n=174 from prior inference) with the same scoring prompt. Source of truth: [`logs/frontier_comparison.csv`](../logs/frontier_comparison.csv).
 
-Three findings:
+Four findings:
 
-1. **Parameter efficiency.** Our 7B + LoRA scores F1 = **0.990**; Llama-3.3-70B scores 0.993. Tied within bootstrap CI at 10× fewer parameters.
-2. **Beats larger frontier.** F1 = 0.990 beats Qwen2.5-72B (0.986) and DeepSeek-V3-0324 at 671B MoE (0.969).
-3. **🔥 The killer finding.** DeepSeek-V3 (671B) scores detection 100 % / FPR **29 %** / F1 = 0.969. That is structurally identical to our v1 LoRA (100 % / 36 % / F1 = 0.96). **A frontier-class model independently reproduces the exact reward-hacking signature our methodology diagnoses and fixes.** External validation that calibrated reward design beats raw model capacity.
+1. **🎯 GRPO + LoRA contribution isolated.** Same Qwen2.5-7B base **without our LoRA** scores 99.3 % / 16.1 % FPR / F1 = 0.980. **With** our reward-engineered GRPO training: 99.3 % / **6.7 %** / 0.990. Same model, same params: **−9.4 pp FPR, +0.010 F1 attributable purely to the training**. The reward design is what's doing the work.
+2. **Parameter efficiency vs frontier.** Our 7B + LoRA scores F1 = **0.990**; Llama-3.3-70B scores 0.990 — tied at 10× fewer parameters. Beats Qwen2.5-72B (0.983), gpt-oss-120B (0.972), DeepSeek-V3-671B (0.966), gemma-3-27B (0.944).
+3. **🔥 The killer finding.** DeepSeek-V3 (671B) scores detection 99.3 % / FPR **29 %** / F1 = 0.966; gemma-3-27B scores detection 99.3 % / FPR **51.6 %** / F1 = 0.944. Both are structurally identical to our v1 LoRA (100 % / 36 % / F1 = 0.96). **Two frontier-class models independently reproduce the reward-hacking signature our methodology diagnoses and fixes.** External validation that calibrated reward design beats raw model capacity.
+4. **Open-weight frontier ≠ guaranteed scam-spotting.** Five of the seven open frontier models we tested have FPR > 6.7 %. The contested channel is calibration, not capacity.
+
+DeepSeek-R1 also tested — its reasoning-token output (`<think>...</think>` blocks) doesn't parse as JSON in our score-extraction prompt, so the parser defaults to 0 (F1 = 0.014). That's a parsing artifact, not a model claim; reasoning-aware parser is v3 work.
 
 Proprietary frontier (GPT-4o / Claude / Gemini) deferred — those APIs are not covered by HF compute credits and we did not authorize the ~$40–80 separate spend. The script supports them; running it is a single command for anyone with the keys.
 

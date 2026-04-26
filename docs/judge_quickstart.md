@@ -53,7 +53,7 @@ If you only have 30 more seconds, these are what differentiates Chakravyuh from 
 These are real but explicitly tagged as v3 / pending GPU compute:
 
 - **v2 per-scenario error analysis** — eval is aggregate-only; per-scenario audit needs GPU re-inference. Currently shipped: scripted-baseline per-scenario audit + v2 aggregate counts in [`docs/v2_error_analysis.md`](v2_error_analysis.md).
-- **Frontier baseline** — script exists at [`eval/frontier_baseline.py`](../eval/frontier_baseline.py); requires API budget to run. The CSV that previously lived at `logs/frontier_comparison.csv` was a 1-row scripted-baseline stub — renamed to [`logs/scripted_baseline_n5_archived.csv`](../logs/scripted_baseline_n5_archived.csv) so nobody reads it as a frontier comparison. Until the real eval runs, no frontier claim is made.
+- ~~**Frontier baseline**~~ — **✅ SHIPPED 2026-04-26.** 7-model open-weight comparison via HuggingFace Inference Providers in [`logs/frontier_comparison.csv`](../logs/frontier_comparison.csv); GRPO+LoRA contribution isolated against Qwen2.5-7B base; v2 LoRA ties Llama-3.3-70B at 10× fewer params; DeepSeek-V3 and gemma-3-27B reproduce the v1 reward-hacking signature externally. Proprietary tier (GPT-4o/Claude/Gemini) deferred — API budget not in HF credits.
 - **Adversarial Scammer training** — onsite GPU work. Today's submission ships scripted Scammer + scripted Victim + trained Analyzer; the multi-agent learning loop is v3. Honest framing.
 - **Calibration ECE** — `CalibrationRubric` is trained for; ECE not yet computed (would need per-scenario v2 logits).
 

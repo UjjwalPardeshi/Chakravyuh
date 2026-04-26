@@ -20,7 +20,10 @@ Round-trip carbon = `power_kW × hours × carbon_intensity_g_per_kWh / 1000`.
 | Bench inference for `eval_v2.json` (n=174) | A100 | ~0.5 | 0.2 | ~78 |
 | Bootstrap CI computation (10k iter) | CPU | ~0.02 | 0.0006 | ~0.2 |
 | Semantic-leakage audit (MiniLM-L6 over 1,177 train × 174 bench) | CPU | ~0.05 | 0.0015 | ~0.6 |
-| **Subtotal — shipped** | | **~10.2 GPU-h** | **2.85 kWh** | **~1,113 g CO2** |
+| Frontier baseline — 7 open-weight models via HF Inference Providers (n=175 × 7) | hosted (3rd-party) | ~0.4 (wall-clock) | n/a | n/a |
+| **Subtotal — shipped (Chakravyuh GPU-h)** | | **~10.2 GPU-h** | **2.85 kWh** | **~1,113 g CO2** |
+
+**Frontier baseline note.** The 7-model frontier comparison ran on third-party hosted inference (HuggingFace Inference Providers), not on our compute. We paid ~$2 of HF compute credits for the full 7-model run; the energy/carbon attribution belongs to the hosting provider (Together AI / Fireworks / Novita / etc.) and is not included in our subtotal. Per-row scores cached at `logs/frontier_cache/` so re-runs are free and zero-emission for us.
 
 ## Compute planned for the 30-credit HF onsite spend
 

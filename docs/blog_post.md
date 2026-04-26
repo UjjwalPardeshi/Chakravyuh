@@ -131,7 +131,7 @@ Three honest things to take away:
 **Missing (named, not hidden):**
 
 - **Multi-seed retrains.** Single-seed numbers cannot rule out lottery-ticket effects. v3 milestone #1.
-- **Frontier baseline.** GPT-4o / Claude / Gemini / Llama-3.3-70B comparison. Script wired up, not run — API budget deferred.
+- **Frontier baseline.** Open-weight tier ✅ shipped — 7-model comparison via HF Inference Providers in [`logs/frontier_comparison.csv`](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/logs/frontier_comparison.csv); v2 LoRA ties Llama-3.3-70B at 10× fewer params, beats Qwen2.5-72B / DeepSeek-V3 / gpt-oss-120B / gemma-3-27B on F1; the GRPO+LoRA contribution is isolated against the Qwen2.5-7B base (FPR 16.1 % → 6.7 %). Proprietary tier (GPT-4o / Claude / Gemini) deferred — not covered by HF compute credits.
 - **Per-language eval.** Multi-language detection on Hindi, Tamil, Telugu, Bengali, Marathi is a capability claim until measured per-language.
 - **Calibration analysis.** ECE / Brier / reliability diagrams.
 - **Adversarial Scammer Phase-2 retrain.** The architectural step that would convert the env from "1 trained, 4 scripted" to a co-evolutionary 2-trained system. Phase 1 is *shipped* (see §5.1 below). Phase 2 (LoRA-vs-LoRA Analyzer retrain against the frozen Phase-1 Scammer with per-rubric W&B logging) is queued for the onsite GPU sprint.

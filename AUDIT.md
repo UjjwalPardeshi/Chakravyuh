@@ -230,7 +230,7 @@ This is fair. The team's WIN_PLAN already acknowledges this with the honest demo
 | **n_benign = 30** | `logs/eval_v2.json:fpr` over n=30 → bootstrap CI [0.0%, 16.7%] | "Your headline 6.7% number is one mistake from being 10%" | B.11 — expand benign corpus to ≥150 + re-eval | ~1h wall | 0.5 GPU-h |
 | **Semantic leakage 44.8% > 0.85** | `logs/semantic_leakage_audit.json` shipped & disclosed | "Your 100% on easy/medium/hard is partly memorization" | B.7 — held-out template-family retrain + B.12 per-row leakage-clean slice | ~3h GPU + 0.5h | 3.5 GPU-h |
 | **Per-row v2 logits not logged** | aggregate-only `logs/eval_v2.json` | "Which 2 benigns? Which 1 missed scam?" | B.12 — `--emit-per-row` flag in `eval/mode_c_real_cases.py` | ~1h | 0.5 GPU-h T4 |
-| **No frontier baseline** | `logs/scripted_baseline_n5_archived.csv` is the renamed stub | "How does a 7B LoRA compare to GPT-4o on novel?" | A.5 — run `eval/frontier_baseline.py`; spend ~$40–80 OR ship without and don't cite | 2h | 0 GPU + $40–80 API |
+| ~~**No frontier baseline**~~ ✅ SHIPPED (open-weight tier, 7 models) | [`logs/frontier_comparison.csv`](logs/frontier_comparison.csv) — Llama-3.3-70B / Qwen2.5-72B / DeepSeek-V3 / Qwen2.5-7B base / gpt-oss-120B / DeepSeek-R1 / gemma-3-27B via HF Inference Providers | answered: v2 LoRA ties Llama-3.3-70B at 10× fewer params; GRPO+LoRA contribution isolated (FPR 16.1 % → 6.7 % vs base); DeepSeek-V3 + gemma-3-27B reproduce v1 reward-hacking signature externally | done | 0 GPU + ~$2 HF credits |
 | **Calibration ECE never reported** | trained for via `CalibrationRubric` but no `ece` key anywhere | "You trained for it; show it" | B.6 — `eval/calibration_eval.py`; produce reliability diagram | 1h | 0.5 GPU-h A100 |
 | **Threshold-sweep degeneracy** | `logs/eval_v2.json:sweep` — 9 of 13 thresholds give *identical* metrics | "Your model is binary-output; calibration didn't shape outputs" | B.6 + add 1-line README disclosure pointing to `docs/limitations.md` | 30 min | 0 |
 | **No permutation test for v1→v2 FPR delta** | bootstrap CI shipped; permutation p-value not | "Bootstrap shows spread, not significance" | D.2 — `eval/permutation_test_v1_v2.py`; expected p < 0.0001 | 1h | 0 |
@@ -507,7 +507,7 @@ These are time sinks that do not move the #1 needle. Cut every one.
 
 1. **Refactoring `server/demo_ui.py`** (it's 2,133 LOC; correctly NOT in scope per WIN_PLAN C.6). Judges don't read source.
 2. **Multi-seed retrain unless ≥6 GPU-h are *spare* after Phase 3.** The bootstrap CI is sufficient defensive cover; multi-seed is v3 work.
-3. **Frontier baseline (A.5)** unless API budget is already in hand. Do NOT cite a frontier number that wasn't measured.
+3. ~~**Frontier baseline (A.5)** unless API budget is already in hand. Do NOT cite a frontier number that wasn't measured.~~ ✅ DONE — open-weight tier (7 models) shipped via HF Inference Providers; proprietary tier (GPT-4o/Claude/Gemini) deferred per separate-spend rule.
 4. **Adding more languages/templates.** 7 languages and 660 templates is enough; effort goes to *measuring* them (B.8) not adding more.
 5. **Property-based tests (E.5), CI matrix expansion (E.6), Inspect/Phoenix integration (E.7).** Polish; cut.
 6. **Inter-rater κ (D.8).** Timeline-impossible; existing limitations.md disclosure is honest enough.

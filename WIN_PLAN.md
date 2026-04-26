@@ -117,19 +117,30 @@ done
 ```
 **Fix every break, commit, then submit.**
 
-### A.5 — Frontier comparison ✅ SHIPPED 2026-04-26 (open-weight tier)
+### A.5 — Frontier comparison ✅ SHIPPED 2026-04-26 (open-weight tier, 7 models)
 
-**Result (n=174 same bench, paid from HF compute credits via HuggingFace Inference Providers):**
+**Result (frontier rows n=175 same bench; v2 LoRA n=174; paid from HF compute credits via HuggingFace Inference Providers):**
 
 | Model | Params | Detection | FPR | F1 |
 |---|---|---|---|---|
 | **Chakravyuh v2 LoRA** | **7B + LoRA** | **99.3 %** | **6.7 %** | **0.990** |
-| Llama-3.3-70B-Instruct | 70B | 99.3 % | 3.2 % | 0.993 |
-| Qwen2.5-72B-Instruct | 72B | 98.6 % | 6.5 % | 0.986 |
-| DeepSeek-V3-0324 | 671B MoE | 100 % | **29.0 %** | 0.969 |
-| Scripted baseline | — | 84.6 % | 9.7 % | 0.906 |
+| Qwen2.5-7B-Instruct (base, no LoRA) | 7B | 99.3 % | 16.1 % | 0.980 |
+| Llama-3.3-70B-Instruct | 70B | 98.6 % | 3.2 % | 0.990 |
+| Qwen2.5-72B-Instruct | 72B | 97.9 % | 6.5 % | 0.983 |
+| DeepSeek-V3-0324 | 671B MoE | 99.3 % | **29.0 %** | 0.966 |
+| gpt-oss-120b | 120B | 97.9 % | 16.1 % | 0.972 |
+| gemma-3-27b-it | 27B | 99.3 % | **51.6 %** | 0.944 |
+| DeepSeek-R1 † | 671B MoE | 0.7 % | 0 % | 0.014 |
+| Scripted baseline | — | 84.0 % | 9.7 % | 0.903 |
 
-Three publishable readouts: parameter efficiency (ties Llama-3.3-70B at 10× fewer params); F1 outperformance over Qwen2.5-72B and DeepSeek-V3; **DeepSeek-V3 reproduces the v1 reward-hacking signature externally** (100 % / 29 % FPR ≈ v1's 100 % / 36 %) — external validation of the reward-engineering methodology. Source: [logs/frontier_comparison.csv](logs/frontier_comparison.csv).
+Four publishable readouts:
+
+1. **GRPO+LoRA contribution isolated.** Same Qwen2.5-7B base no-LoRA → FPR 16.1 %; with our reward-engineered GRPO → FPR 6.7 %. **−9.4 pp FPR, +0.010 F1 attributable purely to the training.**
+2. **Parameter efficiency.** v2 LoRA ties Llama-3.3-70B on F1 at 10× fewer params; beats every other model in the table on F1.
+3. **DeepSeek-V3 + gemma-3-27B reproduce the v1 reward-hacking signature externally** (29 % and 51.6 % FPR ≈ v1's 36 %) — independent corroboration of the reward-engineering diagnostic.
+4. **Open-weight frontier ≠ guaranteed scam-spotting.** 5 of 7 open frontier models we tested have FPR > 6.7 %; calibration channel is the contested axis, not raw capacity.
+
+† DeepSeek-R1 outputs `<think>...</think>` reasoning blocks that don't parse as JSON in our score extraction prompt — parser artifact, v3 fix. Source: [logs/frontier_comparison.csv](logs/frontier_comparison.csv).
 
 **Reproduce:**
 ```bash
@@ -138,9 +149,12 @@ python -m eval.frontier_baseline --providers hf --hf-models \
     meta-llama/Llama-3.3-70B-Instruct \
     Qwen/Qwen2.5-72B-Instruct \
     deepseek-ai/DeepSeek-V3-0324 \
-    --limit 174
+    Qwen/Qwen2.5-7B-Instruct \
+    openai/gpt-oss-120b \
+    deepseek-ai/DeepSeek-R1 \
+    google/gemma-3-27b-it
 ```
-Cost: ~$1 of HF compute credits. Total spend tracked in [docs/compute_carbon_card.md](docs/compute_carbon_card.md).
+Cost: ~$2 of HF compute credits across all 7 runs. Total spend tracked in [docs/compute_carbon_card.md](docs/compute_carbon_card.md).
 
 **Proprietary frontier tier (GPT-4o / Claude / Gemini) deferred** — those APIs are not covered by HF compute credits. The script supports them with `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` / `GEMINI_API_KEY` env vars; pure budget question, not a code question.
 
