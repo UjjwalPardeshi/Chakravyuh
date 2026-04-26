@@ -102,6 +102,7 @@ The composable rubric system ([chakravyuh_env/rubrics.py](chakravyuh_env/rubrics
 |---|---|
 | Hugging Face Space (live env) | [ujjwalpardeshi/chakravyuh](https://huggingface.co/spaces/ujjwalpardeshi/chakravyuh) — **LIVE** at `https://ujjwalpardeshi-chakravyuh.hf.space/demo/` |
 | Trained adapter (HF Hub) | [`ujjwalpardeshi/chakravyuh-analyzer-lora-v2`](https://huggingface.co/ujjwalpardeshi/chakravyuh-analyzer-lora-v2) |
+| Adversarial Scammer LoRA (B.2 phase 1) | [`ujjwalpardeshi/chakravyuh-scammer-lora-phase1`](https://huggingface.co/ujjwalpardeshi/chakravyuh-scammer-lora-phase1) — Qwen2.5-0.5B + GRPO; 94% bypass vs rule-based, 33% vs v2 LoRA (n=64) |
 | Training Colab (TRL + GRPO) | [`training/train_colab.ipynb`](training/train_colab.ipynb) · v2 retrain notebook: [`notebooks/v2_retrain_safe.ipynb`](notebooks/v2_retrain_safe.ipynb) |
 | HF Blog post (draft) | [`docs/blog_post.md`](docs/blog_post.md) |
 | Slide deck (markdown source) | [`docs/chakravyuh_slides.md`](docs/chakravyuh_slides.md) |
