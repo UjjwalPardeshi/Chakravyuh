@@ -37,7 +37,7 @@ from chakravyuh_env.schemas import (
 if TYPE_CHECKING:
     from chakravyuh_env.agents.llm_analyzer import LLMAnalyzer
 
-__version__ = "0.1.0"
+__version__ = "0.3.0"
 
 # Default v2 LoRA adapter on the Hugging Face Hub.
 DEFAULT_ANALYZER_ADAPTER = "ujjwalpardeshi/chakravyuh-analyzer-lora-v2"

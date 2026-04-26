@@ -173,7 +173,7 @@ Expected output (JSON):
 - **Training corpus:** 619 examples (456 scam + 204 benign templates, soft-leakage filtered against the test set; see `training/grpo_analyzer.py:_filter_soft_leakage`)
 - **Algorithm:** GRPO via TRL
 - **Steps:** 619 (1 full epoch over the corpus)
-- **Reward function:** Composable 5-rubric system (detection, FP penalty, missed-scam penalty, calibration, explanation quality)
+- **Reward function:** Composable 8-rubric system (detection, FP penalty, missed-scam penalty, calibration, explanation, signal-accuracy, format, length) — see [`docs/reward_design.md`](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/docs/reward_design.md)
 - **Hardware:** Single A100-80GB (Colab Pro+)
 
 `trainer_state.json` (full training trajectory) is at [logs/v2_trainer_state.json](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/logs/v2_trainer_state.json) in the source repo.
@@ -189,7 +189,7 @@ Expected output (JSON):
 7. **KL trajectory plateau.** v2's GRPO trajectory plateaued KL at 0.25–0.45 with `clip_ratio = 0` for ~600 steps. Honest read in [docs/training_diagnostics.md](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/docs/training_diagnostics.md). v3 includes a KL-early-stop guard.
 8. **Threshold-sweep degeneracy.** 9 of 13 thresholds in the 0.30–0.85 sweep yield identical detection / FPR — v2 outputs near-binary scores. v3 work includes temperature-scaled logits + reliability diagrams (B.6 in WIN_PLAN).
 
-See [docs/RESPONSIBLE_USE.md](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/docs/RESPONSIBLE_USE.md) for intended use and dual-use considerations. See the **gated** companion adapter [`ujjwalpardeshi/chakravyuh-scammer-0.5b-v1`](https://huggingface.co/ujjwalpardeshi/chakravyuh-scammer-0.5b-v1) for the adversarial Scammer trained against the rule-based defense (B.2 Phase 1: 93.75 % best-of-8 / 100 % held-out novel bypass on n=64) — the natural test case for *this* Analyzer adapter.
+See [docs/RESPONSIBLE_USE.md](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/docs/RESPONSIBLE_USE.md) for intended use and dual-use considerations. See the **gated** companion adapter [`ujjwalpardeshi/chakravyuh-scammer-lora-phase1`](https://huggingface.co/ujjwalpardeshi/chakravyuh-scammer-lora-phase1) for the adversarial Scammer trained against the rule-based defense (B.2 Phase 1: 93.75 % best-of-8 / 100 % held-out novel bypass on n=64; **32.8 % vs this Analyzer LoRA — a 60 pp gap that quantifies co-evolution**) — the natural adversarial test case for *this* defender adapter.
 
 ## Links
 

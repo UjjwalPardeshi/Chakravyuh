@@ -15,7 +15,7 @@ India loses **₹13,000+ crore per year** to UPI fraud. 60 crore Indians use UPI
 This post walks through:
 
 1. Why we framed this as **scalable oversight**, not "LLM classifier"
-2. The five-agent OpenEnv environment and the composable 5-rubric reward
+2. The five-agent OpenEnv environment and the composable 8-rubric reward (v2)
 3. The reward-hacking failure we caught in v1 — and the principled fixes that produced v2
 4. Headline numbers with bootstrap CIs (no point estimates without bands)
 5. Honest limitations and the v3 roadmap
@@ -56,7 +56,7 @@ Five agents, asymmetric information:
                    └─────────────────┘
 ```
 
-The Analyzer's reward decomposes into **five orthogonal child rubrics** (composable, introspectable, swappable):
+The Analyzer's reward (`AnalyzerRubricV2`, [`chakravyuh_env/rubrics.py`](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/chakravyuh_env/rubrics.py)) decomposes into **eight orthogonal child rubrics** (composable, introspectable, swappable):
 
 | Rubric | Weight (v2) | What it rewards |
 |---|---|---|
@@ -65,8 +65,11 @@ The Analyzer's reward decomposes into **five orthogonal child rubrics** (composa
 | `FalsePositiveRubric` | **−0.8** | Benign incorrectly flagged |
 | `CalibrationRubric` | **+0.5** (benign) | Score matches ground truth in *both* directions |
 | `ExplanationRubric` | +0.4 | Natural-language explanation references declared signals |
+| `SignalAccuracyRubric` | +0.2 | Fraction of expected signals correctly named |
+| `FormatRubric` | +0.15 | Strict-JSON output — **denied when flagging benign as scam** |
+| `LengthRubric` | ±0.15 | Peak at ~45 tokens, penalty above 70 |
 
-This is the reward profile **after** the v1 → v2 fix. The bold weights are what changed.
+Plus a side-channel `RupeeWeightedRubric` aggregator (not in the trained reward) that scales detection / miss credit by the scenario's `loss_amount_inr` to produce the bench-level "₹ prevented" headline. This is the reward profile **after** the v1 → v2 fix. The bold weights are what changed; the bottom three rubrics were promoted from the trainer's inline reward to first-class env rubrics in v2.
 
 ## 3. Reward hacking — caught and fixed
 

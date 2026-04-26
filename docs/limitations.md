@@ -122,7 +122,7 @@ KL divergence reached 0.36 by step 15 and stayed in the [0.25, 0.45] band for th
 
 ```bash
 make reproduce        # eval-v2 + bootstrap, ~10 min CPU cached
-pytest tests/ -v      # 237 collected · 235 pass · 2 skipped
+pytest tests/ -v      # 337 collected · 334 pass · 3 skipped
 make smoke-test       # in-process env contract
 make link-check       # README references resolve
 ```

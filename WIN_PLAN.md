@@ -10,7 +10,7 @@
 
 > **Production is healthy.** All 11 endpoints (`/`, `/health`, `/schema`, `/metadata`, `/openapi.json`, `/leaderboard`, `/demo/`, `/demo/preview`, `/eval`, `/eval/redteam`, `/eval/known-novel`, `/eval/bootstrap`, `POST /diagnose`) return 200 on the live HF Space at https://ujjwalpardeshi-chakravyuh.hf.space. Deployed SHA `08149ec`.
 >
-> **Test suite:** 303 passed · 2 skipped (305 collected). Container probe matches local. CI green except link-check-http which is now allowed-fail at the step level so the badge stays green during HF rebuild races.
+> **Test suite:** 334 passed · 3 skipped (337 collected). Container probe matches local. CI green except link-check-http which is now allowed-fail at the step level so the badge stays green during HF rebuild races.
 >
 > **What four shipping rounds resolved:**
 >
@@ -306,7 +306,7 @@ Artifact: [logs/b2_phase1_scammer_vs_v2_lora.json](logs/b2_phase1_scammer_vs_v2_
 
 **How.**
 ```bash
-python eval/scammer_generate.py --adapter <user>/chakravyuh-scammer-0.5b-v1 --n 500 --output data/learned_scammer_corpus.jsonl
+python eval/scammer_generate.py --adapter <user>/chakravyuh-scammer-lora-phase1 --n 500 --output data/learned_scammer_corpus.jsonl
 python eval/scammer_emergence.py --generated data/learned_scammer_corpus.jsonl --templates chakravyuh_env/scammer_templates.json --output docs/emergent_behavior_analysis.md
 ```
 
@@ -525,7 +525,7 @@ Embed via `![Demo](docs/assets/demo.gif)` — host on **GitHub raw URL**, NOT HF
 
 **Trigger.** B.2 phase 1+2 converged with stable curves.
 
-**How.** `huggingface-cli repo create chakravyuh-scammer-0.5b-v1 --type model`, push with model card listing intended use (red-team / RL only), out-of-scope, gated access, contact.
+**How.** `huggingface-cli repo create chakravyuh-scammer-lora-phase1 --type model`, push with model card listing intended use (red-team / RL only), out-of-scope, gated access, contact.
 
 **Adverse.** If B.2 fell back to SFT-only, do **not** release publicly. Frame as v3.
 
@@ -761,9 +761,9 @@ Standard files. Use [contributor-covenant](https://www.contributor-covenant.org)
    # Step 2: install (pin via lockfile if shipped — D.1)
    uv pip sync requirements.lock   # OR: pip install -e '.[llm,eval]'
 
-   # Step 3: tests (expected: 303 passed, 2 skipped)
+   # Step 3: tests (expected: 334 passed, 3 skipped)
    pytest tests/ -v --tb=short
-   # Expected last line: ============= 303 passed, 2 skipped in N.NNs =============
+   # Expected last line: ============= 334 passed, 3 skipped in N.NNs =============
 
    # Step 4: smoke test (expected: env reset+step in <5s, no GPU)
    make smoke-test

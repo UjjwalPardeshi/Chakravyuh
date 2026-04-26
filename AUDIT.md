@@ -1,9 +1,39 @@
 # Chakravyuh — Independent Audit
 *Generated: 2026-04-26 · Team member: anonymous · Hours to deadline: 12 (DEFAULT — please confirm)*
-*Last updated: 2026-04-26 post-pull from origin/main @ `ae052d7` — B.2 phase 1 SHIPPED 68.75% Scammer bypass rate*
+*Last updated: 2026-04-26 evening — post-n=64 head-to-head + 0-GPU production polish*
 *Audit scope: full independent examination from first principles. No findings inherited from prior reports.*
 
 ---
+
+> ## Update header — what changed since this audit was first written
+>
+> The body of this audit was written when B.2 Phase 1 had only n=16
+> evaluation samples and the Scammer LoRA was not on the Hub. Three
+> things changed during the day:
+>
+> 1. **B.2 Phase 1 evaluation expanded** to n=64 + best-of-8: bypass
+>    vs ScriptedAnalyzer is **93.75 %** (held-out novel = 100 %), not
+>    68.75 %. Backing artifact:
+>    [`logs/b2_phase1_scammer_eval_n64_bestof8.json`](logs/b2_phase1_scammer_eval_n64_bestof8.json).
+> 2. **B.2 Phase 1 head-to-head shipped** — the same Scammer outputs
+>    re-scored by the v2 Analyzer LoRA show **32.8 % bypass**, a
+>    **60.9-pp gap** that quantifies co-evolution. Backing artifact:
+>    [`logs/b2_phase1_scammer_vs_v2_lora.json`](logs/b2_phase1_scammer_vs_v2_lora.json).
+> 3. **Scammer LoRA HF repo path standardized** to
+>    [`ujjwalpardeshi/chakravyuh-scammer-lora-phase1`](https://huggingface.co/ujjwalpardeshi/chakravyuh-scammer-lora-phase1)
+>    (the older `-0.5b-v1` name appears in this audit's body but is
+>    superseded). The Hub push is still the trainer-machine action
+>    described in §5; the model card content is at
+>    [`docs/misuse_dual_use.md`](docs/misuse_dual_use.md).
+> 4. **0-GPU production polish landed** — slide PDF, requirements.lock,
+>    architecture SVG, reward-design one-pager, three case studies,
+>    Rupee-weighted reward + eval (₹77.95 lakh at risk in bench), 3
+>    quick-test buttons + judge banner in demo. Test count is now
+>    **337 collected · 334 passed · 3 skipped** (was 305/302/3). Commit:
+>    `8f1fff6`.
+>
+> Treat the body below as the strategic frame; the four numbers above
+> are the current ground truth.
 
 ## 0. The Verdict
 
@@ -13,13 +43,13 @@
 **Probability with the recommended P0 actions:** **70–80%** (was 65–75% pre-B.2).
 
 **Top 3 P0 actions (sorted by impact):**
-1. **Push the Scammer LoRA to HF Hub** as `ujjwalpardeshi/chakravyuh-scammer-0.5b-v1` (gated, with a misuse statement). It is a 12 MB upload that converts a *paragraph claim* into a *clickable artifact*. Without this push, the 68.75% bypass-rate result is unverifiable for judges.
+1. **Push the Scammer LoRA to HF Hub** as `ujjwalpardeshi/chakravyuh-scammer-lora-phase1` (gated, with a misuse statement). It is a 12 MB upload that converts a *paragraph claim* into a *clickable artifact*. Without this push, the 68.75% bypass-rate result is unverifiable for judges.
 2. **Render the slide deck to PDF.** 5-minute Marp/Pandoc command. Without it judges see raw markdown — reads as intern submission. ([WIN_PLAN A.1](WIN_PLAN.md))
 3. **Execute the 8 Colab notebooks end-to-end** (eval-only re-runs OK; v2 LoRA already on HF Hub). 0/72 cells executed today; JC explicitly requires *"a working training script ... so judges can re-run it."*
 
 (P0 #4 just behind these: **record the 90-second demo video** — script in `WIN_PLAN A.2`; without it, 30% of the rubric is mostly forfeited.)
 
-**The one thing to do RIGHT NOW:** `huggingface-cli upload ujjwalpardeshi/chakravyuh-scammer-0.5b-v1 checkpoints/scammer_lora_phase1/` from the training machine. Five minutes. Converts B.2 phase 1 from a JSON log into a judge-clickable HF Hub artifact. After that, render the slide PDF.
+**The one thing to do RIGHT NOW:** `huggingface-cli upload ujjwalpardeshi/chakravyuh-scammer-lora-phase1 checkpoints/scammer_lora_phase1/` from the training machine. Five minutes. Converts B.2 phase 1 from a JSON log into a judge-clickable HF Hub artifact. After that, render the slide PDF.
 
 ---
 
@@ -145,14 +175,14 @@ Three sub-points the team must be ready for:
 - One paragraph in README "What B.2 added": both adapters, both trajectories
 
 ### **IMMEDIATE P0 (do this NOW, before phase 2):** Push the phase-1 Scammer LoRA to HF Hub
-The training machine has `checkpoints/scammer_lora_phase1/` (12 MB per WIN_PLAN). This machine has only `.gitkeep` — the adapter is gitignored (correctly — git is wrong for binaries) but **not yet pushed to HF Hub** (verified: HTTP 401 on `huggingface.co/ujjwalpardeshi/chakravyuh-scammer-0.5b-v1`).
+The training machine has `checkpoints/scammer_lora_phase1/` (12 MB per WIN_PLAN). This machine has only `.gitkeep` — the adapter is gitignored (correctly — git is wrong for binaries) but **not yet pushed to HF Hub** (verified: HTTP 401 on `huggingface.co/ujjwalpardeshi/chakravyuh-scammer-lora-phase1`).
 
 ```bash
 # From the training machine (NOT this machine):
 huggingface-cli login
-huggingface-cli repo create chakravyuh-scammer-0.5b-v1 --type model
+huggingface-cli repo create chakravyuh-scammer-lora-phase1 --type model
 cd checkpoints/scammer_lora_phase1
-git init && git remote add origin https://huggingface.co/ujjwalpardeshi/chakravyuh-scammer-0.5b-v1
+git init && git remote add origin https://huggingface.co/ujjwalpardeshi/chakravyuh-scammer-lora-phase1
 huggingface-cli lfs-enable-largefiles .
 git add adapter_config.json adapter_model.safetensors README.md   # README = gated model card, see D.4
 git commit -m "feat: B.2 phase 1 Scammer LoRA — 68.75% bypass vs ScriptedAnalyzer (n=16)"
@@ -325,7 +355,7 @@ The other WIN_PLAN candidates (adversarial self-play loop, multilingual live pan
 |---|---|---|---|---|---|
 | HF Space (live env) | ✅ | ✅ | ✅ via README | ✅ | All 11 endpoints 200; cold start 2.7s |
 | HF Hub Analyzer LoRA (`ujjwalpardeshi/chakravyuh-analyzer-lora-v2`) | ✅ | ⚠️ model card pre-merge state | ✅ | ✅ | **D.9** — refresh card with semantic-leakage caveat + bootstrap CIs (1h) |
-| **HF Hub Scammer LoRA (`ujjwalpardeshi/chakravyuh-scammer-0.5b-v1`)** | **❌ NOT PUSHED** (HTTP 401) | — | ❌ | — | **P0 §5** — 12 MB upload from training machine; gated + misuse statement (15 min) |
+| **HF Hub Scammer LoRA (`ujjwalpardeshi/chakravyuh-scammer-lora-phase1`)** | **❌ NOT PUSHED** (HTTP 401) | — | ❌ | — | **P0 §5** — 12 MB upload from training machine; gated + misuse statement (15 min) |
 | Scammer training results JSON | ✅ `logs/b2_phase1_scammer_training.json` | ✅ 116 lines, 16 eval samples + meta + reward shape | ✅ committed | ✅ | But useless without the LoRA itself — judges can read the result, not try it |
 | HF Hub dataset (`chakravyuh-bench-v0`) | ✅ | ⚠️ no DATASET_CARD on HF | ✅ | ✅ | Root `DATASET_CARD.md` exists; sync to HF Hub data card |
 | Slide deck | ⚠️ markdown only | **❌ NO PDF** | ⚠️ `.md` link | ✅ | **P0 A.1** — `marp` it |
@@ -406,7 +436,7 @@ This is already in the README TL;DR. Reinforce in slide 1 voiceover.
 
 | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|
-| **Scammer LoRA never reaches HF Hub before submission** (still HTTP 401 today) | **High** | **High** — paragraph claim without artifact = "where is it?" credibility hit | **§5 IMMEDIATE P0** — 15-min upload from trainer's machine; gated repo + misuse statement; verify with `curl -I huggingface.co/ujjwalpardeshi/chakravyuh-scammer-0.5b-v1` |
+| **Scammer LoRA never reaches HF Hub before submission** (still HTTP 401 today) | **High** | **High** — paragraph claim without artifact = "where is it?" credibility hit | **§5 IMMEDIATE P0** — 15-min upload from trainer's machine; gated repo + misuse statement; verify with `curl -I huggingface.co/ujjwalpardeshi/chakravyuh-scammer-lora-phase1` |
 | Judge asks to load + try the Scammer adapter live; it isn't on Hub yet | Medium | High | Bring a 60s recorded clip of a local `peft.PeftModel.from_pretrained(...)` load + sample generation as fallback |
 | Judge presses on B.2 opponent being scripted (not v2 LoRA) | High | Medium | Honest framing: "phase 1 is the *training-loop convergence proof*; phase 2 is the LoRA-vs-LoRA co-evolution — onsite work." Don't oversell. |
 | Judge presses on n=16 evaluation set + wide CI on bypass rate | Medium | Medium | Quote 95% bootstrap CI [44%, 88%] on slide; state phase 2 expands eval set |
@@ -510,10 +540,10 @@ $EDITOR docs/misuse_dual_use.md   # ~30 min, see WIN_PLAN D.4
 
 # 2. On the TRAINER's machine — push the LoRA (with the misuse doc as the model README)
 huggingface-cli login
-huggingface-cli repo create chakravyuh-scammer-0.5b-v1 --type model
+huggingface-cli repo create chakravyuh-scammer-lora-phase1 --type model
 cd checkpoints/scammer_lora_phase1
 cp /path/to/Chakravyuh/docs/misuse_dual_use.md README.md
-git init && git remote add origin https://huggingface.co/ujjwalpardeshi/chakravyuh-scammer-0.5b-v1
+git init && git remote add origin https://huggingface.co/ujjwalpardeshi/chakravyuh-scammer-lora-phase1
 huggingface-cli lfs-enable-largefiles .
 git add adapter_config.json adapter_model.safetensors README.md
 git commit -m "feat: B.2 phase 1 Scammer LoRA — 68.75% bypass vs ScriptedAnalyzer (n=16)"

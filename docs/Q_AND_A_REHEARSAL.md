@@ -143,7 +143,7 @@ The Wilson 95 % CI on best-of-8 is [85.0 %, 97.5 %] (n=64); on the held-out subs
 The 0 / 64 refusal count is **disclosed precisely so the dual-use risk is visible**. The LoRA stripped Qwen2.5-0.5B-Instruct's safety training — which is what you want for an *internal red-team adversary in a research environment*, but it is also exactly the dual-use risk that needs the misuse statement.
 
 Mitigations:
-1. The Scammer adapter (`ujjwalpardeshi/chakravyuh-scammer-0.5b-v1`) is **gated** on the HF Hub — access requires accepting the [`docs/RESPONSIBLE_USE.md`](RESPONSIBLE_USE.md) terms.
+1. The Scammer adapter (`ujjwalpardeshi/chakravyuh-scammer-lora-phase1`) is **gated** on the HF Hub — access requires accepting the [`docs/RESPONSIBLE_USE.md`](RESPONSIBLE_USE.md) and [`docs/misuse_dual_use.md`](misuse_dual_use.md) terms.
 2. The adapter weights are 12 MB and **useless without the Qwen2.5-0.5B base**, which is itself instruction-tuned — anyone wanting to do harm has easier paths than this.
 3. The Scammer is **not served externally**. Our live HF Space exposes the *Analyzer*, not the *Scammer*.
 4. Held-out 100 % bypass is vs *the rule-based ScriptedAnalyzer*, not vs the v2 Analyzer LoRA. The v2 LoRA crushes this Scammer; that asymmetry IS the B.2 Phase 2 motivation.

@@ -24,7 +24,7 @@ Thanks for your interest. Chakravyuh is a research environment, not a maintained
 3. Run the local checks before pushing:
    ```bash
    make install            # editable install with eval extras
-   pytest tests/ -v        # 305 collected; 303 pass + 2 GROQ-gated skip
+   pytest tests/ -v        # 337 collected; 334 pass + 3 GROQ-gated skip
    make smoke-test         # in-process env reset+step
    make link-check         # local-link integrity
    ```

@@ -57,7 +57,7 @@ The merged 7B + LoRA quantized to q4_k_m runs at ~10 tok/s on a Pixel 8 (8 GB RA
 ```bash
 git clone https://github.com/UjjwalPardeshi/Chakravyuh && cd Chakravyuh
 uv pip sync uv.lock          # pinned reproducible install
-pytest tests/ -v             # 305 collected, 303 pass, 2 GROQ-gated skip
+pytest tests/ -v             # 337 collected, 334 pass, 3 GROQ-gated skip
 make smoke-test              # in-process env reset+step
 make reproduce               # CHAKRAVYUH_SKIP_INFERENCE=1 for cached scores (~10 min CPU)
 ```

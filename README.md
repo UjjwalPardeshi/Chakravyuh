@@ -14,7 +14,7 @@ short_description: Multi-agent RL env for Indian UPI fraud detection
 
 [![CI](https://github.com/UjjwalPardeshi/Chakravyuh/actions/workflows/ci.yml/badge.svg)](https://github.com/UjjwalPardeshi/Chakravyuh/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.10–3.12](https://img.shields.io/badge/python-3.10--3.12-blue.svg)](https://www.python.org/downloads/)
 
 A multi-agent RL environment for Indian UPI fraud detection — built for the **Meta PyTorch OpenEnv Hackathon 2026 (Bangalore)**.
 
@@ -34,7 +34,7 @@ Imagine a 58-year-old retired teacher in Mumbai. Her son lives in Singapore. A W
 
 **Problem.** Indian digital payments lose ₹13,000+ crore/year to UPI fraud. 60 crore users are exposed. Rule-based detectors degrade meaningfully on post-2024 attack patterns — we measured **scripted analyzer detection = 50% on the 34-scenario novel split** (matrimonial crypto, deepfake CEO, digital arrest, AePS fraud; from `data/chakravyuh-bench-v0/scenarios.jsonl`). No public RL environment exists for multi-agent fraud-detection research — so we built one.
 
-**Approach.** A 5-agent OpenEnv environment (Scammer, Victim, Analyzer, Bank Monitor, Regulator) with a composable 5-rubric reward. The Analyzer is a Qwen2.5-7B LoRA, post-trained with TRL's GRPO. Reward-hacking diagnosed in v1 (FPR = 36 %), then *measurably* fixed in v2 (FPR = 6.7 % — **5× better**).
+**Approach.** A 5-agent OpenEnv environment (Scammer, Victim, Analyzer, Bank Monitor, Regulator) with a composable 8-rubric reward. The Analyzer is a Qwen2.5-7B LoRA, post-trained with TRL's GRPO. Reward-hacking diagnosed in v1 (FPR = 36 %), then *measurably* fixed in v2 (FPR = 6.7 % — **5× better**).
 
 **Headline result** — 174 scenarios, percentile bootstrap 95 % CIs (10 000 iters) from [`logs/bootstrap_v2.json`](logs/bootstrap_v2.json):
 
@@ -287,7 +287,7 @@ print(obs.reward, obs.reward_breakdown)
 
 ```bash
 pytest tests/ -v
-# 337 collected · 335 passed · 2 skipped (LLM-judge tests skip without GROQ_API_KEY)
+# 337 collected · 334 passed · 3 skipped (LLM-judge tests skip without GROQ_API_KEY)
 # Coverage: openenv contract, rubrics, scripted env, demo, explanation judge,
 # GRPO reward, MCP compliance, mode-C bench, negotiation, leaderboard, training data,
 # benign augmentation, known/novel split, red-team robustness, input sanitizer,
@@ -529,7 +529,7 @@ The Gradio UI provides two tabs:
 | Gym-style `reset` / `step` / `state` | ✅ |
 | No reserved MCP tool names | ✅ `tests/test_mcp_compliance.py` |
 | Working training script (TRL / Unsloth, Colab) | ✅ [`training/train_colab.ipynb`](training/train_colab.ipynb) + [`notebooks/v2_retrain_safe.ipynb`](notebooks/v2_retrain_safe.ipynb) |
-| Multiple independent reward functions | ✅ 5 composable child rubrics |
+| Multiple independent reward functions | ✅ 8 composable child rubrics |
 | Anti-reward-hacking design | ✅ [Anti-Reward-Hacking Design](#anti-reward-hacking-design) + [`logs/analyzer_robustness.json`](logs/analyzer_robustness.json) |
 | Real training evidence (reward/loss plots) | ✅ [training reward](https://raw.githubusercontent.com/UjjwalPardeshi/Chakravyuh/a9e723bf495182724845dbf1f69f8968434a9e02/docs/assets/plots/training_reward_curve.png) · [reward-hacking diagnostic](https://raw.githubusercontent.com/UjjwalPardeshi/Chakravyuh/a9e723bf495182724845dbf1f69f8968434a9e02/docs/assets/plots/reward_hacking_diagnostic.png) · [per-difficulty](https://raw.githubusercontent.com/UjjwalPardeshi/Chakravyuh/a9e723bf495182724845dbf1f69f8968434a9e02/docs/assets/plots/v2_per_difficulty_check.png) |
 | HF Space deployed | ✅ [LIVE](https://huggingface.co/spaces/ujjwalpardeshi/chakravyuh) |

@@ -60,7 +60,7 @@ Real-incident grounding cited in [README](https://github.com/UjjwalPardeshi/Chak
 
 ---
 
-## 2 · Environment, two trained agents & 5-rubric reward
+## 2 · Environment, two trained agents & 8-rubric reward
 
 ```
         REGULATOR (meta) ── adapts rule weights from outcomes
