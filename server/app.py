@@ -63,246 +63,503 @@ _LANDING_HTML = """<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light only">
 <title>Chakravyuh — Multi-Agent Fraud Arena</title>
+<meta name="description" content="A self-improving benchmark for Indian UPI fraud detection. Five agents compete under structural information asymmetry.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='15' fill='%23381932'/><circle cx='16' cy='16' r='6' fill='none' stroke='%23e8c97a' stroke-width='2'/><line x1='16' y1='2' x2='16' y2='10' stroke='%23e8c97a' stroke-width='2'/><line x1='16' y1='22' x2='16' y2='30' stroke='%23e8c97a' stroke-width='2'/><line x1='2' y1='16' x2='10' y2='16' stroke='%23e8c97a' stroke-width='2'/><line x1='22' y1='16' x2='30' y2='16' stroke='%23e8c97a' stroke-width='2'/><line x1='6.1' y1='6.1' x2='11.8' y2='11.8' stroke='%23e8c97a' stroke-width='2'/><line x1='20.2' y1='20.2' x2='25.9' y2='25.9' stroke='%23e8c97a' stroke-width='2'/><line x1='25.9' y1='6.1' x2='20.2' y2='11.8' stroke='%23e8c97a' stroke-width='2'/><line x1='11.8' y1='20.2' x2='6.1' y2='25.9' stroke='%23e8c97a' stroke-width='2'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;1,700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <style>
-  :root { color-scheme: light only; }
-  *, *::before, *::after { box-sizing: border-box; }
-  html, body {
-    margin: 0; padding: 0;
-    background: #FFF3E6;
-    color: #000000;
+  :root {
+    --plum: #381932;
+    --plum-dark: #2A0F25;
+    --plum-light: rgba(56,25,50,0.08);
+    --plum-border: rgba(56,25,50,0.18);
+    --cream: #FFF3E6;
+    --cream-2: #FFFBF5;
+    --gold: #e8c97a;
+    --text: #000000;
+    --text-muted: rgba(0,0,0,0.62);
+    --radius: 12px;
+    --nav-h: 64px;
+    color-scheme: light only;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--cream);
+    color: var(--text);
     font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     line-height: 1.6;
+    min-height: 100vh;
   }
-  .wrap {
-    max-width: 880px;
-    margin: 0 auto;
-    padding: 56px 24px 64px;
+
+  /* ── Navbar ── */
+  .nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(255,243,230,0.85);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--plum-border);
+    height: var(--nav-h);
   }
-  .eyebrow {
+  .nav-inner {
+    max-width: 1600px; margin: 0 auto;
+    padding: 0 32px;
+    height: 100%;
+    display: flex; align-items: center; gap: 24px;
+  }
+  .nav-logo {
+    display: flex; align-items: center; gap: 10px;
+    text-decoration: none; color: var(--text);
+    font-weight: 800; font-size: 16px; letter-spacing: -0.3px;
+    flex-shrink: 0;
+  }
+  .nav-logo-badge {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: var(--plum); color: var(--gold);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 800;
+  }
+  .nav-links {
+    display: flex; align-items: center; gap: 4px;
+    margin-left: auto;
+  }
+  .nav-link {
+    padding: 6px 14px; border-radius: 8px;
+    font-size: 14px; font-weight: 600;
+    text-decoration: none; color: var(--text-muted);
+    transition: color .15s, background .15s;
+  }
+  .nav-link:hover { color: var(--text); background: var(--plum-light); }
+  .nav-cta {
+    margin-left: 8px;
+    padding: 8px 18px; border-radius: 8px;
+    background: var(--plum); color: #fff;
+    font-size: 14px; font-weight: 700;
+    text-decoration: none;
+    transition: background .15s, transform .08s;
+    white-space: nowrap;
+  }
+  .nav-cta:hover { background: var(--plum-dark); transform: translateY(-1px); }
+  .nav-ham { display: none; }
+
+  /* ── Page shell ── */
+  .page { max-width: 1600px; margin: 0 auto; padding: 0 32px; }
+
+  /* ── Hero ── */
+  .hero {
+    display: grid;
+    grid-template-columns: 1fr 420px;
+    gap: 48px;
+    align-items: center;
+    padding: 72px 0 80px;
+  }
+  .hero-eyebrow {
     display: inline-block;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 2px;
+    font-size: 11px; font-weight: 700; letter-spacing: 2px;
     text-transform: uppercase;
-    color: #FFFFFF;
-    background: #381932;
-    padding: 5px 12px;
-    border-radius: 999px;
-    margin-bottom: 18px;
+    color: #fff; background: var(--plum);
+    padding: 5px 13px; border-radius: 999px;
+    margin-bottom: 20px;
   }
-  h1 {
-    font-size: clamp(30px, 5vw, 44px);
-    font-weight: 800;
-    line-height: 1.1;
-    letter-spacing: -0.6px;
-    margin: 0 0 12px;
-    color: #000000;
+  .hero h1 {
+    font-size: clamp(32px, 3.8vw, 56px);
+    font-weight: 800; line-height: 1.08; letter-spacing: -1px;
+    margin-bottom: 20px;
   }
-  .lede {
-    font-size: clamp(15px, 1.5vw, 17px);
-    line-height: 1.6;
-    color: rgba(0, 0, 0, 0.78);
-    max-width: 720px;
-    margin: 0 0 32px;
+  .hero h1 em {
+    font-style: normal; color: var(--plum);
+  }
+  .hero-lede {
+    font-size: clamp(15px, 1.3vw, 17px);
+    line-height: 1.7;
+    color: var(--text-muted);
+    max-width: 580px;
+    margin-bottom: 36px;
   }
   .cta-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin: 28px 0 36px;
+    display: flex; flex-wrap: wrap; gap: 12px;
+    margin-bottom: 36px;
   }
   .cta {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    padding: 13px 22px;
-    border-radius: 10px;
-    font-weight: 700;
-    font-size: 14px;
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 13px 24px; border-radius: var(--radius);
+    font-weight: 700; font-size: 14px;
     text-decoration: none;
-    border: 1px solid transparent;
+    border: 1.5px solid transparent;
     transition: transform .08s ease, background .15s ease, border-color .15s ease;
   }
-  .cta:hover { transform: translateY(-1px); }
-  .cta.primary {
-    background: #381932; color: #FFFFFF; border-color: #381932;
+  .cta:hover { transform: translateY(-2px); }
+  .cta.primary { background: var(--plum); color: #fff; border-color: var(--plum); }
+  .cta.primary:hover { background: var(--plum-dark); }
+  .cta.secondary { background: #fff; color: var(--text); border-color: var(--plum-border); }
+  .cta.secondary:hover { background: var(--plum-light); border-color: var(--plum); }
+  .badge-row {
+    display: flex; flex-wrap: wrap; gap: 8px;
   }
-  .cta.primary:hover { background: #2A0F25; }
-  .cta.secondary {
-    background: #FFFFFF; color: #000000; border-color: rgba(56,25,50,0.30);
+  .badge {
+    display: inline-block;
+    padding: 4px 10px; border-radius: 999px;
+    font-size: 11px; font-weight: 600;
+    background: #fff; border: 1px solid var(--plum-border);
+    color: var(--text-muted);
   }
-  .cta.secondary:hover {
-    background: rgba(56,25,50,0.08); border-color: #381932;
+
+  /* ── Stat cards (hero right) ── */
+  .stat-cards {
+    display: flex; flex-direction: column; gap: 12px;
   }
-  h2 {
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 1.6px;
+  .stat-card {
+    background: #fff;
+    border: 1.5px solid var(--plum-border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+  }
+  .stat-card.accent {
+    background: var(--plum); color: #fff;
+    border-color: var(--plum);
+  }
+  .stat-card-label {
+    font-size: 11px; font-weight: 700; letter-spacing: 1.4px;
     text-transform: uppercase;
-    color: #000000;
-    margin: 36px 0 14px;
-    display: flex; align-items: center; gap: 10px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
   }
-  h2::before {
-    content: ""; width: 16px; height: 2px;
-    background: #381932; border-radius: 999px;
+  .stat-card.accent .stat-card-label { color: rgba(255,255,255,0.65); }
+  .stat-card-value {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 36px; font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    color: var(--text);
   }
-  .grid {
+  .stat-card.accent .stat-card-value { color: var(--gold); }
+  .stat-card-sub {
+    font-size: 12px; color: var(--text-muted); margin-top: 4px;
+  }
+  .stat-card.accent .stat-card-sub { color: rgba(255,255,255,0.55); }
+  .stat-pair {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  }
+  .stat-pair .stat-card-value { font-size: 26px; }
+
+  /* ── Section heading ── */
+  .section { padding: 64px 0; }
+  .section-head {
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 28px;
+  }
+  .section-head::before {
+    content: ""; flex-shrink: 0;
+    width: 20px; height: 3px;
+    background: var(--plum); border-radius: 999px;
+  }
+  .section-title {
+    font-size: 11px; font-weight: 800; letter-spacing: 1.8px;
+    text-transform: uppercase; color: var(--text);
+  }
+
+  /* ── Features grid ── */
+  .features-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+  }
+  .feature-card {
+    background: var(--cream-2);
+    border: 1px solid var(--plum-border);
+    border-radius: var(--radius);
+    padding: 22px 20px;
+    transition: border-color .15s, transform .08s;
+  }
+  .feature-card:hover { border-color: var(--plum); transform: translateY(-2px); }
+  .feature-icon {
+    font-size: 22px; margin-bottom: 12px; display: block;
+  }
+  .feature-name {
+    font-size: 14px; font-weight: 700; margin-bottom: 6px;
+  }
+  .feature-desc {
+    font-size: 13px; color: var(--text-muted); line-height: 1.55;
+  }
+
+  /* ── Endpoints grid ── */
+  .endpoints-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
     gap: 12px;
-    margin: 0 0 24px;
   }
   .endpoint {
     display: block;
-    padding: 14px 16px;
-    background: #FFFBF5;
-    border: 1px solid rgba(56,25,50,0.18);
-    border-radius: 12px;
-    text-decoration: none;
-    color: #000000;
+    padding: 16px 18px;
+    background: var(--cream-2);
+    border: 1px solid var(--plum-border);
+    border-radius: var(--radius);
+    text-decoration: none; color: var(--text);
     transition: border-color .15s, transform .08s;
   }
-  .endpoint:hover {
-    border-color: #381932; transform: translateY(-1px);
-  }
+  .endpoint:hover { border-color: var(--plum); transform: translateY(-2px); }
   .endpoint code {
     display: block;
-    font-family: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace;
-    font-weight: 700;
-    font-size: 13px;
-    color: #381932;
-    margin-bottom: 4px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-weight: 700; font-size: 13px;
+    color: var(--plum); margin-bottom: 5px;
   }
   .endpoint span {
-    font-size: 12px;
-    color: rgba(0,0,0,0.72);
-    line-height: 1.45;
-    display: block;
+    font-size: 12px; color: var(--text-muted);
+    line-height: 1.5; display: block;
   }
-  .stat-row {
-    display: flex; flex-wrap: wrap;
-    gap: 8px;
-    margin: 0 0 12px;
+
+  /* ── Divider ── */
+  .divider {
+    border: none; border-top: 1px solid var(--plum-border);
+    margin: 0;
   }
-  .stat {
-    display: inline-flex;
-    align-items: baseline;
-    gap: 8px;
-    padding: 7px 13px;
-    background: #FFFFFF;
-    border: 1px solid rgba(56,25,50,0.18);
-    border-radius: 999px;
-    font-size: 12px;
-  }
-  .stat-label {
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 1.4px;
-    text-transform: uppercase;
-    color: rgba(0,0,0,0.72);
-  }
-  .stat-value {
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
-    font-weight: 700;
-    color: #000000;
-    font-variant-numeric: tabular-nums;
-  }
+
+  /* ── Footer ── */
   footer {
-    margin-top: 40px;
-    padding-top: 18px;
-    border-top: 1px solid rgba(56,25,50,0.18);
-    font-size: 12px;
-    color: rgba(0,0,0,0.72);
+    background: var(--plum);
+    padding: 40px 0;
+    margin-top: 0;
+  }
+  .footer-inner {
+    max-width: 1600px; margin: 0 auto;
+    padding: 0 32px;
+    display: flex; align-items: center;
+    justify-content: space-between;
+    gap: 24px; flex-wrap: wrap;
+  }
+  .footer-brand {
+    font-size: 15px; font-weight: 700; color: #fff;
+    margin-bottom: 4px;
+  }
+  .footer-copy {
+    font-size: 12px; color: rgba(255,255,255,0.55);
     line-height: 1.6;
   }
-  footer a {
-    color: #381932; font-weight: 600;
-    text-decoration: underline;
-    text-decoration-thickness: 1.5px;
-    text-underline-offset: 3px;
+  .footer-links {
+    display: flex; flex-wrap: wrap; gap: 8px;
+  }
+  .footer-link {
+    padding: 6px 14px; border-radius: 999px;
+    font-size: 12px; font-weight: 600;
+    text-decoration: none;
+    color: rgba(255,255,255,0.75);
+    border: 1px solid rgba(255,255,255,0.20);
+    transition: background .15s, color .15s;
+  }
+  .footer-link:hover { background: rgba(255,255,255,0.12); color: #fff; }
+
+  /* ── Responsive ── */
+  @media (max-width: 1100px) {
+    .hero { grid-template-columns: 1fr; gap: 40px; }
+    .stat-cards { flex-direction: row; flex-wrap: wrap; }
+    .stat-card { flex: 1 1 180px; }
+  }
+  @media (max-width: 900px) {
+    .page { padding: 0 20px; }
+    .nav-inner { padding: 0 20px; }
+    .hero { padding: 48px 0 56px; }
+    .nav-links .nav-link { display: none; }
+    .footer-inner { padding: 0 20px; }
+  }
+  @media (max-width: 600px) {
+    .hero { padding: 36px 0 44px; }
+    .stat-pair { grid-template-columns: 1fr; }
+    .cta { padding: 11px 18px; font-size: 13px; }
+    .footer-inner { flex-direction: column; align-items: flex-start; }
+  }
+  @media (min-width: 1400px) {
+    .features-grid { grid-template-columns: repeat(4, 1fr); }
   }
 </style>
 </head>
 <body>
-<main class="wrap">
-  <span class="eyebrow">Chakravyuh · Multi-Agent Fraud Arena</span>
-  <h1>A self-improving benchmark for Indian UPI fraud detection.</h1>
-  <p class="lede">Five agents — Scammer, Victim, on-device Analyzer LLM, Bank Monitor, Regulator —
-  run multi-turn fraud episodes under structural information asymmetry. The Analyzer is a
-  Qwen2.5-7B LoRA post-trained with TRL's GRPO on a composable 8-rubric reward.
-  v1 hit detection 100 % / FPR 36 % (textbook reward-hack); v2 retrained with three principled
-  fixes hits <strong>99.3 % detection</strong> / <strong>6.7 % FPR</strong>.</p>
 
-  <div class="cta-row">
-    <a class="cta primary" href="/demo/">Open the interactive demo →</a>
-    <a class="cta secondary" href="/docs">API docs (Swagger)</a>
-    <a class="cta secondary" href="/leaderboard">Leaderboard</a>
+<!-- ── Navbar ── -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="nav-logo" href="/">
+      <span class="nav-logo-badge">C</span>
+      Chakravyuh
+    </a>
+    <div class="nav-links">
+      <a class="nav-link" href="/demo/">Demo</a>
+      <a class="nav-link" href="/leaderboard">Leaderboard</a>
+      <a class="nav-link" href="/eval">Eval</a>
+      <a class="nav-link" href="/docs">API</a>
+      <a class="nav-cta" href="/demo/">Open Demo &rarr;</a>
+    </div>
   </div>
+</nav>
 
-  <h2>Headline numbers</h2>
-  <div class="stat-row">
-    <span class="stat"><span class="stat-label">Detection</span><span class="stat-value">99.3 %</span></span>
-    <span class="stat"><span class="stat-label">FPR</span><span class="stat-value">6.7 %</span></span>
-    <span class="stat"><span class="stat-label">F1</span><span class="stat-value">0.99</span></span>
-    <span class="stat"><span class="stat-label">Bench</span><span class="stat-value">n = 175</span></span>
-    <span class="stat"><span class="stat-label">Novel det.</span><span class="stat-value">97.1 %</span></span>
+<!-- ── Hero ── -->
+<div class="page">
+  <section class="hero">
+    <div class="hero-left">
+      <span class="hero-eyebrow">Multi-Agent UPI Fraud Arena</span>
+      <h1>The benchmark where <em>scammers train</em> against defenders.</h1>
+      <p class="hero-lede">
+        Five agents &mdash; Scammer, Victim, on-device Analyzer LLM, Bank Monitor, Regulator &mdash;
+        run adversarial fraud episodes under structural information asymmetry.
+        <strong>Two trained adapters:</strong> the Analyzer (Qwen2.5-7B + LoRA, 8-rubric GRPO)
+        hits <strong>99.3&thinsp;% detection / 6.7&thinsp;% FPR</strong>; the Scammer
+        (Qwen2.5-0.5B + LoRA, adversarial GRPO) bypasses rules at
+        <strong>93.75&thinsp;%</strong> &mdash; a 0.5B model beating 70B+ frontier LLMs
+        at detector evasion.
+      </p>
+      <div class="cta-row">
+        <a class="cta primary" href="/demo/">Open interactive demo &rarr;</a>
+        <a class="cta secondary" href="/docs">API docs (Swagger)</a>
+        <a class="cta secondary" href="/leaderboard">Leaderboard</a>
+      </div>
+      <div class="badge-row">
+        <span class="badge">OpenEnv Hackathon 2026</span>
+        <span class="badge">MIT License</span>
+        <span class="badge">CC-BY-4.0 Dataset</span>
+        <span class="badge">n = 175 bench scenarios</span>
+      </div>
+    </div>
+
+    <div class="stat-cards">
+      <div class="stat-card accent">
+        <div class="stat-card-label">v2 Detection rate</div>
+        <div class="stat-card-value">99.3%</div>
+        <div class="stat-card-sub">vs 100% v1 (reward-hacked)</div>
+      </div>
+      <div class="stat-pair">
+        <div class="stat-card">
+          <div class="stat-card-label">v2 FPR</div>
+          <div class="stat-card-value">6.7%</div>
+          <div class="stat-card-sub">v1 was 36%</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">F1 Score</div>
+          <div class="stat-card-value">0.99</div>
+          <div class="stat-card-sub">+0.03 vs v1</div>
+        </div>
+      </div>
+      <div class="stat-pair">
+        <div class="stat-card">
+          <div class="stat-card-label">Novel det.</div>
+          <div class="stat-card-value">97.1%</div>
+          <div class="stat-card-sub">post-2024 scams</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Bench size</div>
+          <div class="stat-card-value">175</div>
+          <div class="stat-card-sub">scenarios</div>
+        </div>
+      </div>
+      <div class="stat-card accent">
+        <div class="stat-card-label">Scammer LoRA bypass (0.5B)</div>
+        <div class="stat-card-value">93.75%</div>
+        <div class="stat-card-sub">best-of-8 vs rules &middot; beats 70B+ frontier LLMs</div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ── Features ── -->
+  <section class="section">
+    <div class="section-head">
+      <span class="section-title">Five-agent arena</span>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <span class="feature-icon">&#x1F3AD;</span>
+        <div class="feature-name">Scammer</div>
+        <div class="feature-desc">Qwen2.5-0.5B + LoRA trained via GRPO to craft convincing UPI fraud scripts across banking, KYC, OTP and CEO-deepfake categories.</div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">&#x1F6E1;</span>
+        <div class="feature-name">Analyzer LLM</div>
+        <div class="feature-desc">Qwen2.5-7B LoRA post-trained on 8-rubric GRPO reward. v2 retrain fixed reward hacking: FPR dropped 5&times; while detection held at 99.3%.</div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">&#x1F3E6;</span>
+        <div class="feature-name">Bank Monitor</div>
+        <div class="feature-desc">Rule-based transaction watchdog that applies velocity limits, amount thresholds, and beneficiary trust scores in real-time per episode.</div>
+      </div>
+      <div class="feature-card">
+        <span class="feature-icon">&#x2696;&#xFE0F;</span>
+        <div class="feature-name">Composable Reward</div>
+        <div class="feature-desc">8-leaf rubric with independently tuneable weights. Reward hacking is made visible: toggle v1 vs v2 profiles on the same analyzer output.</div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- ── Endpoints ── -->
+  <section class="section">
+    <div class="section-head">
+      <span class="section-title">API endpoints</span>
+    </div>
+    <div class="endpoints-grid">
+      <a class="endpoint" href="/demo/">
+        <code>/demo/</code>
+        <span>Interactive Gradio UI &mdash; replay curated episodes or score your own message.</span>
+      </a>
+      <a class="endpoint" href="/health">
+        <code>GET /health</code>
+        <span>OpenEnv liveness probe. Returns {"status": "healthy"}.</span>
+      </a>
+      <a class="endpoint" href="/metadata">
+        <code>GET /metadata</code>
+        <span>Environment metadata (action / observation schema, version).</span>
+      </a>
+      <a class="endpoint" href="/schema">
+        <code>GET /schema</code>
+        <span>Pydantic model JSON schemas for action and observation.</span>
+      </a>
+      <a class="endpoint" href="/leaderboard">
+        <code>GET /leaderboard</code>
+        <span>Ranked submissions on chakravyuh-bench-v0.</span>
+      </a>
+      <a class="endpoint" href="/eval">
+        <code>GET /eval</code>
+        <span>v2 eval artifact &mdash; detection / FPR / F1 / per-difficulty breakdown.</span>
+      </a>
+      <a class="endpoint" href="/eval/bootstrap">
+        <code>GET /eval/bootstrap</code>
+        <span>10k-iteration percentile bootstrap 95% confidence intervals.</span>
+      </a>
+      <a class="endpoint" href="/docs#/diagnose/post_diagnose_diagnose_post">
+        <code>POST /diagnose</code>
+        <span>Score one message; get full 8-rubric AnalyzerRubricV2 decomposition.</span>
+      </a>
+      <a class="endpoint" href="/docs">
+        <code>/docs &middot; /openapi.json</code>
+        <span>Interactive API explorer + OpenAPI 3.1 schema.</span>
+      </a>
+    </div>
+  </section>
+</div>
+
+<!-- ── Footer ── -->
+<footer>
+  <div class="footer-inner">
+    <div>
+      <div class="footer-brand">Chakravyuh</div>
+      <div class="footer-copy">
+        Open-source benchmark for Indian UPI fraud detection &middot;
+        Entry to the Meta PyTorch OpenEnv Hackathon 2026, Bangalore.<br>
+        MIT (code) &middot; CC-BY-4.0 (dataset)
+      </div>
+    </div>
+    <div class="footer-links">
+      <a class="footer-link" href="https://huggingface.co/datasets/ujjwalpardeshi/chakravyuh-bench-v0">Dataset</a>
+      <a class="footer-link" href="https://huggingface.co/ujjwalpardeshi/chakravyuh-analyzer-lora-v2">Analyzer LoRA</a>
+      <a class="footer-link" href="https://huggingface.co/ujjwalpardeshi/chakravyuh-scammer-lora-phase1">Scammer LoRA</a>
+      <a class="footer-link" href="https://github.com/UjjwalPardeshi/Chakravyuh">GitHub</a>
+      <a class="footer-link" href="/docs">API</a>
+    </div>
   </div>
+</footer>
 
-  <h2>Endpoints</h2>
-  <div class="grid">
-    <a class="endpoint" href="/demo/">
-      <code>/demo/</code>
-      <span>Interactive Gradio UI — replay 5 curated episodes or score your own message.</span>
-    </a>
-    <a class="endpoint" href="/health">
-      <code>GET /health</code>
-      <span>OpenEnv liveness probe. Returns {"status": "healthy"}.</span>
-    </a>
-    <a class="endpoint" href="/metadata">
-      <code>GET /metadata</code>
-      <span>Environment metadata (action / observation schema, version).</span>
-    </a>
-    <a class="endpoint" href="/schema">
-      <code>GET /schema</code>
-      <span>Pydantic model JSON schemas.</span>
-    </a>
-    <a class="endpoint" href="/leaderboard">
-      <code>GET /leaderboard</code>
-      <span>Ranked submissions on chakravyuh-bench-v0 (3 seeded entries).</span>
-    </a>
-    <a class="endpoint" href="/eval">
-      <code>GET /eval</code>
-      <span>v2 eval artifact — detection / FPR / F1 / per-difficulty.</span>
-    </a>
-    <a class="endpoint" href="/eval/bootstrap">
-      <code>GET /eval/bootstrap</code>
-      <span>10k-iteration percentile bootstrap 95% CIs.</span>
-    </a>
-    <a class="endpoint" href="/docs#/diagnose/post_diagnose_diagnose_post">
-      <code>POST /diagnose</code>
-      <span>Score one message; get full 8-rubric AnalyzerRubricV2 decomposition.</span>
-    </a>
-    <a class="endpoint" href="/docs">
-      <code>/docs · /openapi.json</code>
-      <span>Interactive API explorer + OpenAPI 3.1 schema.</span>
-    </a>
-  </div>
-
-  <footer>
-    Chakravyuh — open-source benchmark for Indian UPI fraud detection · entry to the
-    Meta PyTorch <strong>OpenEnv Hackathon 2026</strong>, Bangalore. Bench
-    <a href="https://huggingface.co/datasets/ujjwalpardeshi/chakravyuh-bench-v0">chakravyuh-bench-v0</a> ·
-    Adapter <a href="https://huggingface.co/ujjwalpardeshi/chakravyuh-analyzer-lora-v2">chakravyuh-analyzer-lora-v2</a> ·
-    Repo <a href="https://github.com/UjjwalPardeshi/Chakravyuh">UjjwalPardeshi/Chakravyuh</a> ·
-    MIT (code) · CC-BY-4.0 (dataset).
-  </footer>
-</main>
 </body>
 </html>"""
 
@@ -371,7 +628,7 @@ _DEMO_PREVIEW_HTML = """<!DOCTYPE html>
       detection 99.3 % · FPR <strong>6.7 %</strong> · F1 0.99 · same detection, FPR collapsed 5×.
     </div>
   </div>
-  <p style="font-size:13px;color:#444">Once the demo is live, you'll see five tabs: Replay, Live Q&amp;A, You vs Analyzer, v1↔v2 toggle, <strong>🔴 Red-team it yourself</strong>, and Leaderboard.</p>
+  <p style="font-size:13px;color:#444">Once the demo is live, you'll see eight tabs: Replay, Live Q&amp;A, You vs Analyzer, 🎭 Trained Scammer, Adversary Lab, v1↔v2 toggle, <strong>🔴 Red-team it yourself</strong>, and Leaderboard.</p>
   <p><a href="/">← back to landing</a> · <a href="/demo/" id="live-link">try the live demo</a></p>
 <script>
   // Poll /demo/ every 2s; redirect when 200.

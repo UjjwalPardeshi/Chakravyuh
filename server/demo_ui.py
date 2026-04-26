@@ -1580,14 +1580,16 @@ def build_app() -> gr.Blocks:
                 '<ol class="ck-howto-list" style="margin:0;padding-left:1.25rem;">'
                 '<li><strong>Tab 1 — Replay</strong>: pick a curated episode and watch the 5-agent fraud arena play out turn-by-turn. Suspicion bars climb; the bank either freezes or releases.</li>'
                 '<li><strong>Tab 3 — You vs Analyzer</strong>: paste any UPI message and get a live verdict (or click one of the 3 quick-test buttons: OTP-Hindi, matrimonial-crypto, deepfake-CEO).</li>'
-                '<li><strong>Tab 4 — Adversary Lab</strong>: browse all 64 outputs from our trained Scammer LoRA. Side-by-side, scripted defender misses 60.9 pp more than the v2 LoRA — that is co-evolution, not a benchmark number.</li>'
-                '<li><strong>Tab 5 — v1 vs v2</strong>: see the reward-hacking fix that took FPR from 36% → 6.7%.</li>'
-                '<li><strong>Tab 6 — Red-team it yourself</strong>: try to bypass v2 (good luck — best-of-8 caps at 32.8%).</li>'
+                '<li><strong>Tab 4 — 🎭 Trained Scammer</strong>: our second trained model — a 0.5B Scammer LoRA that beats 70B frontier LLMs at detector evasion. Frontier comparison table, OOD generalization stats, and the 60 pp co-evolution gap.</li>'
+                '<li><strong>Tab 5 — Adversary Lab</strong>: browse all 64 outputs from the trained Scammer LoRA. Side-by-side, scripted defender misses 60 pp more than the v2 LoRA — co-evolution made visible.</li>'
+                '<li><strong>Tab 6 — v1 vs v2</strong>: see the reward-hacking fix that took FPR from 36% → 6.7%.</li>'
+                '<li><strong>Tab 7 — Red-team it yourself</strong>: try to bypass v2 (good luck — best-of-8 caps at 32.8%).</li>'
                 '</ol>'
                 '<p style="margin-top:0.5rem;font-size:0.92rem;color:rgba(0,0,0,0.72);">'
-                'Headline: <strong>v2 LoRA F1 = 0.99</strong> on n=144 scams (Wilson 95% CI 95.1–99.9), '
-                '<strong>FPR = 6.7%</strong> on n=30 benigns (CI 1.9–21.3), '
-                '<strong>ECE = 0.039</strong> well-calibrated. All numbers reproducible in &lt;2 min on CPU.'
+                '<strong>Two trained adapters:</strong> '
+                'Analyzer v2 LoRA (Qwen2.5-7B) — F1 = 0.99, FPR = 6.7%, ECE = 0.039. '
+                'Scammer LoRA (Qwen2.5-0.5B) — 93.75% bypass vs rules, beats 70B+ frontier LLMs. '
+                'All numbers reproducible in &lt;2 min on CPU.'
                 '</p>'
                 '</div>'
                 '</details>'
@@ -1925,6 +1927,50 @@ def build_app() -> gr.Blocks:
                     )
 
                 # =================================================
+                # TRAINED SCAMMER SHOWCASE TAB
+                # =================================================
+                with gr.Tab("🎭 Trained Scammer"):
+                    from server.scammer_showcase import (
+                        render_coevolution_panel,
+                        render_frontier_table,
+                        render_scammer_hero,
+                        render_significance_panel,
+                    )
+
+                    gr.HTML(render_scammer_hero())
+                    gr.HTML(
+                        '<div class="panel-heading">Why train a Scammer?</div>'
+                        '<p style="margin:0 0 14px;font-size:14px;line-height:1.6;'
+                        'color:#000000;max-width:760px;">'
+                        "A static benchmark goes stale as the defender improves. The "
+                        "Scammer LoRA (<code>Qwen2.5-0.5B + LoRA r=16</code>) is "
+                        "trained via TRL GRPO with the reward <code>1 &minus; "
+                        "ScriptedAnalyzer.score</code> to craft scams that evade "
+                        "keyword rules. This creates an <strong>arms-race dynamic</strong>: "
+                        "the Analyzer must learn semantics, not keyword patterns, "
+                        "because the adversary is co-adapting. The result? A 0.5B "
+                        "model that outperforms 70B frontier LLMs at detector evasion."
+                        "</p>"
+                    )
+                    gr.HTML(value=render_frontier_table())
+                    gr.HTML(value=render_significance_panel())
+                    gr.HTML(value=render_coevolution_panel())
+                    gr.HTML(
+                        '<div style="margin-top:14px;padding:12px 16px;background:#FFF3E6;'
+                        'border:1px solid rgba(56,25,50,0.18);border-radius:8px;'
+                        'font-size:13px;line-height:1.55;color:#000;">'
+                        '<strong>Adapter:</strong> '
+                        '<a href="https://huggingface.co/ujjwalpardeshi/chakravyuh-scammer-lora-phase1" '
+                        'target="_blank" style="color:#381932;font-weight:700;">'
+                        'ujjwalpardeshi/chakravyuh-scammer-lora-phase1</a> · '
+                        '<strong>Training log:</strong> '
+                        '<code>logs/b2_phase1_scammer_training.json</code> · '
+                        '<strong>Eval log:</strong> '
+                        '<code>logs/b2_phase1_scammer_eval_n64_bestof8.json</code>'
+                        '</div>'
+                    )
+
+                # =================================================
                 # ADVERSARY LAB TAB — trained Scammer outputs vs both defenders
                 # =================================================
                 with gr.Tab("Adversary Lab · trained Scammer vs both defenders"):
@@ -2144,7 +2190,8 @@ def build_app() -> gr.Blocks:
                 'an entry to the Meta PyTorch <abbr title="Open Reinforcement Learning Environment">OpenEnv</abbr> '
                 "Hackathon 2026, Bangalore. "
                 "Bench <code>chakravyuh-bench-v0</code> (n=175 scenarios) · "
-                "Adapter <code>ujjwalpardeshi/chakravyuh-analyzer-lora-v2</code> · "
+                "Analyzer <code>ujjwalpardeshi/chakravyuh-analyzer-lora-v2</code> · "
+                "Scammer <code>ujjwalpardeshi/chakravyuh-scammer-lora-phase1</code> · "
                 "MIT-licensed code, CC-BY-4.0 dataset."
                 "</footer>"
             )

@@ -48,6 +48,7 @@ _URGENCY_KEYWORDS = [
     "at 3 pm today", "at 5 pm today", "at 6 pm today", "at 8 pm today",
     "pm today", "end of today",
     "limited spots", "limited seats", "offer valid till",
+    "limited to first", "exclusive allocation", "allocation closes",
 ]
 
 _IMPERSONATION_PHRASES = [
@@ -132,6 +133,7 @@ _FINANCIAL_LURE_KEYWORDS = [
     "onboarding fee", "training certification", "software installation fee",
     "software fee", "activation charge", "installation fee",
     "registration fee", "entry fee",
+    "invest rs", "invest ₹",
 ]
 
 _GREED_KEYWORDS = [
@@ -164,6 +166,7 @@ _GREED_KEYWORDS = [
     "dream11 secret", "fantasy prediction",
     "private placement", "ipo alert", "listing price",
     "sovereign gold bond",
+    "invest a small", "ipo allocation",
 ]
 
 _FEAR_KEYWORDS = [
@@ -207,6 +210,7 @@ _EMPATHY_KEYWORDS = [
     "i'll pay back", "return tomorrow", "return when",
     "college fees", "hospital bill", "flight change", "ticket urgent",
     "chori ho gaya", "wallet chori",
+    "interested in marriage", "show you my setup",
 ]
 
 
@@ -346,6 +350,7 @@ class ScriptedAnalyzer(Agent):
             r"@(?:ybl|okicici|okhdfc|okaxis|okbizaxis|ibl|upi|oksbi|paytm|ubi)"
             r"|upi\s+(?:id|handle)\s*:?\s*\S+"
             r"|transfer\s+(?:via|to)\s+upi"
+            r"|upi\s+transfer"
             r"|pay\s+(?:rs|₹)\s*\d"
             r"|send\s+(?:rs|₹)\s*\d",
             re.IGNORECASE,
