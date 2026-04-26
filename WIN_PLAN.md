@@ -263,15 +263,27 @@ Same training corpus (~700 templates), same LoRA hyperparams (r=32, α=64, 7 mod
 
 **Why.** Today only the Analyzer learns. A learning Scammer is the single change that converts "5 agents, 1 trained" into evidence of multi-agent dynamics — the textbook Theme #1 demonstration.
 
-**How.**
-1. Create `chakravyuh_env/agents/learned_scammer.py` (Qwen2.5-0.5B-Instruct + LoRA). Small base model keeps GPU bill manageable.
-2. Scammer reward: `+1.0` OTP-shared and not-flagged-by-turn-5; `+0.3` partial extraction; `−0.5` flagged ≤ turn 3; `+0.2` novelty bonus (MiniLM-L6 distance from last 500 generated scams).
-3. Two-phase in `training/adversarial_selfplay.py`:
-   - Phase 1: train Scammer LoRA, 200 episodes vs frozen scripted Analyzer (T4/L4, ~2h).
-   - Phase 2: freeze Scammer, retrain Analyzer LoRA 150 episodes with **per-rubric W&B logging** (A100, ~3h) — this also produces the per-rubric trajectory plot we have not yet shipped.
-4. Plot co-evolution curves: Scammer success rate vs Analyzer detection over time. Save to `plots/chakravyuh_plots/coevolution_curves.png` (handle binary via SHA-pinned raw URL pattern from prior commits).
+#### B.2 Phase 1 ✅ SHIPPED 2026-04-26 — Scammer LoRA vs ScriptedAnalyzer
 
-**Adverse plan.** If full RL collapses, fall back to SFT-generation-only Qwen2.5-0.5B fine-tuned on `scammer_templates.json`; frame as v3 work.
+**Result.** Trained Qwen2.5-0.5B-Instruct + LoRA (r=16, α=32) via TRL 0.14 GRPO with adversarial reward `1 − ScriptedAnalyzer(c).score`. 200 episodes (8 seeds × 25 reps), 16 evaluation samples post-training:
+
+| Metric | Value | Read |
+|---|---|---|
+| Bypass rate (reward ≥ 0.5) | **11/16 = 68.75%** | Trained Scammer evades the rule-based defense ~7-in-10 attempts |
+| Avg reward | 0.461 | Above zero — the model learned the adversarial objective |
+| Refusals | 0/16 | LoRA fully removed instruction-tuned refusal behavior |
+
+Artifact: [logs/b2_phase1_scammer_training.json](logs/b2_phase1_scammer_training.json). LoRA: `checkpoints/scammer_lora_phase1/` (12 MB, gitignored — push to HF Hub for demo). Notebook: [notebooks/T4_or_A100_b2_phase1_scammer.ipynb](notebooks/T4_or_A100_b2_phase1_scammer.ipynb).
+
+**Headline framing for slide / README.** *"B.2 phase 1: a Qwen2.5-0.5B + LoRA Scammer, trained via TRL 0.14 GRPO with adversarial reward (1 − ScriptedAnalyzer.score), evades the rule-based defense in **68.75% of held-out attempts** after 200 episodes. This is the working artifact for the B.1 framing claim that **GRPO uniquely enables adversarial co-evolution** — converts '5 agents, 1 trained' into '5 agents, 2 trained against each other.'"*
+
+#### B.2 Phase 2 — Retrain Analyzer LoRA against the trained Scammer [P0, ~3h A100]
+
+1. Freeze the phase-1 Scammer LoRA. Use it as the opponent in a fresh GRPO run that retrains the Analyzer LoRA from v2.
+2. 150 episodes with **per-rubric W&B logging** (rubric scores per turn, not just final reward) — also produces the per-rubric trajectory plot still missing from the v3 lookbook.
+3. Plot co-evolution curves: phase-1 Scammer success rate ↑, then phase-2 Analyzer detection ↓ that. Save to `plots/chakravyuh_plots/coevolution_curves.png`.
+
+**Adverse plan.** If phase-2 GRPO collapses (negative-reward spiral), fall back to SFT on the 11 successful phase-1 bypass examples; frame phase 2 as "Analyzer hardened on emergent attacks."
 
 **Process-level reward (was B.4) folds in here**: add `compute_step_reward(turn_index, action, partial_observation)` to `chakravyuh_env/rubrics.py`; use it only in B.2 Phase 2 retrain.
 

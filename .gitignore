@@ -102,3 +102,7 @@ plots/*.zip
 plots/**/*.png
 plots/**/*.zip
 docs/assets/plots/*.png
+
+# LoRA / checkpoint zips at repo root — these belong on HF Hub, not git.
+*.zip
+!notebooks/**/*.zip
