@@ -1562,6 +1562,28 @@ def build_app() -> gr.Blocks:
                 "ask anything → [Q&A rehearsal](https://github.com/UjjwalPardeshi/Chakravyuh/blob/main/docs/Q_AND_A_REHEARSAL.md)."
             )
 
+            gr.HTML(
+                '<details class="ck-howto" open>'
+                '<summary style="cursor:pointer;font-weight:700;font-size:1.05rem;padding:0.5rem 0;">'
+                '🎬 Story Mode — 30-second tour (click to collapse)'
+                '</summary>'
+                '<div class="ck-howto-body" style="padding:0.75rem 0 0.25rem 0;">'
+                '<ol class="ck-howto-list" style="margin:0;padding-left:1.25rem;">'
+                '<li><strong>Tab 1 — Replay</strong>: pick a curated episode and watch the 5-agent fraud arena play out turn-by-turn. Suspicion bars climb; the bank either freezes or releases.</li>'
+                '<li><strong>Tab 3 — You vs Analyzer</strong>: paste any UPI message and get a live verdict (or click one of the 3 quick-test buttons: OTP-Hindi, matrimonial-crypto, deepfake-CEO).</li>'
+                '<li><strong>Tab 4 — Adversary Lab</strong>: browse all 64 outputs from our trained Scammer LoRA. Side-by-side, scripted defender misses 60.9 pp more than the v2 LoRA — that is co-evolution, not a benchmark number.</li>'
+                '<li><strong>Tab 5 — v1 vs v2</strong>: see the reward-hacking fix that took FPR from 36% → 6.7%.</li>'
+                '<li><strong>Tab 6 — Red-team it yourself</strong>: try to bypass v2 (good luck — best-of-8 caps at 32.8%).</li>'
+                '</ol>'
+                '<p style="margin-top:0.5rem;font-size:0.92rem;color:rgba(0,0,0,0.72);">'
+                'Headline: <strong>v2 LoRA F1 = 0.99</strong> on n=144 scams (Wilson 95% CI 95.1–99.9), '
+                '<strong>FPR = 6.7%</strong> on n=30 benigns (CI 1.9–21.3), '
+                '<strong>ECE = 0.039</strong> well-calibrated. All numbers reproducible in &lt;2 min on CPU.'
+                '</p>'
+                '</div>'
+                '</details>'
+            )
+
             with gr.Tabs():
                 # =================================================
                 # REPLAY TAB
@@ -1892,6 +1914,57 @@ def build_app() -> gr.Blocks:
                         inputs=[],
                         outputs=[adv_input, adv_score, adv_flagged, adv_signals, adv_explanation, adv_banner],
                     )
+
+                # =================================================
+                # ADVERSARY LAB TAB — trained Scammer outputs vs both defenders
+                # =================================================
+                with gr.Tab("Adversary Lab · trained Scammer vs both defenders"):
+                    from server.adversary_lab import (
+                        render_aggregate_banner,
+                        render_sample,
+                        sample_choice_labels,
+                    )
+
+                    gr.HTML(
+                        '<div class="panel-heading">B.2 Phase-1 head-to-head — visible co-evolution</div>'
+                        '<p style="margin:0 0 14px;font-size:14px;line-height:1.6;'
+                        'color:#000000;max-width:760px;">'
+                        "We trained a <code>Qwen2.5-0.5B</code> Scammer LoRA via TRL GRPO "
+                        "with the adversarial reward <code>1 − ScriptedAnalyzer.score</code>. "
+                        "Below are the <strong>n = 64 best-of-8 generated scams</strong>, "
+                        "scored by <em>both</em> defenders side-by-side. The pairs where "
+                        "scripted misses but v2 LoRA catches are <strong>the +60 pp "
+                        "co-evolution gap made visible</strong> — Theme #1 in one click."
+                        "</p>"
+                    )
+                    gr.HTML(value=render_aggregate_banner())
+                    adv_lab_choices = sample_choice_labels()
+                    if adv_lab_choices:
+                        adv_lab_picker = gr.Dropdown(
+                            choices=[label for label, _ in adv_lab_choices],
+                            value=adv_lab_choices[0][0],
+                            label="Browse the 64 generated scams (✓ = caught · ✗ = bypassed)",
+                        )
+                        adv_lab_panel = gr.HTML(value=render_sample(0))
+
+                        def _on_adv_lab_pick(label: str) -> str:
+                            for lbl, idx in adv_lab_choices:
+                                if lbl == label:
+                                    return render_sample(idx)
+                            return render_sample(0)
+
+                        adv_lab_picker.change(
+                            _on_adv_lab_pick,
+                            inputs=[adv_lab_picker],
+                            outputs=[adv_lab_panel],
+                        )
+                    else:
+                        gr.HTML(
+                            '<div style="color:#b71c1c;padding:12px;">'
+                            "Adversary Lab data not loaded — "
+                            "<code>logs/b2_phase1_scammer_vs_v2_lora.json</code> missing."
+                            "</div>"
+                        )
 
                 # =================================================
                 # v1 vs v2 TAB — the wow moment
