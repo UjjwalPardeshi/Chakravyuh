@@ -1,0 +1,54 @@
+{
+  "sft_baseline": {
+    "detection": 0.9930555555555556,
+    "fpr": 0.03225806451612903,
+    "precision": 0.9930555555555556,
+    "f1": 0.9930555555555556,
+    "n": 175,
+    "per_difficulty": {
+      "easy": {
+        "n": 30,
+        "detection_rate": 1.0
+      },
+      "medium": {
+        "n": 78,
+        "detection_rate": 1.0
+      },
+      "hard": {
+        "n": 33,
+        "detection_rate": 0.9444444444444444
+      },
+      "novel": {
+        "n": 34,
+        "detection_rate": 1.0
+      }
+    },
+    "threshold": 0.55
+  },
+  "meta": {
+    "base_model": "Qwen/Qwen2.5-7B-Instruct",
+    "lora_config": {
+      "r": 32,
+      "alpha": 64,
+      "target_modules": [
+        "q_proj",
+        "k_proj",
+        "v_proj",
+        "o_proj",
+        "gate_proj",
+        "up_proj",
+        "down_proj"
+      ]
+    },
+    "training": {
+      "epochs": 3,
+      "batch_size": 4,
+      "grad_accum": 2,
+      "lr": 5e-05,
+      "optim": "paged_adamw_8bit"
+    },
+    "dataset_size": 741,
+    "temperature": 0.0,
+    "seed": 42
+  }
+}

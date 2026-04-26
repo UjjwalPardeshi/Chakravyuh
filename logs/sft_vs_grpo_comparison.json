@@ -1,0 +1,23 @@
+{
+  "sft_baseline": {
+    "detection": 0.9930555555555556,
+    "fpr": 0.03225806451612903,
+    "precision": 0.9930555555555556,
+    "f1": 0.9930555555555556,
+    "n": 175
+  },
+  "v2_grpo": {
+    "detection": 0.9930555555555556,
+    "fpr": 0.06666666666666667,
+    "precision": 0.9862068965517241,
+    "f1": 0.9896193771626298,
+    "n": 174
+  },
+  "delta_sft_minus_grpo": {
+    "detection": 0.0,
+    "fpr": -0.034408602150537634,
+    "precision": 0.00684865900383147,
+    "f1": 0.0034361783929257594
+  },
+  "note": "Same training corpus, same LoRA hyperparams (r=32, alpha=64), same target modules. Only the training algo differs: SFT (imitation of gold answers) vs GRPO (online RL on AnalyzerRubricV2 reward)."
+}

@@ -241,25 +241,23 @@ Export as `docs/assets/redteam_30s.mp4` (≤ 25 MB) + GIF version `docs/assets/r
 
 Each item below converts a *narrative* claim into measured *evidence*. The single most defensible move is **B.2 (adversarial Scammer)** — it answers the only steelman of Theme #1.
 
-### B.1 — SFT vs RL controlled experiment [P0, ~1.5h A100]
+### B.1 — SFT vs RL controlled experiment [P0, ~1.5h A100] ✅ SHIPPED 2026-04-26
 
 **Why.** A judge will ask: "did GRPO actually help, or could SFT have given you the same numbers?" Today's only counter is "we believe so" — that's not enough. SFT baseline closes the gap.
 
-**How.**
-```bash
-python training/sft_baseline.py \
-  --model-id Qwen/Qwen2.5-7B-Instruct \
-  --train-file data/training_corpus.jsonl \
-  --output-dir checkpoints/sft_baseline/ \
-  --num-epochs 3 --batch-size 8
+**Result (statistically tied within Wilson CIs).**
 
-python eval/mode_c_real_cases.py \
-  --model-id checkpoints/sft_baseline/ \
-  --bench data/chakravyuh-bench-v0/scenarios.jsonl \
-  --output logs/eval_sft.json
-```
+| Metric | v2 GRPO | SFT baseline | Read |
+|---|---|---|---|
+| Detection | 99.31% | 99.31% | Tied (143/144 scams caught) |
+| FPR | 6.67% (2/30) | 3.23% (1/31) | Within Wilson CI — tied |
+| F1 | 0.9896 | 0.9931 | Tied |
 
-**Adverse plans.** RL wins ≥10pp → headline. Within 10pp → "RL marginally outperforms." SFT ties → reframe as "env-as-benchmark." SFT beats → publish honestly; multi-seed v3.
+Same training corpus (~700 templates), same LoRA hyperparams (r=32, α=64, 7 modules), same prompt format — only the training algorithm differs. Both errors are on hard-difficulty intentionally-ambiguous scenarios. Artifacts: [logs/eval_sft.json](logs/eval_sft.json), [logs/eval_sft_per_row.jsonl](logs/eval_sft_per_row.jsonl), [logs/sft_vs_grpo_comparison.json](logs/sft_vs_grpo_comparison.json). Notebook: [notebooks/A100_b1_sft_vs_grpo.ipynb](notebooks/A100_b1_sft_vs_grpo.ipynb).
+
+**Headline framing (use verbatim).** *"We tested whether GRPO's complexity over SFT is justified. SFT (identical LoRA, identical training data) achieves 99.3% / 3.2% FPR vs GRPO's 99.3% / 6.7% — statistically tied within Wilson CIs at n=30-31 benigns. The contribution of Chakravyuh is the **environment design + reward-hacking diagnosis methodology**, not the training algorithm. GRPO uniquely enables (a) reward-hacking diagnosis via training-trajectory inspection — our v1 → v2 fix came from this — and (b) adversarial Scammer co-evolution (B.2)."*
+
+**Q&A response — "did GRPO win?"**: tied honest answer + cite the two unique GRPO advantages (diagnosis + B.2 prerequisite). Do NOT cite SFT-wins-on-FPR as a headline (1 vs 2 FP at n=30 is sample-size noise).
 
 ### B.2 — Adversarial Scammer training ⭐ [P0, ~5h GPU]
 
