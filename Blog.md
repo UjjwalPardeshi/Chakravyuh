@@ -120,14 +120,35 @@ The Analyzer sees chat content. The Bank Monitor sees transaction metadata. Thes
 
 ## Training Pipeline (OpenEnv + TRL/GRPO)
 
-We use **OpenEnv** for environment interaction and **TRL GRPO** for post-training:
+We use **OpenEnv** for environment interaction and **TRL GRPO** for post-training. Two LoRA adapters were trained — one on each side of the fraud loop:
 
-- Base model: **Qwen2.5-7B-Instruct**
-- Method: **LoRA + GRPO**
-- Output target: calibrated scam probability + grounded explanation
-- Training notebooks:
-  - [`training/train_colab.ipynb`](training/train_colab.ipynb)
-  - [`notebooks/v2_retrain_safe.ipynb`](notebooks/v2_retrain_safe.ipynb)
+### Analyzer LoRA (Defender)
+
+| Parameter | Value |
+|---|---|
+| Base model | **Qwen2.5-7B-Instruct** |
+| Method | **LoRA r=64, α=128 + GRPO** |
+| Reward | Composable 8-rubric (`AnalyzerRubricV2`) |
+| Output target | Calibrated scam probability [0,1] + grounded explanation |
+| Training steps | 619 (natural dataset endpoint) |
+| Result | 99.3 % detection · 6.7 % FPR · F1 = 0.99 |
+| Artifact | [`ujjwalpardeshi/chakravyuh-analyzer-lora-v2`](https://huggingface.co/ujjwalpardeshi/chakravyuh-analyzer-lora-v2) |
+| Notebook | [`notebooks/v2_retrain_safe.ipynb`](notebooks/v2_retrain_safe.ipynb) |
+
+### Scammer LoRA Phase 1 (Adversary)
+
+| Parameter | Value |
+|---|---|
+| Base model | **Qwen2.5-0.5B-Instruct** |
+| Method | **LoRA r=16, α=32 + GRPO** |
+| Reward | Bypass rate against scripted `ScriptedAnalyzer` defense |
+| Output target | Persuasive scam messages that evade rule-based detection |
+| Result | **93.75 % bypass** (best-of-8) · **100 % held-out novel categories** |
+| vs v2 LoRA defender | 32.8 % bypass — 60 pp harder than vs scripted rules |
+| Artifact | [`ujjwalpardeshi/chakravyuh-scammer-lora-phase1`](https://huggingface.co/ujjwalpardeshi/chakravyuh-scammer-lora-phase1) (gated) |
+| Notebook | [`notebooks/T4_or_A100_b2_phase1_scammer.ipynb`](notebooks/T4_or_A100_b2_phase1_scammer.ipynb) |
+
+The two-sided training is the key claim for the Multi-Agent track: **both agents are parameter-efficient against frontier baselines** — the 7B Analyzer ties Llama-3.3-70B at 10× fewer params; the 0.5B Scammer beats DeepSeek-V3-0324 at 1340× fewer params.
 
 ### OpenEnv Compliance
 
