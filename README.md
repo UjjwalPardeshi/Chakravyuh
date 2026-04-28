@@ -161,7 +161,7 @@ The composable rubric system ([chakravyuh_env/rubrics.py](chakravyuh_env/rubrics
 
 ## Submission Materials
 
-> **🎯 OFFICIAL SUBMISSION URL** (give this to judges) → **[`https://huggingface.co/spaces/ujjwalpardeshi/chakravyuh`](https://huggingface.co/spaces/ujjwalpardeshi/chakravyuh)**
+> **🎯 OFFICIAL SUBMISSION URL**  → **[`https://huggingface.co/spaces/ujjwalpardeshi/chakravyuh`](https://huggingface.co/spaces/ujjwalpardeshi/chakravyuh)**
 >
 > Per the hackathon organisers, the HF Space URL above is the canonical
 > submission link — judges pull the environment from there. The
